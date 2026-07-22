@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+level_id = "merge_demo_2"
+level_name_key = "UI_DEMO_LEVEL_MERGE_2"
+columns = 8
+rows = 8
+goal_left_color = 1
+goal_top_color = 4
+goal_right_color = 5
+block_positions = Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 5), Vector2i(4, 2), Vector2i(4, 5), Vector2i(6, 1), Vector2i(6, 5)])
+block_colors = Array[int]([0, 3, 2, 0, 3, 2])
+block_shapes = Array[String](["line_3", "line_3", "l_shape", "l_shape", "line_2", "line_2"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1])

@@ -1,0 +1,133 @@
+[gd_scene load_steps=6 format=3 uid="uid://d17j508vck7jl"]
+
+[ext_resource type="PackedScene" uid="uid://qwpopfwnvd7c" path="res://scenes/board.tscn" id="1_board"]
+[ext_resource type="Script" path="res://scritps/Main.gd" id="2_main"]
+[ext_resource type="PackedScene" uid="uid://prism_level_complete_modal" path="res://scenes/ui/level_complete_modal.tscn" id="3_modal"]
+[ext_resource type="PackedScene" uid="uid://prism_game_over_modal" path="res://scenes/ui/game_over_modal.tscn" id="4_game_over_modal"]
+[ext_resource type="PackedScene" path="res://scenes/ui/goal_border.tscn" id="5_goal_border"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("2_main")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(640, 360)
+
+[node name="Board" parent="." instance=ExtResource("1_board")]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="BackButton" type="Button" parent="UI"]
+unique_name_in_owner = true
+anchors_preset = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 160.0
+offset_bottom = 88.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "Back"
+
+[node name="RestartButton" type="Button" parent="UI"]
+unique_name_in_owner = true
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 96.0
+offset_top = -88.0
+offset_right = 160.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+focus_mode = 0
+flat = false
+
+[node name="UndoButton" type="Button" parent="UI"]
+unique_name_in_owner = true
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -88.0
+offset_right = 88.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+focus_mode = 0
+flat = false
+disabled = true
+
+[node name="GoalBorderLeft" parent="UI" instance=ExtResource("5_goal_border")]
+mouse_filter = 2
+anchors_preset = 9
+anchor_top = 0.0
+anchor_bottom = 1.0
+anchor_left = 0.0
+anchor_right = 0.0
+offset_top = 0.0
+offset_right = 8.0
+offset_bottom = 0.0
+grow_vertical = 2
+edge_kind = 0
+
+[node name="GoalBorderTop" parent="UI" instance=ExtResource("5_goal_border")]
+mouse_filter = 2
+anchors_preset = 10
+anchor_top = 0.0
+anchor_bottom = 0.0
+anchor_left = 0.0
+anchor_right = 1.0
+offset_top = 0.0
+offset_bottom = 8.0
+grow_horizontal = 2
+edge_kind = 1
+
+[node name="GoalBorderRight" parent="UI" instance=ExtResource("5_goal_border")]
+mouse_filter = 2
+anchors_preset = 11
+anchor_top = 0.0
+anchor_bottom = 1.0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -8.0
+offset_top = 0.0
+offset_bottom = 0.0
+grow_horizontal = 0
+grow_vertical = 2
+edge_kind = 2
+
+[node name="GoalBorderBottom" parent="UI" instance=ExtResource("5_goal_border")]
+mouse_filter = 2
+anchors_preset = 12
+anchor_top = 1.0
+anchor_bottom = 1.0
+anchor_left = 0.0
+anchor_right = 1.0
+offset_top = -8.0
+offset_bottom = 0.0
+grow_horizontal = 2
+edge_kind = 3
+
+[node name="LivesLabel" type="Label" parent="UI"]
+mouse_filter = 2
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -80.0
+offset_top = -60.0
+offset_right = 80.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 24
+text = "Lives: 3"
+horizontal_alignment = 1
+
+[node name="LevelCompleteModal" parent="UI" instance=ExtResource("3_modal")]
+
+[node name="GameOverModal" parent="UI" instance=ExtResource("4_game_over_modal")]
+
+[connection signal="pressed" from="UI/BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="pressed" from="UI/RestartButton" to="." method="_on_restart_button_pressed"]
+[connection signal="pressed" from="UI/UndoButton" to="." method="_on_undo_button_pressed"]

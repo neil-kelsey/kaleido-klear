@@ -1,0 +1,413 @@
+msgid ""
+msgstr ""
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "UI_GAME_TITLE"
+msgstr "Kaleido Klear"
+
+msgid "UI_TAP_TO_START"
+msgstr "Tap to start game"
+
+msgid "UI_INITIATE_PROTOCOL"
+msgstr "Initiate protocol"
+
+msgid "UI_START_GAME"
+msgstr "Start game"
+
+msgid "UI_BROWSE_ARCHIVE"
+msgstr "Browse archive"
+
+msgid "UI_SYSTEM_CONFIG"
+msgstr "System config"
+
+msgid "UI_LEVEL_SELECT"
+msgstr "Dimensions"
+
+msgid "UI_SETTINGS"
+msgstr "Settings"
+
+msgid "UI_BACK"
+msgstr "Back"
+
+msgid "UI_RESTART_LEVEL"
+msgstr "Restart level"
+
+msgid "UI_UNDO_MOVE"
+msgstr "Undo last move"
+
+msgid "UI_LEVEL_SELECT_TITLE"
+msgstr "Choose a dimension"
+
+msgid "UI_SETTINGS_TITLE"
+msgstr "Settings"
+
+msgid "UI_DEMO_LEVEL"
+msgstr "Demo level"
+
+msgid "UI_DEMO_LEVEL_STANDARD"
+msgstr "Standard demo"
+
+msgid "UI_DEMO_LEVEL_MERGE"
+msgstr "Merge demo"
+
+msgid "UI_DEMO_LEVEL_STANDARD_2"
+msgstr "Standard demo 2"
+
+msgid "UI_DEMO_LEVEL_MERGE_2"
+msgstr "Merge demo 2"
+
+msgid "UI_MULTI_GOAL_DEMO_1"
+msgstr "Multi-goal demo"
+
+msgid "UI_MULTI_GOAL_DEMO_2"
+msgstr "Multi-goal demo 2"
+
+msgid "UI_SECTION_1"
+msgstr "Dimension 1"
+
+msgid "UI_SECTION_2"
+msgstr "Dimension 2"
+
+msgid "UI_SECTION_3"
+msgstr "Dimension 3"
+
+msgid "UI_DIMENSION_1"
+msgstr "Dimension 1"
+
+msgid "UI_DIMENSION_2"
+msgstr "Dimension 2"
+
+msgid "UI_DIMENSION_3"
+msgstr "Dimension 3"
+
+msgid "UI_DIMENSION_4"
+msgstr "Dimension 4"
+
+msgid "UI_DIMENSION_5"
+msgstr "Dimension 5"
+
+msgid "UI_DIMENSION_6"
+msgstr "Dimension 6"
+
+msgid "UI_DIMENSION_7"
+msgstr "Dimension 7"
+
+msgid "UI_DIMENSION_8"
+msgstr "Dimension 8"
+
+msgid "UI_DIMENSION_9"
+msgstr "Dimension 9"
+
+msgid "UI_DIMENSION_10"
+msgstr "Dimension 10"
+
+msgid "UI_DIMENSION_MAP_HINT"
+msgstr "Scroll to zoom · drag to pan · tap a diamond"
+
+msgid "UI_DIMENSION_EMPTY"
+msgstr "No levels in this dimension yet."
+
+msgid "UI_CURRENT"
+msgstr "Current"
+
+msgid "UI_LOCKED"
+msgstr "Locked"
+
+msgid "UI_LANGUAGE"
+msgstr "Language"
+
+msgid "UI_LANGUAGE_ENGLISH"
+msgstr "English"
+
+msgid "UI_SOUND"
+msgstr "Sound"
+
+msgid "UI_MUSIC"
+msgstr "Music"
+
+msgid "UI_DEVELOP_MODE"
+msgstr "Develop mode"
+
+msgid "UI_COMING_SOON"
+msgstr "Coming soon"
+
+msgid "UI_LEVEL_COMPLETE"
+msgstr "Level complete"
+
+msgid "UI_SECTION_COMPLETE"
+msgstr "Section complete!"
+
+msgid "UI_NEXT_LEVEL"
+msgstr "Next level"
+
+msgid "UI_PLAY_NEXT_SECTION"
+msgstr "Play next section"
+
+msgid "UI_CONTINUE"
+msgstr "Continue"
+
+msgid "UI_REMOVE_ADS"
+msgstr "Remove ads"
+
+msgid "UI_SHARE"
+msgstr "Share"
+
+msgid "UI_LIVES"
+msgstr "Lives: %d"
+
+msgid "UI_LEVEL_FAILED"
+msgstr "Level failed"
+
+msgid "UI_TRY_AGAIN_PROMPT"
+msgstr "Would you like to try again?"
+
+msgid "UI_REPLAY_LEVEL"
+msgstr "Replay level"
+
+msgid "UI_BACK_TO_LEVEL_SELECT"
+msgstr "Back to dimensions"
+
+msgid "UI_CLOSE"
+msgstr "Close"
+
+msgid "UI_SHARE_MESSAGE"
+msgstr "I got %d stars on %s in Kaleido Klear!"
+
+msgid "UI_LEVEL_CREATOR"
+msgstr "Level creator"
+
+msgid "UI_CREATOR_TAB_SETUP"
+msgstr "Level setup"
+
+msgid "UI_CREATOR_TAB_BLOCKS"
+msgstr "Blocks"
+
+msgid "UI_CREATOR_TAB_GOALS"
+msgstr "Goals"
+
+msgid "UI_CREATOR_LEVEL_SETUP"
+msgstr "Level setup"
+
+msgid "UI_CREATOR_LEVEL_ID"
+msgstr "Level ID"
+
+msgid "UI_CREATOR_DISPLAY_NAME"
+msgstr "Display name"
+
+msgid "UI_CREATOR_SECTION"
+msgstr "Section"
+
+msgid "UI_CREATOR_COLUMNS"
+msgstr "Columns"
+
+msgid "UI_CREATOR_ROWS"
+msgstr "Rows"
+
+msgid "UI_CREATOR_APPLY_GRID"
+msgstr "Apply grid size"
+
+msgid "UI_CREATOR_BLOCK_TOOLS"
+msgstr "Block tools"
+
+msgid "UI_CREATOR_KIND_STANDARD"
+msgstr "Standard"
+
+msgid "UI_CREATOR_KIND_MERGE"
+msgstr "Merge"
+
+msgid "UI_CREATOR_KIND_WALL"
+msgstr "Wall"
+
+msgid "UI_CREATOR_ERASE_MODE"
+msgstr "Erase mode"
+
+msgid "UI_CREATOR_MODE"
+msgstr "Mode"
+
+msgid "UI_CREATOR_DRAW_MODE"
+msgstr "Draw mode"
+
+msgid "UI_CREATOR_GRID_SECTION"
+msgstr "Grid squares"
+
+msgid "UI_CREATOR_GRID_DRAW_MODE"
+msgstr "Draw"
+
+msgid "UI_CREATOR_GRID_ERASE_MODE"
+msgstr "Erase"
+
+msgid "UI_CREATOR_GRID_HINT"
+msgstr "Click the grid above to edit squares. Erase removes a square (creates a hole). Draw adds a removed square back."
+
+msgid "UI_CREATOR_SQUARE_ADDED"
+msgstr "Square added back to the grid."
+
+msgid "UI_CREATOR_SQUARE_REMOVED"
+msgstr "Square removed — blocks can't pass through it."
+
+msgid "UI_CREATOR_SQUARE_OCCUPIED"
+msgstr "Can't remove a square that a block occupies."
+
+msgid "UI_CREATOR_CELL_DISABLED"
+msgstr "That square is a hole — switch to Level setup and use grid Draw to add it back."
+
+msgid "UI_CREATOR_ACTIONS"
+msgstr "Actions"
+
+msgid "UI_CREATOR_PAINT_HINT"
+msgstr "Create a shape, select it, then use draw mode to add connected squares one at a time. Use erase mode to remove squares."
+
+msgid "UI_CREATOR_CREATE_SHAPE"
+msgstr "Create shape"
+
+msgid "UI_CREATOR_SELECT_SHAPE"
+msgstr "Select"
+
+msgid "UI_CREATOR_SHAPE_NAME"
+msgstr "Name"
+
+msgid "UI_CREATOR_SHAPE_TYPE"
+msgstr "Type"
+
+msgid "UI_CREATOR_SHAPE_COLOR"
+msgstr "Color"
+
+msgid "UI_CREATOR_NO_SHAPE_SELECTED"
+msgstr "Create or select a shape first."
+
+msgid "UI_CREATOR_CELL_ADDED"
+msgstr "Square added to shape."
+
+msgid "UI_CREATOR_CELL_REMOVED"
+msgstr "Square removed."
+
+msgid "UI_CREATOR_SHAPE_CREATED"
+msgstr "New shape created — draw on the grid."
+
+msgid "UI_CREATOR_SHAPE_DELETED"
+msgstr "Shape deleted."
+
+msgid "UI_CREATOR_INVALID_CELL"
+msgstr "That square cannot be placed here — it must touch the shape and not overlap others."
+
+msgid "UI_CREATOR_GOALS"
+msgstr "Goals"
+
+msgid "UI_CREATOR_MULTI_GOAL"
+msgstr "Multi-goal mode (phased goals per edge)"
+
+msgid "UI_CREATOR_GOAL_LEFT"
+msgstr "Left goal"
+
+msgid "UI_CREATOR_GOAL_TOP"
+msgstr "Top goal"
+
+msgid "UI_CREATOR_GOAL_RIGHT"
+msgstr "Right goal"
+
+msgid "UI_CREATOR_GOAL_BOTTOM"
+msgstr "Bottom goal"
+
+msgid "UI_CREATOR_GOAL_COLOR"
+msgstr "Color"
+
+msgid "UI_CREATOR_ADD_GOAL"
+msgstr "Add goal"
+
+msgid "UI_CREATOR_GOAL_LIMIT_UNLIMITED"
+msgstr "Goal limit unlimited"
+
+msgid "UI_CREATOR_GOAL_LIMIT"
+msgstr "Goal limit"
+
+msgid "UI_CREATOR_GOAL_LIMIT_COUNT"
+msgstr "Limit: %d blocks"
+
+msgid "UI_CREATOR_GOAL_ADD_CONFIRM"
+msgstr "Add this goal"
+
+msgid "UI_CREATOR_ADD_PHASE"
+msgstr "Add goal phase"
+
+msgid "UI_CREATOR_BOTTOM_GOAL_NOTE"
+msgstr "Bottom goals are saved for future use. Gameplay currently uses left, top, and right goals only."
+
+msgid "UI_CREATOR_SAVE"
+msgstr "Save"
+
+msgid "UI_CREATOR_PLAYTEST"
+msgstr "Playtest"
+
+msgid "UI_CREATOR_NEW"
+msgstr "New"
+
+msgid "UI_CREATOR_CLEAR"
+msgstr "Clear"
+
+msgid "UI_CREATOR_CLEAR_CONFIRM"
+msgstr "Clear all data. Are you sure?"
+
+msgid "UI_CREATOR_BACK_CONFIRM"
+msgstr "Are you sure? Going back to the settings menu will lose all unsaved data."
+
+msgid "UI_CANCEL"
+msgstr "Cancel"
+
+msgid "UI_CREATOR_LOAD_PLACEHOLDER"
+msgstr "Load saved level..."
+
+msgid "UI_CREATOR_NEW_LEVEL"
+msgstr "New level started."
+
+msgid "UI_CREATOR_GRID_APPLIED"
+msgstr "Grid size applied."
+
+msgid "UI_CREATOR_INVALID_PLACEMENT"
+msgstr "That block cannot be placed there."
+
+msgid "UI_CREATOR_BLOCK_PLACED"
+msgstr "Block placed."
+
+msgid "UI_CREATOR_ERROR_ID"
+msgstr "Level ID is required."
+
+msgid "UI_CREATOR_ERROR_DISPLAY_NAME"
+msgstr "Enter a display name before saving."
+
+msgid "UI_CREATOR_DISPLAY_NAME_PLACEHOLDER"
+msgstr "My custom level"
+
+msgid "UI_CREATOR_ERROR_BLOCKS"
+msgstr "Add at least one block before continuing."
+
+msgid "UI_CREATOR_ERROR_SAVE"
+msgstr "Could not save level (error %s)."
+
+msgid "UI_CREATOR_SAVED"
+msgstr "Saved level: %s"
+
+msgid "UI_CREATOR_ERROR_LOAD"
+msgstr "Could not load that level."
+
+msgid "UI_CREATOR_LOADED"
+msgstr "Loaded level: %s"
+
+msgid "UI_PLAYTEST_SUCCESS_TITLE"
+msgstr "Success"
+
+msgid "UI_PLAYTEST_SUCCESS_MESSAGE"
+msgstr "Your level is completable."
+
+msgid "UI_BACK_TO_LEVEL_CREATOR"
+msgstr "Back to level creator"
+
+msgid "UI_CREATOR_RETURNED_FROM_PLAYTEST"
+msgstr "Returned from playtest."
+
+msgid "UI_CREATOR_PLAYTEST_PASSED"
+msgstr "Playtest passed — you can now save this level."
+
+msgid "UI_CREATOR_SAVE_NEEDS_PLAYTEST"
+msgstr "Playtest and complete the level before saving."

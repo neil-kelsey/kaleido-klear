@@ -1,0 +1,49 @@
+# Godot 4+
+.godot/
+*.translation
+
+# Imports / generated (Godot regenerates these)
+# Keep *.import sidecars — those are source-of-truth for import settings.
+
+# Exports / builds
+/build/
+/android/
+/ios/
+/export/
+dist/
+*.apk
+*.aab
+*.ipa
+*.exe
+*.x86_64
+*.app
+*.dmg
+*.zip
+*.pck
+*.tmp
+
+# Mono / C# (if used later)
+.mono/
+data_*/
+**/bin/
+**/obj/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Local / secrets
+.env
+.env.*
+*.keystore
+*.jks
+export_credentials.cfg
+
+# Godot crash / logs
+*.log

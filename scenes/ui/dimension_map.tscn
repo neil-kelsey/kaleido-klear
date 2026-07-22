@@ -1,0 +1,49 @@
+[gd_scene load_steps=2 format=3 uid="uid://prism_dimension_map"]
+
+[ext_resource type="Script" path="res://scritps/ui/DimensionMap.gd" id="1"]
+
+[node name="DimensionMap" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(0, 0)
+zoom = Vector2(3.6, 3.6)
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Root" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="MarginContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 120.0
+grow_horizontal = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 36
+
+[node name="HBox" type="HBoxContainer" parent="UI/Root/TopBar"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="BackButton" type="Button" parent="UI/Root/TopBar/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 72)
+layout_mode = 2
+text = "Back"
+
+[node name="HintLabel" type="Label" parent="UI/Root/TopBar/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+text = "Pinch or scroll to zoom · drag to pan"
+vertical_alignment = 1

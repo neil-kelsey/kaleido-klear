@@ -1,0 +1,58 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Prism Swipe"
+config/description="Colour matching tile game - clear the board to win"
+run/main_scene="res://scenes/ui/main_menu.tscn"
+config/features=PackedStringArray("4.7", "Forward Plus")
+config/icon="res://icon.svg"
+boot_splash/bg_color=Color(1, 1, 1, 1)
+boot_splash/fullsize=true
+boot_splash/use_filter=true
+
+[autoload]
+
+GameSession="*res://scritps/GameSession.gd"
+LevelCatalog="*res://scritps/LevelCatalog.gd"
+CustomLevelStore="*res://scritps/editor/CustomLevelStore.gd"
+Sfx="*res://scritps/Sfx.gd"
+
+[display]
+
+; Portrait phone aspect matching the window override (412x915).
+; Width stays 915 so existing UI sizing is unchanged.
+window/size/viewport_width=915
+window/size/viewport_height=2033
+window/size/window_width_override=412
+window/size/window_height_override=915
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://locales/en.po")
+locale/locale="en"
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
+
+[rendering]
+
+rendering_device/driver.windows="d3d12"
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(1, 1, 1, 1)

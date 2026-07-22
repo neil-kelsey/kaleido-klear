@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://qwpopfwnvd7c"]
+
+[ext_resource type="Script" path="res://scritps/Board.gd" id="1_board"]
+[ext_resource type="Resource" path="res://resources/levels/demo_level.tres" id="2_level"]
+
+[node name="Board" type="Node2D"]
+script = ExtResource("1_board")
+level_config = ExtResource("2_level")
+
+[node name="PlayfieldBackground" type="ColorRect" parent="."]
+mouse_filter = 2
+color = Color(0.14, 0.14, 0.18, 1)
+
+[node name="PlayfieldTiles" type="Node2D" parent="."]
+
+[node name="Blocks" type="Node2D" parent="."]
