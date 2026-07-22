@@ -6,6 +6,8 @@
 script = ExtResource("1")
 level_id = "standard_demo"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
+section_index = 0
+sort_index = 10
 columns = 8
 rows = 8
 goal_left_color = 0

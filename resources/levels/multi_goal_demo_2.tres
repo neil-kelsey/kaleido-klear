@@ -51,6 +51,8 @@ count = 4
 [resource]
 script = ExtResource("1")
 level_id = "multi_goal_demo_2"
+section_index = 2
+sort_index = 20
 level_name_key = "UI_MULTI_GOAL_DEMO_2"
 columns = 8
 rows = 8

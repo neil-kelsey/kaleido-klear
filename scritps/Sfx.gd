@@ -29,6 +29,7 @@ func _make_player(player_name: String, stream: AudioStream, volume_db: float) ->
 
 func play_bump() -> void:
 	## Wrong move — solid puck hit.
+	Haptics.medium()
 	if _error_player == null:
 		return
 	_error_player.pitch_scale = 1.0

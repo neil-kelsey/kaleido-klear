@@ -5,6 +5,8 @@ class_name LevelConfig
 @export var level_name_key: String = "UI_DEMO_LEVEL_STANDARD"
 @export var display_name: String = ""
 @export var section_index: int = 0
+## Lower values appear earlier within a dimension. Creator saves use unix time.
+@export var sort_index: int = 1000
 @export var columns: int = 8
 @export var rows: int = 8
 

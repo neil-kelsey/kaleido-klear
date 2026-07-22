@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_a7x3i"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_0p4uk"]
+
+[sub_resource type="Resource" id="Resource_a7x3i"]
+script = ExtResource("1_a7x3i")
+
+[sub_resource type="Resource" id="Resource_0p4uk"]
+script = ExtResource("1_a7x3i")
+color = 1
+
+[sub_resource type="Resource" id="Resource_euhme"]
+script = ExtResource("1_a7x3i")
+color = 2
+
+[sub_resource type="Resource" id="Resource_1720e"]
+script = ExtResource("1_a7x3i")
+color = 2
+
+[sub_resource type="Resource" id="Resource_m8xck"]
+script = ExtResource("1_a7x3i")
+color = 1
+count = 2
+
+[sub_resource type="Resource" id="Resource_iak8y"]
+script = ExtResource("1_a7x3i")
+count = 3
+
+[resource]
+script = ExtResource("2_0p4uk")
+level_id = "custom_level_1783256558"
+display_name = "Custom level"
+section_index = 0
+sort_index = 1783256558
+goal_left_color = 2
+goal_top_color = 1
+goal_right_color = 0
+goal_bottom_color = 0
+multi_goal_mode = true
+goal_left_phases = Array[ExtResource("1_a7x3i")]([SubResource("Resource_1720e")])
+goal_top_phases = Array[ExtResource("1_a7x3i")]([SubResource("Resource_m8xck"), SubResource("Resource_iak8y")])
+goal_bottom_phases = Array[ExtResource("1_a7x3i")]([SubResource("Resource_a7x3i"), SubResource("Resource_0p4uk"), SubResource("Resource_euhme")])
+goal_right_enabled = false
+goal_bottom_enabled = true
+block_positions = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 1), Vector2i(3, 0), Vector2i(4, 4), Vector2i(4, 0), Vector2i(5, 0), Vector2i(5, 0), Vector2i(7, 0)])
+block_colors = Array[int]([2, 0, 1, 2, 0, 0, 0, 1, 1])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([0, 0, 0, 0, 0, 0, 0, 0, 0])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(0, 4), Vector2i(0, 5), Vector2i(0, 6), Vector2i(0, 7), Vector2i(1, 7)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(0, 4), Vector2i(0, 5), Vector2i(0, 6)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(0, 4), Vector2i(0, 5), Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6)]), Array[Vector2i]([Vector2i(0, 6), Vector2i(0, 5), Vector2i(0, 4), Vector2i(0, 3), Vector2i(0, 2), Vector2i(1, 3), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 7), Vector2i(1, 7), Vector2i(2, 7), Vector2i(1, 6), Vector2i(1, 5), Vector2i(1, 4), Vector2i(1, 3), Vector2i(1, 2), Vector2i(1, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(0, 4), Vector2i(0, 5), Vector2i(0, 6)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(0, 4), Vector2i(0, 5), Vector2i(0, 6)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9"])

@@ -6,6 +6,8 @@
 script = ExtResource("1")
 level_id = "merge_demo"
 level_name_key = "UI_DEMO_LEVEL_MERGE"
+section_index = 1
+sort_index = 10
 columns = 8
 rows = 8
 goal_left_color = 1

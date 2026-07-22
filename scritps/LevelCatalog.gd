@@ -1,7 +1,8 @@
 extends Node
 
-## Ten dimensions (sections). First three have playable levels; the rest are stubs.
-## Map links form a linear path: each dimension unlocks the next.
+## Ten dimensions (sections). Project levels come from levels_manifest.json
+## (DirAccess can't list res:// inside Android APKs). Device drafts in user://
+## are still merged for on-phone creator work until synced.
 
 const PRIMARY_BLUE := Color(0.0, 0.28, 0.66, 1.0)
 
@@ -11,81 +12,92 @@ const SECTIONS: Array[Dictionary] = [
 		"color": Color(0.0, 0.28, 0.66, 1.0),
 		"background": "res://assets/backgrounds/section_1_fields.png",
 		"parent": -1,
-		"levels": [
-			preload("res://resources/levels/demo_level.tres"),
-			preload("res://resources/levels/demo_level_2.tres"),
-		],
 	},
 	{
 		"title_key": "UI_DIMENSION_2",
 		"color": Color(0.12, 0.62, 0.48, 1.0),
 		"background": "",
 		"parent": 0,
-		"levels": [
-			preload("res://resources/levels/merge_demo_level.tres"),
-			preload("res://resources/levels/merge_demo_level_2.tres"),
-		],
 	},
 	{
 		"title_key": "UI_DIMENSION_3",
 		"color": Color(0.82, 0.28, 0.38, 1.0),
 		"background": "",
 		"parent": 1,
-		"levels": [
-			preload("res://resources/levels/multi_goal_demo_1.tres"),
-			preload("res://resources/levels/multi_goal_demo_2.tres"),
-		],
 	},
 	{
 		"title_key": "UI_DIMENSION_4",
 		"color": Color(0.72, 0.42, 0.95, 1.0),
 		"background": "",
 		"parent": 2,
-		"levels": [],
 	},
 	{
 		"title_key": "UI_DIMENSION_5",
 		"color": Color(0.95, 0.55, 0.18, 1.0),
 		"background": "",
 		"parent": 3,
-		"levels": [],
 	},
 	{
 		"title_key": "UI_DIMENSION_6",
 		"color": Color(0.15, 0.72, 0.85, 1.0),
 		"background": "",
 		"parent": 4,
-		"levels": [],
 	},
 	{
 		"title_key": "UI_DIMENSION_7",
 		"color": Color(0.9, 0.72, 0.15, 1.0),
 		"background": "",
 		"parent": 5,
-		"levels": [],
 	},
 	{
 		"title_key": "UI_DIMENSION_8",
 		"color": Color(0.95, 0.35, 0.55, 1.0),
 		"background": "",
 		"parent": 6,
-		"levels": [],
 	},
 	{
 		"title_key": "UI_DIMENSION_9",
 		"color": Color(0.35, 0.55, 0.95, 1.0),
 		"background": "",
 		"parent": 7,
-		"levels": [],
 	},
 	{
 		"title_key": "UI_DIMENSION_10",
 		"color": Color(0.45, 0.78, 0.35, 1.0),
 		"background": "",
 		"parent": 8,
-		"levels": [],
 	},
 ]
+
+## Cached project levels grouped by dimension index.
+var _project_levels_by_section: Array = []
+
+
+func _ready() -> void:
+	reload_levels()
+
+
+func reload_levels() -> void:
+	_project_levels_by_section.clear()
+	_project_levels_by_section.resize(SECTIONS.size())
+	for i in SECTIONS.size():
+		var bucket: Array[LevelConfig] = []
+		_project_levels_by_section[i] = bucket
+
+	for path in CustomLevelStore.list_project_level_paths():
+		var level := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
+		if level == null:
+			continue
+		var index := clampi(level.section_index, 0, SECTIONS.size() - 1)
+		(_project_levels_by_section[index] as Array).append(level)
+
+	for i in SECTIONS.size():
+		var levels: Array = _project_levels_by_section[i]
+		levels.sort_custom(func(a: LevelConfig, b: LevelConfig) -> bool:
+			if a.sort_index == b.sort_index:
+				return a.level_id < b.level_id
+			return a.sort_index < b.sort_index
+		)
 
 
 func get_dimension_count() -> int:
@@ -154,11 +166,17 @@ func get_section_levels(section_index: int) -> Array[LevelConfig]:
 	var levels: Array[LevelConfig] = []
 	if section_index < 0 or section_index >= SECTIONS.size():
 		return levels
-	var section: Dictionary = SECTIONS[section_index]
-	for level in section["levels"]:
-		levels.append(level)
+	if _project_levels_by_section.is_empty():
+		reload_levels()
+	for level in _project_levels_by_section[section_index]:
+		levels.append(level as LevelConfig)
+	var known_ids: Dictionary = {}
+	for level in levels:
+		known_ids[level.level_id] = true
+	## Append on-device creator drafts that aren't already in the project.
 	for custom_level in _custom_levels_for_section(section_index):
-		levels.append(custom_level)
+		if not known_ids.has(custom_level.level_id):
+			levels.append(custom_level)
 	return levels
 
 

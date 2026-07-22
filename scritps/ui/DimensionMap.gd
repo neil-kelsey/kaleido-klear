@@ -11,9 +11,10 @@ const STRIP_WORLD := Rect2(-560, -3600, 1120, 4300)
 const ZOOM_MIN := 0.75
 const ZOOM_MAX := 5.5
 const WHEEL_ZOOM_STEP := 0.15
-const INTRO_ZOOM_START := 2.4
+const PINCH_ZOOM_SENSITIVITY := 1.0
+const INTRO_ZOOM_START := 1.35
 const INTRO_ZOOM_END := 3.6
-const INTRO_ZOOM_DURATION := 0.9
+const INTRO_ZOOM_DURATION := 1.15
 
 const DIAMOND_SIZE := 72.0
 const LINE_WIDTH := 2.5
@@ -29,6 +30,7 @@ const LOCK_ICON := preload("res://assets/icons/lock_icon.svg")
 const PAN_FRICTION := 7.5
 const PAN_STOP_SPEED := 12.0
 const PAN_MAX_SPEED := 4200.0
+const FOCUS_DURATION := 0.45
 
 @onready var camera: Camera2D = $Camera2D
 @onready var back_button: Button = %BackButton
@@ -38,9 +40,17 @@ var _positions: Array[Vector2] = []
 var _star_chart_tex: Texture2D
 var _map_font: Font
 var _intro_tween: Tween
+var _focus_tween: Tween
 var _intro_playing := false
 var _panning := false
+var _pan_pointer_id := -1
 var _pan_velocity := Vector2.ZERO
+var _selected_index: int = 0
+var _pinch_active := false
+var _pinch_touches: Dictionary = {} # index -> screen position
+var _pinch_start_distance := 0.0
+var _pinch_start_zoom := 1.0
+var _pinch_last_midpoint := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -51,6 +61,7 @@ func _ready() -> void:
 		push_warning("Missing baked star chart at %s — run bake_star_chart.gd" % STAR_CHART_PATH)
 	if not LevelCatalog.is_dimension_unlocked(GameSession.current_dimension_index):
 		GameSession.set_current_dimension(_focus_dimension_index())
+	_selected_index = _focus_dimension_index()
 	camera.make_current()
 	back_button.pressed.connect(_on_back_pressed)
 	UiTheme.style_menu_button(back_button)
@@ -59,8 +70,10 @@ func _ready() -> void:
 	hint_label.text = tr("UI_DIMENSION_MAP_HINT")
 	UiTheme.style_menu_hint(hint_label)
 	hint_label.add_theme_color_override("font_color", Color(0.25, 0.35, 0.55, 0.85))
+	get_viewport().size_changed.connect(_clamp_camera_to_strip)
 	queue_redraw()
 	await get_tree().process_frame
+	_clamp_camera_to_strip()
 	_play_intro()
 
 
@@ -79,6 +92,7 @@ func _play_intro() -> void:
 	var focus := _positions[focus_i] if not _positions.is_empty() else Vector2.ZERO
 	camera.position = focus
 	camera.zoom = Vector2(INTRO_ZOOM_START, INTRO_ZOOM_START)
+	_clamp_camera_to_strip()
 	if _intro_tween:
 		_intro_tween.kill()
 	_intro_tween = create_tween()
@@ -99,10 +113,47 @@ func _focus_dimension_index() -> int:
 
 func _set_intro_zoom(z: float) -> void:
 	camera.zoom = Vector2(z, z)
+	_clamp_camera_to_strip()
 
 
 func _world_mouse() -> Vector2:
-	return get_viewport().get_canvas_transform().affine_inverse() * get_viewport().get_mouse_position()
+	return _screen_to_world(get_viewport().get_mouse_position())
+
+
+func _screen_to_world(screen_pos: Vector2) -> Vector2:
+	return get_viewport().get_canvas_transform().affine_inverse() * screen_pos
+
+
+func _min_zoom_to_cover_strip() -> float:
+	## Zoom out no further than the star chart filling the viewport.
+	var vp := get_viewport_rect().size
+	if STRIP_WORLD.size.x <= 0.0 or STRIP_WORLD.size.y <= 0.0:
+		return ZOOM_MIN
+	return maxf(vp.x / STRIP_WORLD.size.x, vp.y / STRIP_WORLD.size.y)
+
+
+func _clamp_camera_to_strip() -> void:
+	## Keep the view inside STRIP_WORLD so the plain fill outside never shows.
+	var vp := get_viewport_rect().size
+	var z := maxf(camera.zoom.x, 0.001)
+	var cover := _min_zoom_to_cover_strip()
+	if z < cover:
+		z = cover
+		camera.zoom = Vector2(z, z)
+	var half := vp / (2.0 * z)
+	var b := STRIP_WORLD
+	var min_pos := b.position + half
+	var max_pos := b.end - half
+	var pos := camera.position
+	if min_pos.x > max_pos.x:
+		pos.x = b.get_center().x
+	else:
+		pos.x = clampf(pos.x, min_pos.x, max_pos.x)
+	if min_pos.y > max_pos.y:
+		pos.y = b.get_center().y
+	else:
+		pos.y = clampf(pos.y, min_pos.y, max_pos.y)
+	camera.position = pos
 
 
 func _process(delta: float) -> void:
@@ -112,13 +163,23 @@ func _process(delta: float) -> void:
 		_pan_velocity = Vector2.ZERO
 		set_process(false)
 		return
-	camera.position += _pan_velocity * delta
+	var intended := camera.position + _pan_velocity * delta
+	camera.position = intended
+	_clamp_camera_to_strip()
+	if absf(camera.position.x - intended.x) > 0.01:
+		_pan_velocity.x = 0.0
+	if absf(camera.position.y - intended.y) > 0.01:
+		_pan_velocity.y = 0.0
 	_pan_velocity *= exp(-PAN_FRICTION * delta)
 
 
-func _apply_pan_delta(screen_delta: Vector2) -> void:
+func _apply_pan_delta(screen_delta: Vector2, record_velocity: bool = true) -> void:
 	var world_delta := -screen_delta / camera.zoom.x
 	camera.position += world_delta
+	_clamp_camera_to_strip()
+	if not record_velocity:
+		_pan_velocity = Vector2.ZERO
+		return
 	var dt := maxf(get_process_delta_time(), 0.0001)
 	var sample := (world_delta / dt).limit_length(PAN_MAX_SPEED)
 	_pan_velocity = _pan_velocity.lerp(sample, 0.55)
@@ -126,11 +187,11 @@ func _apply_pan_delta(screen_delta: Vector2) -> void:
 
 
 func _draw() -> void:
-	## Soft fill outside the strip so pan/zoom never shows void.
-	var extent := 4000.0
-	draw_rect(Rect2(-extent, -extent, extent * 2.0, extent * 2.0), CHART_BG, true)
+	## Chart only — camera clamps keep the view on this strip.
 	if _star_chart_tex != null:
 		draw_texture_rect(_star_chart_tex, STRIP_WORLD, false)
+	else:
+		draw_rect(STRIP_WORLD, CHART_BG, true)
 
 	for i in _positions.size():
 		var parent_i := LevelCatalog.get_dimension_parent(i)
@@ -151,10 +212,11 @@ func _draw() -> void:
 		var pos: Vector2 = _positions[i]
 		var theme := LevelCatalog.get_dimension_color(i)
 		var unlocked := LevelCatalog.is_dimension_unlocked(i)
-		var is_current := i == progress
-		_draw_diamond(pos, DIAMOND_SIZE, theme, is_current, unlocked)
-		_draw_dimension_label(pos, i, theme, is_current, unlocked)
-		if is_current:
+		var is_progress := i == progress
+		var is_selected := i == _selected_index
+		_draw_diamond(pos, DIAMOND_SIZE, theme, is_progress, is_selected, unlocked)
+		_draw_dimension_label(pos, i, theme, is_progress, is_selected, unlocked)
+		if is_progress:
 			_draw_current_badge(pos)
 
 
@@ -186,10 +248,19 @@ func _diamond_points(center: Vector2, size: float) -> PackedVector2Array:
 	])
 
 
-func _draw_diamond(center: Vector2, size: float, theme: Color, is_current: bool, unlocked: bool) -> void:
+func _draw_diamond(
+	center: Vector2,
+	size: float,
+	theme: Color,
+	is_progress: bool,
+	is_selected: bool,
+	unlocked: bool
+) -> void:
 	var pts := _diamond_points(center, size)
 	var outline := pts + PackedVector2Array([pts[0]])
-	if is_current:
+	if is_selected:
+		_draw_selection_glow(center, size, LevelCatalog.PRIMARY_BLUE if is_progress else theme)
+	if is_progress:
 		_draw_current_glow(center, size)
 		draw_colored_polygon(pts, LevelCatalog.PRIMARY_BLUE)
 		draw_polyline(outline, Color(1, 1, 1, 0.95), 3.0, true)
@@ -197,12 +268,23 @@ func _draw_diamond(center: Vector2, size: float, theme: Color, is_current: bool,
 		draw_polyline(outline, theme, 4.0, true)
 	else:
 		draw_polyline(outline, theme.lightened(0.25), 3.0, true)
+	if is_selected and not is_progress:
+		## Clear selection ring so locked/unlocked picks read as focused.
+		draw_polyline(outline, Color(1, 1, 1, 0.95), 5.0, true)
+		draw_polyline(outline, theme if unlocked else theme.lightened(0.15), 2.5, true)
 	var hub_r := 3.5
 	draw_circle(center, hub_r + 1.6, Color(1, 1, 1, 1))
 	draw_circle(center, hub_r, STAR_COLOR)
 	if not unlocked:
 		## Sit on the diamond's top-right corner (not centered over the hub).
 		_draw_lock_icon(center + Vector2(size * 0.28, -size * 0.28))
+
+
+func _draw_selection_glow(center: Vector2, size: float, accent: Color) -> void:
+	var outer := _diamond_points(center, size * 1.55)
+	draw_colored_polygon(outer, Color(accent.r, accent.g, accent.b, 0.12))
+	var mid := _diamond_points(center, size * 1.28)
+	draw_polyline(mid + PackedVector2Array([mid[0]]), Color(accent.r, accent.g, accent.b, 0.55), 4.5, true)
 
 
 func _draw_current_glow(center: Vector2, size: float) -> void:
@@ -249,15 +331,22 @@ func _draw_current_badge(diamond_center: Vector2) -> void:
 	draw_string(font, text_pos, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color.WHITE)
 
 
-func _draw_dimension_label(center: Vector2, index: int, theme: Color, is_current: bool, unlocked: bool) -> void:
+func _draw_dimension_label(
+	center: Vector2,
+	index: int,
+	theme: Color,
+	is_progress: bool,
+	is_selected: bool,
+	unlocked: bool
+) -> void:
 	var title := LevelCatalog.get_dimension_title(index)
 	var font := _map_font
 	var font_size := 20
 	var text_size := font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var origin := center + Vector2(-text_size.x * 0.5, -DIAMOND_SIZE * 0.5 - 16.0)
 	var col: Color
-	if is_current:
-		col = LevelCatalog.PRIMARY_BLUE
+	if is_selected or is_progress:
+		col = LevelCatalog.PRIMARY_BLUE if is_progress else theme
 	elif unlocked:
 		col = theme
 	else:
@@ -289,10 +378,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
-			_set_zoom(camera.zoom.x + WHEEL_ZOOM_STEP)
+			_zoom_at_screen_point(mb.position, camera.zoom.x + WHEEL_ZOOM_STEP)
 			get_viewport().set_input_as_handled()
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
-			_set_zoom(camera.zoom.x - WHEEL_ZOOM_STEP)
+			_zoom_at_screen_point(mb.position, camera.zoom.x - WHEEL_ZOOM_STEP)
 			get_viewport().set_input_as_handled()
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
@@ -302,39 +391,128 @@ func _unhandled_input(event: InputEvent) -> void:
 					get_viewport().set_input_as_handled()
 					_on_dimension_clicked(hit)
 				else:
-					_panning = true
+					_begin_pan(-1)
 			else:
-				_panning = false
-	elif event is InputEventMouseMotion and _panning:
+				_end_pan()
+	elif event is InputEventMouseMotion and _panning and not _pinch_active:
 		var motion := event as InputEventMouseMotion
 		_apply_pan_delta(motion.relative)
 		var viewport := get_viewport()
 		if viewport:
 			viewport.set_input_as_handled()
 	elif event is InputEventScreenTouch:
-		var touch := event as InputEventScreenTouch
-		if touch.pressed:
-			_pan_velocity = Vector2.ZERO
-			var hit := _hit_dimension(_world_mouse())
-			if hit >= 0:
-				get_viewport().set_input_as_handled()
-				_on_dimension_clicked(hit)
-			else:
-				_panning = true
-		else:
-			_panning = false
+		if _handle_pinch_touch(event as InputEventScreenTouch):
+			get_viewport().set_input_as_handled()
 	elif event is InputEventScreenDrag:
-		var drag := event as InputEventScreenDrag
-		_panning = true
-		_apply_pan_delta(drag.relative)
-		var viewport := get_viewport()
-		if viewport:
-			viewport.set_input_as_handled()
+		if _handle_pinch_drag(event as InputEventScreenDrag):
+			get_viewport().set_input_as_handled()
+
+
+func _handle_pinch_touch(event: InputEventScreenTouch) -> bool:
+	if event.pressed:
+		_pinch_touches[event.index] = event.position
+		_pan_velocity = Vector2.ZERO
+		if _pinch_touches.size() >= 2:
+			_end_pan()
+			_begin_pinch()
+			return true
+		var hit := _hit_dimension(_screen_to_world(event.position))
+		if hit >= 0:
+			_on_dimension_clicked(hit)
+			return true
+		_begin_pan(event.index)
+		return true
+
+	_pinch_touches.erase(event.index)
+	if _pinch_touches.size() < 2:
+		_pinch_active = false
+	if _pan_pointer_id == event.index:
+		_end_pan()
+	return false
+
+
+func _handle_pinch_drag(event: InputEventScreenDrag) -> bool:
+	if _pinch_touches.has(event.index):
+		_pinch_touches[event.index] = event.position
+	if _pinch_touches.size() >= 2:
+		if not _pinch_active:
+			_end_pan()
+			_begin_pinch()
+		_update_pinch()
+		return true
+	if _pinch_touches.has(event.index) or _panning:
+		if not _panning:
+			_begin_pan(event.index)
+		_apply_pan_delta(event.relative)
+		return true
+	return false
+
+
+func _begin_pan(pointer_id: int) -> void:
+	_panning = true
+	_pan_pointer_id = pointer_id
+	_pan_velocity = Vector2.ZERO
+	set_process(false)
+
+
+func _end_pan() -> void:
+	_panning = false
+	_pan_pointer_id = -1
+
+
+func _begin_pinch() -> void:
+	var points := _pinch_points()
+	if points.size() < 2:
+		return
+	if _focus_tween:
+		_focus_tween.kill()
+	_pinch_active = true
+	_pan_velocity = Vector2.ZERO
+	set_process(false)
+	_pinch_start_distance = points[0].distance_to(points[1])
+	_pinch_start_zoom = camera.zoom.x
+	_pinch_last_midpoint = (points[0] + points[1]) * 0.5
+
+
+func _update_pinch() -> void:
+	var points := _pinch_points()
+	if points.size() < 2 or _pinch_start_distance <= 0.001:
+		return
+	var midpoint := (points[0] + points[1]) * 0.5
+	var distance := points[0].distance_to(points[1])
+	var target_zoom := _pinch_start_zoom * (distance / _pinch_start_distance) * PINCH_ZOOM_SENSITIVITY
+	_zoom_at_screen_point(midpoint, target_zoom)
+
+	var mid_delta := midpoint - _pinch_last_midpoint
+	if mid_delta.length_squared() > 0.01:
+		_apply_pan_delta(mid_delta, false)
+	_pinch_last_midpoint = midpoint
+
+
+func _pinch_points() -> Array[Vector2]:
+	var points: Array[Vector2] = []
+	for key in _pinch_touches.keys():
+		points.append(_pinch_touches[key])
+		if points.size() >= 2:
+			break
+	return points
+
+
+func _zoom_at_screen_point(screen_point: Vector2, target_zoom: float) -> void:
+	var old_zoom := camera.zoom.x
+	var new_zoom := clampf(target_zoom, maxf(ZOOM_MIN, _min_zoom_to_cover_strip()), ZOOM_MAX)
+	if is_equal_approx(old_zoom, new_zoom):
+		_clamp_camera_to_strip()
+		return
+	var world_before := _screen_to_world(screen_point)
+	camera.zoom = Vector2(new_zoom, new_zoom)
+	var world_after := _screen_to_world(screen_point)
+	camera.position += world_before - world_after
+	_clamp_camera_to_strip()
 
 
 func _set_zoom(z: float) -> void:
-	z = clampf(z, ZOOM_MIN, ZOOM_MAX)
-	camera.zoom = Vector2(z, z)
+	_zoom_at_screen_point(get_viewport_rect().size * 0.5, z)
 
 
 func _hit_dimension(world_pos: Vector2) -> int:
@@ -350,10 +528,35 @@ func _hit_dimension(world_pos: Vector2) -> int:
 
 
 func _on_dimension_clicked(index: int) -> void:
-	if not LevelCatalog.is_dimension_unlocked(index):
+	## First tap: select + center. Second tap on an unlocked dim: open levels.
+	if index == _selected_index:
+		if LevelCatalog.is_dimension_unlocked(index):
+			GameSession.set_current_dimension(index)
+			get_tree().change_scene_to_file(DIMENSION_LEVELS_SCENE)
+		else:
+			_center_on_dimension(index)
 		return
-	GameSession.set_current_dimension(index)
-	get_tree().change_scene_to_file(DIMENSION_LEVELS_SCENE)
+	_selected_index = index
+	queue_redraw()
+	_center_on_dimension(index)
+
+
+func _center_on_dimension(index: int) -> void:
+	if index < 0 or index >= _positions.size():
+		return
+	_pan_velocity = Vector2.ZERO
+	set_process(false)
+	var target: Vector2 = _positions[index]
+	if _focus_tween:
+		_focus_tween.kill()
+	_focus_tween = create_tween()
+	_focus_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_focus_tween.tween_method(_set_camera_position_clamped, camera.position, target, FOCUS_DURATION)
+
+
+func _set_camera_position_clamped(pos: Vector2) -> void:
+	camera.position = pos
+	_clamp_camera_to_strip()
 
 
 func _on_back_pressed() -> void:

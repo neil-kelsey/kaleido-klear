@@ -3,7 +3,7 @@ class_name GoalBorder
 
 enum EdgeKind { LEFT, TOP, RIGHT, BOTTOM }
 
-const BAR_WIDTH := 8
+const BAR_WIDTH := 16
 const ZONE_STRIPE_WIDTH := 4.5
 const PREVIEW_SCROLL_SPEED := 36.0
 const PREVIEW_MIN_ZONE_SIZE := 36.0

@@ -845,6 +845,7 @@ func _begin_pointer(pointer_id: int, pointer_pos: Vector2) -> void:
 	_show_merge_previews(selected_block)
 	selected_block.set_drag_focus(true)
 	_show_swipe_hints(selected_block)
+	Haptics.light()
 	is_dragging = true
 	drag_start = pointer_pos
 	last_pointer_pos = pointer_pos
@@ -923,6 +924,7 @@ func _end_pointer(pointer_pos: Vector2) -> void:
 
 	var move_dir := drag_locked_axis
 
+	Haptics.medium()
 	_commit_move(selected_block, drag_anchor_start, move_dir, release_speed)
 	_reset_pointer()
 	get_viewport().set_input_as_handled()

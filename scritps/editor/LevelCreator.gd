@@ -512,9 +512,11 @@ func _build_edge_panel(edge_key: String) -> Dictionary:
 
 func _new_level() -> void:
 	_draft = LevelConfig.new()
-	_draft.level_id = "custom_level_%d" % int(Time.get_unix_time_from_system())
+	var stamp := int(Time.get_unix_time_from_system())
+	_draft.level_id = "custom_level_%d" % stamp
 	_draft.display_name = tr("UI_CREATOR_DEFAULT_DISPLAY_NAME")
 	_draft.section_index = 0
+	_draft.sort_index = stamp
 	_draft.columns = 8
 	_draft.rows = 8
 	_draft.multi_goal_mode = false
@@ -1183,7 +1185,11 @@ func _on_save_pressed() -> void:
 		_set_status(tr("UI_CREATOR_ERROR_DISPLAY_NAME"))
 		return
 	if _draft.level_id.is_empty():
-		_draft.level_id = "custom_level_%d" % int(Time.get_unix_time_from_system())
+		var stamp := int(Time.get_unix_time_from_system())
+		_draft.level_id = "custom_level_%d" % stamp
+		_draft.sort_index = stamp
+	elif _draft.sort_index <= 0:
+		_draft.sort_index = int(Time.get_unix_time_from_system())
 	if not _has_valid_blocks():
 		_set_status(tr("UI_CREATOR_ERROR_BLOCKS"))
 		return
@@ -1193,7 +1199,10 @@ func _on_save_pressed() -> void:
 		_set_status(tr("UI_CREATOR_ERROR_SAVE") % str(error))
 		return
 
-	_set_status(tr("UI_CREATOR_SAVED") % _draft.display_name)
+	if CustomLevelStore.saves_to_project():
+		_set_status("%s (project)" % (tr("UI_CREATOR_SAVED") % _draft.display_name))
+	else:
+		_set_status(tr("UI_CREATOR_SAVED") % _draft.display_name)
 	_capture_baseline_signature()
 
 

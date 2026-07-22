@@ -25,6 +25,7 @@ GameSession="*res://scritps/GameSession.gd"
 LevelCatalog="*res://scritps/LevelCatalog.gd"
 CustomLevelStore="*res://scritps/editor/CustomLevelStore.gd"
 Sfx="*res://scritps/Sfx.gd"
+Haptics="*res://scritps/Haptics.gd"
 
 [display]
 
