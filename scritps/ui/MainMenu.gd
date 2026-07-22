@@ -26,6 +26,13 @@ func _ready() -> void:
 	_on_viewport_resized()
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		if not is_node_ready():
+			return
+		_apply_translations()
+
+
 func _on_viewport_resized() -> void:
 	_apply_side_margins()
 	_fit_brand_titles()
@@ -54,6 +61,8 @@ func _fit_brand_titles() -> void:
 
 
 func _apply_translations() -> void:
+	if play_button == null or level_select_button == null or settings_button == null:
+		return
 	play_button.set_label(tr("UI_START_GAME"))
 	level_select_button.set_label(tr("UI_LEVEL_SELECT"))
 	settings_button.set_label(tr("UI_SETTINGS"))

@@ -74,13 +74,12 @@ theme_override_colors/font_color = Color(0.95, 0.95, 0.97, 1)
 theme_override_font_sizes/font_size = 22
 text = "Language"
 
-[node name="LanguageValueLabel" type="Label" parent="Margin/VBox/Panel/SettingsList/LanguageRow"]
+[node name="LanguageOption" type="OptionButton" parent="Margin/VBox/Panel/SettingsList/LanguageRow"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 96)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.67, 0.72, 1)
-theme_override_font_sizes/font_size = 22
-text = "English"
-horizontal_alignment = 2
+size_flags_horizontal = 0
+fit_to_longest_item = true
 
 [node name="SoundLabel" type="Label" parent="Margin/VBox/Panel/SettingsList"]
 unique_name_in_owner = true
@@ -138,3 +137,4 @@ text = "Back"
 [connection signal="pressed" from="Margin/VBox/BackButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="Margin/VBox/Panel/SettingsList/LevelCreatorButton" to="." method="_on_level_creator_button_pressed"]
 [connection signal="toggled" from="Margin/VBox/Panel/SettingsList/DevelopModeRow/DevelopModeCheckBox" to="." method="_on_develop_mode_checkbox_toggled"]
+[connection signal="item_selected" from="Margin/VBox/Panel/SettingsList/LanguageRow/LanguageOption" to="." method="_on_language_option_item_selected"]

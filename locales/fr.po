@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Language: en\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
@@ -8,61 +8,61 @@ msgid "UI_GAME_TITLE"
 msgstr "Kaleido Klear"
 
 msgid "UI_TAP_TO_START"
-msgstr "Tap to start game"
+msgstr "Touchez pour commencer"
 
 msgid "UI_INITIATE_PROTOCOL"
-msgstr "Initiate protocol"
+msgstr "Lancer le protocole"
 
 msgid "UI_START_GAME"
-msgstr "Start game"
+msgstr "Commencer"
 
 msgid "UI_BROWSE_ARCHIVE"
-msgstr "Browse archive"
+msgstr "Parcourir les archives"
 
 msgid "UI_SYSTEM_CONFIG"
-msgstr "System config"
+msgstr "Configuration système"
 
 msgid "UI_LEVEL_SELECT"
 msgstr "Dimensions"
 
 msgid "UI_SETTINGS"
-msgstr "Settings"
+msgstr "Réglages"
 
 msgid "UI_BACK"
-msgstr "Back"
+msgstr "Retour"
 
 msgid "UI_RESTART_LEVEL"
-msgstr "Restart level"
+msgstr "Recommencer le niveau"
 
 msgid "UI_UNDO_MOVE"
-msgstr "Undo last move"
+msgstr "Annuler le dernier coup"
 
 msgid "UI_LEVEL_SELECT_TITLE"
-msgstr "Choose a dimension"
+msgstr "Choisissez une dimension"
 
 msgid "UI_SETTINGS_TITLE"
-msgstr "Settings"
+msgstr "Réglages"
 
 msgid "UI_DEMO_LEVEL"
-msgstr "Demo level"
+msgstr "Niveau démo"
 
 msgid "UI_DEMO_LEVEL_STANDARD"
-msgstr "Standard demo"
+msgstr "Démo standard"
 
 msgid "UI_DEMO_LEVEL_MERGE"
-msgstr "Merge demo"
+msgstr "Démo fusion"
 
 msgid "UI_DEMO_LEVEL_STANDARD_2"
-msgstr "Standard demo 2"
+msgstr "Démo standard 2"
 
 msgid "UI_DEMO_LEVEL_MERGE_2"
-msgstr "Merge demo 2"
+msgstr "Démo fusion 2"
 
 msgid "UI_MULTI_GOAL_DEMO_1"
-msgstr "Multi-goal demo"
+msgstr "Démo multi-objectifs"
 
 msgid "UI_MULTI_GOAL_DEMO_2"
-msgstr "Multi-goal demo 2"
+msgstr "Démo multi-objectifs 2"
 
 msgid "UI_SECTION_1"
 msgstr "Dimension 1"
@@ -104,346 +104,346 @@ msgid "UI_DIMENSION_10"
 msgstr "Dimension 10"
 
 msgid "UI_DIMENSION_MAP_HINT"
-msgstr "Scroll to zoom · drag to pan · tap a diamond"
+msgstr "Molette pour zoomer · glisser pour déplacer · toucher un diamant"
 
 msgid "UI_DIMENSION_EMPTY"
-msgstr "No levels in this dimension yet."
+msgstr "Aucun niveau dans cette dimension pour l’instant."
 
 msgid "UI_CURRENT"
-msgstr "Current"
+msgstr "Actuel"
 
 msgid "UI_LOCKED"
-msgstr "Locked"
+msgstr "Verrouillé"
 
 msgid "UI_LANGUAGE"
-msgstr "Language"
+msgstr "Langue"
 
 msgid "UI_LANGUAGE_ENGLISH"
-msgstr "English"
+msgstr "Anglais"
 
 msgid "UI_SOUND"
-msgstr "Sound"
+msgstr "Sons"
 
 msgid "UI_MUSIC"
-msgstr "Music"
+msgstr "Musique"
 
 msgid "UI_DEVELOP_MODE"
-msgstr "Develop mode"
+msgstr "Mode développeur"
 
 msgid "UI_COMING_SOON"
-msgstr "Coming soon"
+msgstr "Bientôt disponible"
 
 msgid "UI_LEVEL_COMPLETE"
-msgstr "Level complete"
+msgstr "Niveau terminé"
 
 msgid "UI_SECTION_COMPLETE"
-msgstr "Section complete!"
+msgstr "Section terminée !"
 
 msgid "UI_NEXT_LEVEL"
-msgstr "Next level"
+msgstr "Niveau suivant"
 
 msgid "UI_PLAY_NEXT_SECTION"
-msgstr "Play next section"
+msgstr "Section suivante"
 
 msgid "UI_CONTINUE"
-msgstr "Continue"
+msgstr "Continuer"
 
 msgid "UI_REMOVE_ADS"
-msgstr "Remove ads"
+msgstr "Supprimer les pubs"
 
 msgid "UI_SHARE"
-msgstr "Share"
+msgstr "Partager"
 
 msgid "UI_LIVES"
-msgstr "Lives: %d"
+msgstr "Vies : %d"
 
 msgid "UI_LEVEL_FAILED"
-msgstr "Level failed"
+msgstr "Niveau échoué"
 
 msgid "UI_TRY_AGAIN_PROMPT"
-msgstr "Would you like to try again?"
+msgstr "Voulez-vous réessayer ?"
 
 msgid "UI_REPLAY_LEVEL"
-msgstr "Replay level"
+msgstr "Rejouer le niveau"
 
 msgid "UI_BACK_TO_LEVEL_SELECT"
-msgstr "Back to dimensions"
+msgstr "Retour aux dimensions"
 
 msgid "UI_CLOSE"
-msgstr "Close"
+msgstr "Fermer"
 
 msgid "UI_SHARE_MESSAGE"
-msgstr "I got %d stars on %s in Kaleido Klear!"
+msgstr "J’ai obtenu %d étoiles sur %s dans Kaleido Klear !"
 
 msgid "UI_LEVEL_CREATOR"
-msgstr "Level creator"
+msgstr "Créateur de niveaux"
 
 msgid "UI_CREATOR_TAB_SETUP"
-msgstr "Level setup"
+msgstr "Réglages du niveau"
 
 msgid "UI_CREATOR_TAB_BLOCKS"
-msgstr "Blocks"
+msgstr "Blocs"
 
 msgid "UI_CREATOR_TAB_GOALS"
-msgstr "Goals"
+msgstr "Objectifs"
 
 msgid "UI_CREATOR_LEVEL_SETUP"
-msgstr "Level setup"
+msgstr "Réglages du niveau"
 
 msgid "UI_CREATOR_LEVEL_ID"
-msgstr "Level ID"
+msgstr "ID du niveau"
 
 msgid "UI_CREATOR_DISPLAY_NAME"
-msgstr "Display name"
+msgstr "Nom affiché"
 
 msgid "UI_CREATOR_SECTION"
 msgstr "Section"
 
 msgid "UI_CREATOR_COLUMNS"
-msgstr "Columns"
+msgstr "Colonnes"
 
 msgid "UI_CREATOR_ROWS"
-msgstr "Rows"
+msgstr "Lignes"
 
 msgid "UI_CREATOR_APPLY_GRID"
-msgstr "Apply grid size"
+msgstr "Appliquer la grille"
 
 msgid "UI_CREATOR_BLOCK_TOOLS"
-msgstr "Block tools"
+msgstr "Outils de blocs"
 
 msgid "UI_CREATOR_KIND_STANDARD"
 msgstr "Standard"
 
 msgid "UI_CREATOR_KIND_MERGE"
-msgstr "Merge"
+msgstr "Fusion"
 
 msgid "UI_CREATOR_KIND_WALL"
-msgstr "Wall"
+msgstr "Mur"
 
 msgid "UI_CREATOR_ERASE_MODE"
-msgstr "Erase mode"
+msgstr "Mode effacer"
 
 msgid "UI_CREATOR_MODE"
 msgstr "Mode"
 
 msgid "UI_CREATOR_DRAW_MODE"
-msgstr "Draw mode"
+msgstr "Mode dessin"
 
 msgid "UI_CREATOR_GRID_SECTION"
-msgstr "Grid squares"
+msgstr "Cases de la grille"
 
 msgid "UI_CREATOR_GRID_DRAW_MODE"
-msgstr "Draw"
+msgstr "Dessiner"
 
 msgid "UI_CREATOR_GRID_ERASE_MODE"
-msgstr "Erase"
+msgstr "Effacer"
 
 msgid "UI_CREATOR_GRID_HINT"
-msgstr "Click the grid above to edit squares. Erase removes a square (creates a hole). Draw adds a removed square back."
+msgstr "Cliquez sur la grille pour modifier les cases. Effacer retire une case (trou). Dessiner la remet."
 
 msgid "UI_CREATOR_SQUARE_ADDED"
-msgstr "Square added back to the grid."
+msgstr "Case remise sur la grille."
 
 msgid "UI_CREATOR_SQUARE_REMOVED"
-msgstr "Square removed — blocks can't pass through it."
+msgstr "Case retirée — les blocs ne peuvent pas y passer."
 
 msgid "UI_CREATOR_SQUARE_OCCUPIED"
-msgstr "Can't remove a square that a block occupies."
+msgstr "Impossible de retirer une case occupée par un bloc."
 
 msgid "UI_CREATOR_CELL_DISABLED"
-msgstr "That square is a hole — switch to Level setup and use grid Draw to add it back."
+msgstr "Cette case est un trou — passez en Réglages du niveau et utilisez Dessiner pour la remettre."
 
 msgid "UI_CREATOR_ACTIONS"
 msgstr "Actions"
 
 msgid "UI_CREATOR_PAINT_HINT"
-msgstr "Create a shape, select it, then use draw mode to add connected squares one at a time. Use erase mode to remove squares."
+msgstr "Créez une forme, sélectionnez-la, puis dessinez des cases connectées une par une. Utilisez Effacer pour retirer des cases."
 
 msgid "UI_CREATOR_CREATE_SHAPE"
-msgstr "Create shape"
+msgstr "Créer une forme"
 
 msgid "UI_CREATOR_SELECT_SHAPE"
-msgstr "Select"
+msgstr "Sélectionner"
 
 msgid "UI_CREATOR_SHAPE_NAME"
-msgstr "Name"
+msgstr "Nom"
 
 msgid "UI_CREATOR_SHAPE_TYPE"
 msgstr "Type"
 
 msgid "UI_CREATOR_SHAPE_COLOR"
-msgstr "Color"
+msgstr "Couleur"
 
 msgid "UI_CREATOR_NO_SHAPE_SELECTED"
-msgstr "Create or select a shape first."
+msgstr "Créez ou sélectionnez d’abord une forme."
 
 msgid "UI_CREATOR_CELL_ADDED"
-msgstr "Square added to shape."
+msgstr "Case ajoutée à la forme."
 
 msgid "UI_CREATOR_CELL_REMOVED"
-msgstr "Square removed."
+msgstr "Case retirée."
 
 msgid "UI_CREATOR_SHAPE_CREATED"
-msgstr "New shape created — draw on the grid."
+msgstr "Nouvelle forme créée — dessinez sur la grille."
 
 msgid "UI_CREATOR_SHAPE_DELETED"
-msgstr "Shape deleted."
+msgstr "Forme supprimée."
 
 msgid "UI_CREATOR_INVALID_CELL"
-msgstr "That square cannot be placed here — it must touch the shape and not overlap others."
+msgstr "Cette case ne peut pas être placée ici — elle doit toucher la forme et ne pas chevaucher les autres."
 
 msgid "UI_CREATOR_GOALS"
-msgstr "Goals"
+msgstr "Objectifs"
 
 msgid "UI_CREATOR_MULTI_GOAL"
-msgstr "Multi-goal mode (phased goals per edge)"
+msgstr "Mode multi-objectifs (phases par bord)"
 
 msgid "UI_CREATOR_GOAL_LEFT"
-msgstr "Left goal"
+msgstr "Objectif gauche"
 
 msgid "UI_CREATOR_GOAL_TOP"
-msgstr "Top goal"
+msgstr "Objectif haut"
 
 msgid "UI_CREATOR_GOAL_RIGHT"
-msgstr "Right goal"
+msgstr "Objectif droit"
 
 msgid "UI_CREATOR_GOAL_BOTTOM"
-msgstr "Bottom goal"
+msgstr "Objectif bas"
 
 msgid "UI_CREATOR_GOAL_COLOR"
-msgstr "Color"
+msgstr "Couleur"
 
 msgid "UI_CREATOR_ADD_GOAL"
-msgstr "Add goal"
+msgstr "Ajouter un objectif"
 
 msgid "UI_CREATOR_GOAL_LIMIT_UNLIMITED"
-msgstr "Goal limit unlimited"
+msgstr "Limite d’objectif illimitée"
 
 msgid "UI_CREATOR_GOAL_LIMIT"
-msgstr "Goal limit"
+msgstr "Limite d’objectif"
 
 msgid "UI_CREATOR_GOAL_LIMIT_COUNT"
-msgstr "Limit: %d blocks"
+msgstr "Limite : %d blocs"
 
 msgid "UI_CREATOR_GOAL_ADD_CONFIRM"
-msgstr "Add this goal"
+msgstr "Ajouter cet objectif"
 
 msgid "UI_CREATOR_ADD_PHASE"
-msgstr "Add goal phase"
+msgstr "Ajouter une phase"
 
 msgid "UI_CREATOR_BOTTOM_GOAL_NOTE"
-msgstr "Bottom goals are saved for future use. Gameplay currently uses left, top, and right goals only."
+msgstr "Les objectifs du bas sont enregistrés pour plus tard. Le jeu utilise actuellement gauche, haut et droite."
 
 msgid "UI_CREATOR_SAVE"
-msgstr "Save"
+msgstr "Enregistrer"
 
 msgid "UI_CREATOR_PLAYTEST"
-msgstr "Playtest"
+msgstr "Tester"
 
 msgid "UI_CREATOR_NEW"
-msgstr "New"
+msgstr "Nouveau"
 
 msgid "UI_CREATOR_CLEAR"
-msgstr "Clear"
+msgstr "Effacer"
 
 msgid "UI_CREATOR_CLEAR_CONFIRM"
-msgstr "Clear all data. Are you sure?"
+msgstr "Effacer toutes les données. Confirmer ?"
 
 msgid "UI_CREATOR_BACK_CONFIRM"
-msgstr "Are you sure? Going back to the settings menu will lose all unsaved data."
+msgstr "Confirmer ? Retourner aux réglages perdra toutes les données non enregistrées."
 
 msgid "UI_CANCEL"
-msgstr "Cancel"
+msgstr "Annuler"
 
 msgid "UI_CREATOR_LOAD_PLACEHOLDER"
-msgstr "Load saved level..."
+msgstr "Charger un niveau…"
 
 msgid "UI_CREATOR_NEW_LEVEL"
-msgstr "New level started."
+msgstr "Nouveau niveau commencé."
 
 msgid "UI_CREATOR_GRID_APPLIED"
-msgstr "Grid size applied."
+msgstr "Taille de grille appliquée."
 
 msgid "UI_CREATOR_INVALID_PLACEMENT"
-msgstr "That block cannot be placed there."
+msgstr "Ce bloc ne peut pas être placé ici."
 
 msgid "UI_CREATOR_BLOCK_PLACED"
-msgstr "Block placed."
+msgstr "Bloc placé."
 
 msgid "UI_CREATOR_ERROR_ID"
-msgstr "Level ID is required."
+msgstr "L’ID du niveau est requis."
 
 msgid "UI_CREATOR_ERROR_DISPLAY_NAME"
-msgstr "Enter a display name before saving."
+msgstr "Entrez un nom affiché avant d’enregistrer."
 
 msgid "UI_CREATOR_DISPLAY_NAME_PLACEHOLDER"
-msgstr "My custom level"
+msgstr "Mon niveau perso"
 
 msgid "UI_CREATOR_ERROR_BLOCKS"
-msgstr "Add at least one block before continuing."
+msgstr "Ajoutez au moins un bloc avant de continuer."
 
 msgid "UI_CREATOR_ERROR_SAVE"
-msgstr "Could not save level (error %s)."
+msgstr "Impossible d’enregistrer le niveau (erreur %s)."
 
 msgid "UI_CREATOR_SAVED"
-msgstr "Saved level: %s"
+msgstr "Niveau enregistré : %s"
 
 msgid "UI_CREATOR_ERROR_LOAD"
-msgstr "Could not load that level."
+msgstr "Impossible de charger ce niveau."
 
 msgid "UI_CREATOR_LOADED"
-msgstr "Loaded level: %s"
+msgstr "Niveau chargé : %s"
 
 msgid "UI_PLAYTEST_SUCCESS_TITLE"
-msgstr "Success"
+msgstr "Réussi"
 
 msgid "UI_PLAYTEST_SUCCESS_MESSAGE"
-msgstr "Your level is completable."
+msgstr "Votre niveau est complétable."
 
 msgid "UI_BACK_TO_LEVEL_CREATOR"
-msgstr "Back to level creator"
+msgstr "Retour au créateur"
 
 msgid "UI_CREATOR_RETURNED_FROM_PLAYTEST"
-msgstr "Returned from playtest."
+msgstr "Retour du test de jeu."
 
 msgid "UI_CREATOR_PLAYTEST_PASSED"
-msgstr "Playtest passed — you can now save this level."
+msgstr "Test réussi — vous pouvez enregistrer ce niveau."
 
 msgid "UI_CREATOR_SAVE_NEEDS_PLAYTEST"
-msgstr "Playtest and complete the level before saving."
+msgstr "Testez et terminez le niveau avant d’enregistrer."
 
 msgid "UI_LANGUAGE_FRENCH"
-msgstr "French"
+msgstr "Français"
 
 msgid "UI_LANGUAGE_PIRATE"
 msgstr "Pirate"
 
 msgid "UI_COLOR"
-msgstr "Color"
+msgstr "Couleur"
 
 msgid "UI_COLOR_RED"
-msgstr "Red"
+msgstr "Rouge"
 
 msgid "UI_COLOR_GREEN"
-msgstr "Green"
+msgstr "Vert"
 
 msgid "UI_COLOR_BLUE"
-msgstr "Blue"
+msgstr "Bleu"
 
 msgid "UI_COLOR_YELLOW"
-msgstr "Yellow"
+msgstr "Jaune"
 
 msgid "UI_COLOR_PURPLE"
-msgstr "Purple"
+msgstr "Violet"
 
 msgid "UI_COLOR_ORANGE"
 msgstr "Orange"
 
 msgid "UI_CREATOR_DEFAULT_DISPLAY_NAME"
-msgstr "Custom level"
+msgstr "Niveau personnalisé"
 
 msgid "UI_CREATOR_SHAPE_DEFAULT_NAME"
-msgstr "Shape %d"
+msgstr "Forme %d"
 
 msgid "UI_CREATOR_READY"
-msgstr "Ready"
+msgstr "Prêt"

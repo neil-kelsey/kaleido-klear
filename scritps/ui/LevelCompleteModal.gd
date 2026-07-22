@@ -32,6 +32,14 @@ func _ready() -> void:
 	close_button.tooltip_text = tr("UI_CLOSE")
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		if not is_node_ready():
+			return
+		_apply_translations()
+		close_button.tooltip_text = tr("UI_CLOSE")
+
+
 func _apply_translations() -> void:
 	title_label.text = tr("UI_LEVEL_COMPLETE")
 	next_level_button.text = tr("UI_NEXT_LEVEL")

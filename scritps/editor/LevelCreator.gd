@@ -216,6 +216,27 @@ func _apply_translations() -> void:
 	blocks_tab_button.text = tr("UI_CREATOR_TAB_BLOCKS")
 	goals_tab_button.text = tr("UI_CREATOR_TAB_GOALS")
 	actions_label.text = tr("UI_CREATOR_ACTIONS")
+	back_button.text = "  " + tr("UI_BACK")
+	save_button.text = tr("UI_CREATOR_SAVE")
+	playtest_button.text = tr("UI_CREATOR_PLAYTEST")
+	clear_button.text = tr("UI_CREATOR_CLEAR")
+	if status_label.text.is_empty() or status_label.text == "Ready":
+		status_label.text = tr("UI_CREATOR_READY")
+	if _clear_confirm:
+		_clear_confirm.dialog_text = tr("UI_CREATOR_CLEAR_CONFIRM")
+		_clear_confirm.ok_button_text = tr("UI_CREATOR_CLEAR")
+		_clear_confirm.cancel_button_text = tr("UI_CANCEL")
+	if _back_confirm:
+		_back_confirm.dialog_text = tr("UI_CREATOR_BACK_CONFIRM")
+		_back_confirm.ok_button_text = tr("UI_BACK")
+		_back_confirm.cancel_button_text = tr("UI_CANCEL")
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		if not is_node_ready():
+			return
+		_apply_translations()
 
 
 func _build_setup_panel() -> void:
@@ -492,7 +513,7 @@ func _build_edge_panel(edge_key: String) -> Dictionary:
 func _new_level() -> void:
 	_draft = LevelConfig.new()
 	_draft.level_id = "custom_level_%d" % int(Time.get_unix_time_from_system())
-	_draft.display_name = "Custom level"
+	_draft.display_name = tr("UI_CREATOR_DEFAULT_DISPLAY_NAME")
 	_draft.section_index = 0
 	_draft.columns = 8
 	_draft.rows = 8
@@ -1401,19 +1422,19 @@ func _style_shape_color_option(option: OptionButton, tile_color: Block.TileColor
 func _color_label(color: Block.TileColor) -> String:
 	match color:
 		Block.TileColor.RED:
-			return "Red"
+			return tr("UI_COLOR_RED")
 		Block.TileColor.GREEN:
-			return "Green"
+			return tr("UI_COLOR_GREEN")
 		Block.TileColor.BLUE:
-			return "Blue"
+			return tr("UI_COLOR_BLUE")
 		Block.TileColor.YELLOW:
-			return "Yellow"
+			return tr("UI_COLOR_YELLOW")
 		Block.TileColor.PURPLE:
-			return "Purple"
+			return tr("UI_COLOR_PURPLE")
 		Block.TileColor.ORANGE:
-			return "Orange"
+			return tr("UI_COLOR_ORANGE")
 		_:
-			return "Color"
+			return tr("UI_COLOR")
 
 
 func _style_compact_action_button(button: Button) -> void:

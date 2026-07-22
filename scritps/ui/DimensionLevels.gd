@@ -12,15 +12,27 @@ const GAME_SCENE := "res://scenes/main.tscn"
 
 
 func _ready() -> void:
-	var dim := GameSession.current_dimension_index
-	title_label.text = LevelCatalog.get_dimension_title(dim)
+	_apply_translations()
 	UiTheme.style_menu_title(title_label)
 	UiTheme.style_menu_button(back_button)
 	back_button.icon = load("res://assets/icons/back_icon.svg")
+	UiTheme.style_menu_hint(empty_label)
+	_build_levels(GameSession.current_dimension_index)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		if not is_node_ready():
+			return
+		_apply_translations()
+		_build_levels(GameSession.current_dimension_index)
+
+
+func _apply_translations() -> void:
+	var dim := GameSession.current_dimension_index
+	title_label.text = LevelCatalog.get_dimension_title(dim)
 	back_button.text = "  " + tr("UI_BACK")
 	empty_label.text = tr("UI_DIMENSION_EMPTY")
-	UiTheme.style_menu_hint(empty_label)
-	_build_levels(dim)
 
 
 func _build_levels(dim: int) -> void:
@@ -39,11 +51,12 @@ func _build_levels(dim: int) -> void:
 		if unlocked:
 			button.text = "  %s   %s" % [LevelCatalog.get_level_label(level), star_text]
 			button.icon = load("res://assets/icons/play_icon.svg")
+			UiTheme.style_menu_button(button)
 			button.pressed.connect(_on_level_pressed.bind(level))
 		else:
-			button.text = "  %s  — %s" % [LevelCatalog.get_level_label(level), tr("UI_LOCKED")]
+			button.text = "  %s  —  %s" % [LevelCatalog.get_level_label(level), tr("UI_LOCKED")]
 			button.disabled = true
-		UiTheme.style_menu_button(button)
+			UiTheme.style_menu_button(button)
 		levels_container.add_child(button)
 
 

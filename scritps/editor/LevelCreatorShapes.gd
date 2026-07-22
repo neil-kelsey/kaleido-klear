@@ -113,4 +113,4 @@ static func largest_connected_component(cells: Array[Vector2i]) -> Array[Vector2
 
 
 static func default_shape_name(index: int) -> String:
-	return "Shape %d" % (index + 1)
+	return tr("UI_CREATOR_SHAPE_DEFAULT_NAME") % (index + 1)

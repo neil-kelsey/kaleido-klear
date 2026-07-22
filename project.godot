@@ -44,8 +44,9 @@ pointing/emulate_touch_from_mouse=true
 
 [internationalization]
 
-locale/translations=PackedStringArray("res://locales/en.po")
+locale/translations=PackedStringArray("res://locales/en.po", "res://locales/fr.po", "res://locales/pirate.po")
 locale/locale="en"
+locale/fallback="en"
 
 [physics]
 

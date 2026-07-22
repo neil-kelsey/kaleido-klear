@@ -64,6 +64,15 @@ func _ready() -> void:
 	_play_intro()
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		if not is_node_ready():
+			return
+		back_button.text = "  " + tr("UI_BACK")
+		hint_label.text = tr("UI_DIMENSION_MAP_HINT")
+		queue_redraw()
+
+
 func _play_intro() -> void:
 	_intro_playing = true
 	var focus_i := _focus_dimension_index()

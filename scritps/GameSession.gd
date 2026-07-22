@@ -1,6 +1,16 @@
 extends Node
 
+const SETTINGS_PATH := "user://settings.cfg"
 const DEV_SETTINGS_PATH := "user://dev_settings.cfg"
+
+## Supported app locales (code must match Language: header in locales/*.po).
+const AVAILABLE_LOCALES: Array[Dictionary] = [
+	{"code": "en", "name_key": "UI_LANGUAGE_ENGLISH"},
+	{"code": "fr", "name_key": "UI_LANGUAGE_FRENCH"},
+	{"code": "pirate", "name_key": "UI_LANGUAGE_PIRATE"},
+]
+
+signal locale_changed(locale_code: String)
 
 var selected_level: LevelConfig = null
 var level_stars: Dictionary = {}
@@ -10,10 +20,17 @@ var playtest_level_draft: LevelConfig = null
 var playtest_passed: bool = false
 ## Last / current dimension on the star map (section index).
 var current_dimension_index: int = 0
+var locale: String = "en"
 
 
 func _ready() -> void:
-	_load_develop_mode()
+	_load_settings()
+	## Defer so scene @onready nodes exist before TRANSLATION_CHANGED fires.
+	call_deferred("_boot_locale")
+
+
+func _boot_locale() -> void:
+	_apply_locale(locale, false)
 
 
 func set_level(level: LevelConfig) -> void:
@@ -109,17 +126,51 @@ func has_next_level(current: LevelConfig) -> bool:
 
 func set_develop_mode(enabled: bool) -> void:
 	develop_mode = enabled
-	_save_develop_mode()
+	_save_settings()
 
 
-func _load_develop_mode() -> void:
-	var config := ConfigFile.new()
-	if config.load(DEV_SETTINGS_PATH) != OK:
+func set_locale(locale_code: String) -> void:
+	var code := _normalize_locale(locale_code)
+	if code == locale and TranslationServer.get_locale() == code:
 		return
-	develop_mode = config.get_value("dev", "develop_mode", false)
+	_apply_locale(code, true)
 
 
-func _save_develop_mode() -> void:
+func get_locale_display_name(locale_code: String) -> String:
+	for entry in AVAILABLE_LOCALES:
+		if str(entry.code) == locale_code:
+			return tr(str(entry.name_key))
+	return locale_code
+
+
+func _apply_locale(locale_code: String, persist: bool) -> void:
+	locale = _normalize_locale(locale_code)
+	TranslationServer.set_locale(locale)
+	if persist:
+		_save_settings()
+	locale_changed.emit(locale)
+
+
+func _normalize_locale(locale_code: String) -> String:
+	for entry in AVAILABLE_LOCALES:
+		if str(entry.code) == locale_code:
+			return locale_code
+	return "en"
+
+
+func _load_settings() -> void:
+	var config := ConfigFile.new()
+	## Prefer unified settings; fall back to legacy develop-mode file.
+	if config.load(SETTINGS_PATH) == OK:
+		develop_mode = bool(config.get_value("dev", "develop_mode", false))
+		locale = _normalize_locale(str(config.get_value("i18n", "locale", "en")))
+		return
+	if config.load(DEV_SETTINGS_PATH) == OK:
+		develop_mode = bool(config.get_value("dev", "develop_mode", false))
+
+
+func _save_settings() -> void:
 	var config := ConfigFile.new()
 	config.set_value("dev", "develop_mode", develop_mode)
-	config.save(DEV_SETTINGS_PATH)
+	config.set_value("i18n", "locale", locale)
+	config.save(SETTINGS_PATH)

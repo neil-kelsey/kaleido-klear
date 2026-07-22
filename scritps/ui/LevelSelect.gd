@@ -16,6 +16,14 @@ func _ready() -> void:
 	_build_sections()
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		if not is_node_ready():
+			return
+		_apply_translations()
+		_build_sections()
+
+
 func _apply_translations() -> void:
 	title_label.text = tr("UI_LEVEL_SELECT_TITLE")
 	back_button.text = "  " + tr("UI_BACK")

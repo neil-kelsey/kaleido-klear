@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Language: en\n"
+"Language: pirate\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
@@ -8,196 +8,196 @@ msgid "UI_GAME_TITLE"
 msgstr "Kaleido Klear"
 
 msgid "UI_TAP_TO_START"
-msgstr "Tap to start game"
+msgstr "Tap to set sail"
 
 msgid "UI_INITIATE_PROTOCOL"
-msgstr "Initiate protocol"
+msgstr "Fire the cannons"
 
 msgid "UI_START_GAME"
-msgstr "Start game"
+msgstr "Weigh anchor"
 
 msgid "UI_BROWSE_ARCHIVE"
-msgstr "Browse archive"
+msgstr "Raid the charts"
 
 msgid "UI_SYSTEM_CONFIG"
-msgstr "System config"
+msgstr "Ship’s orders"
 
 msgid "UI_LEVEL_SELECT"
-msgstr "Dimensions"
+msgstr "Seas"
 
 msgid "UI_SETTINGS"
-msgstr "Settings"
+msgstr "Ship’s orders"
 
 msgid "UI_BACK"
-msgstr "Back"
+msgstr "Belay"
 
 msgid "UI_RESTART_LEVEL"
-msgstr "Restart level"
+msgstr "Sail again"
 
 msgid "UI_UNDO_MOVE"
-msgstr "Undo last move"
+msgstr "Take it back, ye scallywag"
 
 msgid "UI_LEVEL_SELECT_TITLE"
-msgstr "Choose a dimension"
+msgstr "Pick yer sea"
 
 msgid "UI_SETTINGS_TITLE"
-msgstr "Settings"
+msgstr "Ship’s orders"
 
 msgid "UI_DEMO_LEVEL"
-msgstr "Demo level"
+msgstr "Demo voyage"
 
 msgid "UI_DEMO_LEVEL_STANDARD"
-msgstr "Standard demo"
+msgstr "Standard voyage"
 
 msgid "UI_DEMO_LEVEL_MERGE"
-msgstr "Merge demo"
+msgstr "Merge voyage"
 
 msgid "UI_DEMO_LEVEL_STANDARD_2"
-msgstr "Standard demo 2"
+msgstr "Standard voyage 2"
 
 msgid "UI_DEMO_LEVEL_MERGE_2"
-msgstr "Merge demo 2"
+msgstr "Merge voyage 2"
 
 msgid "UI_MULTI_GOAL_DEMO_1"
-msgstr "Multi-goal demo"
+msgstr "Multi-plunder voyage"
 
 msgid "UI_MULTI_GOAL_DEMO_2"
-msgstr "Multi-goal demo 2"
+msgstr "Multi-plunder voyage 2"
 
 msgid "UI_SECTION_1"
-msgstr "Dimension 1"
+msgstr "Sea 1"
 
 msgid "UI_SECTION_2"
-msgstr "Dimension 2"
+msgstr "Sea 2"
 
 msgid "UI_SECTION_3"
-msgstr "Dimension 3"
+msgstr "Sea 3"
 
 msgid "UI_DIMENSION_1"
-msgstr "Dimension 1"
+msgstr "Sea 1"
 
 msgid "UI_DIMENSION_2"
-msgstr "Dimension 2"
+msgstr "Sea 2"
 
 msgid "UI_DIMENSION_3"
-msgstr "Dimension 3"
+msgstr "Sea 3"
 
 msgid "UI_DIMENSION_4"
-msgstr "Dimension 4"
+msgstr "Sea 4"
 
 msgid "UI_DIMENSION_5"
-msgstr "Dimension 5"
+msgstr "Sea 5"
 
 msgid "UI_DIMENSION_6"
-msgstr "Dimension 6"
+msgstr "Sea 6"
 
 msgid "UI_DIMENSION_7"
-msgstr "Dimension 7"
+msgstr "Sea 7"
 
 msgid "UI_DIMENSION_8"
-msgstr "Dimension 8"
+msgstr "Sea 8"
 
 msgid "UI_DIMENSION_9"
-msgstr "Dimension 9"
+msgstr "Sea 9"
 
 msgid "UI_DIMENSION_10"
-msgstr "Dimension 10"
+msgstr "Sea 10"
 
 msgid "UI_DIMENSION_MAP_HINT"
-msgstr "Scroll to zoom · drag to pan · tap a diamond"
+msgstr "Scroll to spyglass · drag to sail · tap a diamond"
 
 msgid "UI_DIMENSION_EMPTY"
-msgstr "No levels in this dimension yet."
+msgstr "No plunder on this sea yet, matey."
 
 msgid "UI_CURRENT"
-msgstr "Current"
+msgstr "Here ye be"
 
 msgid "UI_LOCKED"
-msgstr "Locked"
+msgstr "Under lock an’ key"
 
 msgid "UI_LANGUAGE"
-msgstr "Language"
+msgstr "Tongue"
 
 msgid "UI_LANGUAGE_ENGLISH"
-msgstr "English"
+msgstr "Proper English"
 
 msgid "UI_SOUND"
-msgstr "Sound"
+msgstr "Cannon noise"
 
 msgid "UI_MUSIC"
-msgstr "Music"
+msgstr "Sea shanties"
 
 msgid "UI_DEVELOP_MODE"
-msgstr "Develop mode"
+msgstr "Cap’n’s workshop"
 
 msgid "UI_COMING_SOON"
-msgstr "Coming soon"
+msgstr "Comin’ soon over the horizon"
 
 msgid "UI_LEVEL_COMPLETE"
-msgstr "Level complete"
+msgstr "Voyage complete!"
 
 msgid "UI_SECTION_COMPLETE"
-msgstr "Section complete!"
+msgstr "Sea conquered!"
 
 msgid "UI_NEXT_LEVEL"
-msgstr "Next level"
+msgstr "Next voyage"
 
 msgid "UI_PLAY_NEXT_SECTION"
-msgstr "Play next section"
+msgstr "Next sea"
 
 msgid "UI_CONTINUE"
-msgstr "Continue"
+msgstr "Aye continue"
 
 msgid "UI_REMOVE_ADS"
-msgstr "Remove ads"
+msgstr "Banish the ads"
 
 msgid "UI_SHARE"
-msgstr "Share"
+msgstr "Boast to the crew"
 
 msgid "UI_LIVES"
-msgstr "Lives: %d"
+msgstr "Lives left: %d"
 
 msgid "UI_LEVEL_FAILED"
-msgstr "Level failed"
+msgstr "Sent to Davy Jones!"
 
 msgid "UI_TRY_AGAIN_PROMPT"
-msgstr "Would you like to try again?"
+msgstr "Fancy another go, sailor?"
 
 msgid "UI_REPLAY_LEVEL"
-msgstr "Replay level"
+msgstr "Sail it again"
 
 msgid "UI_BACK_TO_LEVEL_SELECT"
-msgstr "Back to dimensions"
+msgstr "Back to the seas"
 
 msgid "UI_CLOSE"
-msgstr "Close"
+msgstr "Stow it"
 
 msgid "UI_SHARE_MESSAGE"
-msgstr "I got %d stars on %s in Kaleido Klear!"
+msgstr "I scored %d stars on %s in Kaleido Klear, ye landlubbers!"
 
 msgid "UI_LEVEL_CREATOR"
-msgstr "Level creator"
+msgstr "Chart maker"
 
 msgid "UI_CREATOR_TAB_SETUP"
-msgstr "Level setup"
+msgstr "Voyage setup"
 
 msgid "UI_CREATOR_TAB_BLOCKS"
 msgstr "Blocks"
 
 msgid "UI_CREATOR_TAB_GOALS"
-msgstr "Goals"
+msgstr "Plunder goals"
 
 msgid "UI_CREATOR_LEVEL_SETUP"
-msgstr "Level setup"
+msgstr "Voyage setup"
 
 msgid "UI_CREATOR_LEVEL_ID"
-msgstr "Level ID"
+msgstr "Voyage ID"
 
 msgid "UI_CREATOR_DISPLAY_NAME"
 msgstr "Display name"
 
 msgid "UI_CREATOR_SECTION"
-msgstr "Section"
+msgstr "Sea"
 
 msgid "UI_CREATOR_COLUMNS"
 msgstr "Columns"
@@ -206,7 +206,7 @@ msgid "UI_CREATOR_ROWS"
 msgstr "Rows"
 
 msgid "UI_CREATOR_APPLY_GRID"
-msgstr "Apply grid size"
+msgstr "Set the grid"
 
 msgid "UI_CREATOR_BLOCK_TOOLS"
 msgstr "Block tools"
@@ -218,7 +218,7 @@ msgid "UI_CREATOR_KIND_MERGE"
 msgstr "Merge"
 
 msgid "UI_CREATOR_KIND_WALL"
-msgstr "Wall"
+msgstr "Bulkhead"
 
 msgid "UI_CREATOR_ERASE_MODE"
 msgstr "Erase mode"
@@ -230,7 +230,7 @@ msgid "UI_CREATOR_DRAW_MODE"
 msgstr "Draw mode"
 
 msgid "UI_CREATOR_GRID_SECTION"
-msgstr "Grid squares"
+msgstr "Deck squares"
 
 msgid "UI_CREATOR_GRID_DRAW_MODE"
 msgstr "Draw"
@@ -239,28 +239,28 @@ msgid "UI_CREATOR_GRID_ERASE_MODE"
 msgstr "Erase"
 
 msgid "UI_CREATOR_GRID_HINT"
-msgstr "Click the grid above to edit squares. Erase removes a square (creates a hole). Draw adds a removed square back."
+msgstr "Tap the grid to shape the deck. Erase digs a hole. Draw fills it back in."
 
 msgid "UI_CREATOR_SQUARE_ADDED"
-msgstr "Square added back to the grid."
+msgstr "Square patched back onto the deck."
 
 msgid "UI_CREATOR_SQUARE_REMOVED"
-msgstr "Square removed — blocks can't pass through it."
+msgstr "Square scuttled — blocks can’t cross it."
 
 msgid "UI_CREATOR_SQUARE_OCCUPIED"
-msgstr "Can't remove a square that a block occupies."
+msgstr "Can’t scuttle a square with a block on it."
 
 msgid "UI_CREATOR_CELL_DISABLED"
-msgstr "That square is a hole — switch to Level setup and use grid Draw to add it back."
+msgstr "That square’s a hole — switch to Voyage setup and Draw it back."
 
 msgid "UI_CREATOR_ACTIONS"
-msgstr "Actions"
+msgstr "Orders"
 
 msgid "UI_CREATOR_PAINT_HINT"
-msgstr "Create a shape, select it, then use draw mode to add connected squares one at a time. Use erase mode to remove squares."
+msgstr "Make a shape, pick it, then draw connected squares one by one. Erase to yank ’em off."
 
 msgid "UI_CREATOR_CREATE_SHAPE"
-msgstr "Create shape"
+msgstr "Forge a shape"
 
 msgid "UI_CREATOR_SELECT_SHAPE"
 msgstr "Select"
@@ -275,175 +275,175 @@ msgid "UI_CREATOR_SHAPE_COLOR"
 msgstr "Color"
 
 msgid "UI_CREATOR_NO_SHAPE_SELECTED"
-msgstr "Create or select a shape first."
+msgstr "Forge or pick a shape first, ye swab."
 
 msgid "UI_CREATOR_CELL_ADDED"
-msgstr "Square added to shape."
+msgstr "Square added to the shape."
 
 msgid "UI_CREATOR_CELL_REMOVED"
 msgstr "Square removed."
 
 msgid "UI_CREATOR_SHAPE_CREATED"
-msgstr "New shape created — draw on the grid."
+msgstr "New shape forged — draw on the deck."
 
 msgid "UI_CREATOR_SHAPE_DELETED"
-msgstr "Shape deleted."
+msgstr "Shape tossed overboard."
 
 msgid "UI_CREATOR_INVALID_CELL"
-msgstr "That square cannot be placed here — it must touch the shape and not overlap others."
+msgstr "That square won’t stick — it must touch the shape and not overlap the rest."
 
 msgid "UI_CREATOR_GOALS"
-msgstr "Goals"
+msgstr "Plunder goals"
 
 msgid "UI_CREATOR_MULTI_GOAL"
-msgstr "Multi-goal mode (phased goals per edge)"
+msgstr "Multi-plunder mode (phases per edge)"
 
 msgid "UI_CREATOR_GOAL_LEFT"
-msgstr "Left goal"
+msgstr "Port goal"
 
 msgid "UI_CREATOR_GOAL_TOP"
-msgstr "Top goal"
+msgstr "Crow’s nest goal"
 
 msgid "UI_CREATOR_GOAL_RIGHT"
-msgstr "Right goal"
+msgstr "Starboard goal"
 
 msgid "UI_CREATOR_GOAL_BOTTOM"
-msgstr "Bottom goal"
+msgstr "Keel goal"
 
 msgid "UI_CREATOR_GOAL_COLOR"
 msgstr "Color"
 
 msgid "UI_CREATOR_ADD_GOAL"
-msgstr "Add goal"
+msgstr "Add plunder"
 
 msgid "UI_CREATOR_GOAL_LIMIT_UNLIMITED"
-msgstr "Goal limit unlimited"
+msgstr "Plunder limit: unlimited"
 
 msgid "UI_CREATOR_GOAL_LIMIT"
-msgstr "Goal limit"
+msgstr "Plunder limit"
 
 msgid "UI_CREATOR_GOAL_LIMIT_COUNT"
 msgstr "Limit: %d blocks"
 
 msgid "UI_CREATOR_GOAL_ADD_CONFIRM"
-msgstr "Add this goal"
+msgstr "Add this plunder"
 
 msgid "UI_CREATOR_ADD_PHASE"
-msgstr "Add goal phase"
+msgstr "Add plunder phase"
 
 msgid "UI_CREATOR_BOTTOM_GOAL_NOTE"
-msgstr "Bottom goals are saved for future use. Gameplay currently uses left, top, and right goals only."
+msgstr "Keel goals are stowed for later. Play uses port, crow’s nest, and starboard for now."
 
 msgid "UI_CREATOR_SAVE"
-msgstr "Save"
+msgstr "Stow it"
 
 msgid "UI_CREATOR_PLAYTEST"
-msgstr "Playtest"
+msgstr "Sea trial"
 
 msgid "UI_CREATOR_NEW"
-msgstr "New"
+msgstr "New chart"
 
 msgid "UI_CREATOR_CLEAR"
-msgstr "Clear"
+msgstr "Clear the deck"
 
 msgid "UI_CREATOR_CLEAR_CONFIRM"
-msgstr "Clear all data. Are you sure?"
+msgstr "Clear all data. Ye sure?"
 
 msgid "UI_CREATOR_BACK_CONFIRM"
-msgstr "Are you sure? Going back to the settings menu will lose all unsaved data."
+msgstr "Ye sure? Headin’ back to ship’s orders dumps any unsaved charts."
 
 msgid "UI_CANCEL"
-msgstr "Cancel"
+msgstr "Belay that"
 
 msgid "UI_CREATOR_LOAD_PLACEHOLDER"
-msgstr "Load saved level..."
+msgstr "Load a stowed chart…"
 
 msgid "UI_CREATOR_NEW_LEVEL"
-msgstr "New level started."
+msgstr "Fresh voyage charted."
 
 msgid "UI_CREATOR_GRID_APPLIED"
-msgstr "Grid size applied."
+msgstr "Grid size set."
 
 msgid "UI_CREATOR_INVALID_PLACEMENT"
-msgstr "That block cannot be placed there."
+msgstr "That block can’t drop there."
 
 msgid "UI_CREATOR_BLOCK_PLACED"
 msgstr "Block placed."
 
 msgid "UI_CREATOR_ERROR_ID"
-msgstr "Level ID is required."
+msgstr "Voyage ID be required."
 
 msgid "UI_CREATOR_ERROR_DISPLAY_NAME"
-msgstr "Enter a display name before saving."
+msgstr "Name yer chart before stowin’ it."
 
 msgid "UI_CREATOR_DISPLAY_NAME_PLACEHOLDER"
-msgstr "My custom level"
+msgstr "Me custom voyage"
 
 msgid "UI_CREATOR_ERROR_BLOCKS"
-msgstr "Add at least one block before continuing."
+msgstr "Add at least one block afore ye continue."
 
 msgid "UI_CREATOR_ERROR_SAVE"
-msgstr "Could not save level (error %s)."
+msgstr "Couldn’t stow the chart (error %s)."
 
 msgid "UI_CREATOR_SAVED"
-msgstr "Saved level: %s"
+msgstr "Chart stowed: %s"
 
 msgid "UI_CREATOR_ERROR_LOAD"
-msgstr "Could not load that level."
+msgstr "Couldn’t haul that chart aboard."
 
 msgid "UI_CREATOR_LOADED"
-msgstr "Loaded level: %s"
+msgstr "Chart hauled aboard: %s"
 
 msgid "UI_PLAYTEST_SUCCESS_TITLE"
-msgstr "Success"
+msgstr "Victory!"
 
 msgid "UI_PLAYTEST_SUCCESS_MESSAGE"
-msgstr "Your level is completable."
+msgstr "Yer voyage be completable."
 
 msgid "UI_BACK_TO_LEVEL_CREATOR"
-msgstr "Back to level creator"
+msgstr "Back to the chart maker"
 
 msgid "UI_CREATOR_RETURNED_FROM_PLAYTEST"
-msgstr "Returned from playtest."
+msgstr "Back from the sea trial."
 
 msgid "UI_CREATOR_PLAYTEST_PASSED"
-msgstr "Playtest passed — you can now save this level."
+msgstr "Sea trial passed — ye may stow this chart."
 
 msgid "UI_CREATOR_SAVE_NEEDS_PLAYTEST"
-msgstr "Playtest and complete the level before saving."
+msgstr "Sea-trial and finish the voyage afore stowin’."
 
 msgid "UI_LANGUAGE_FRENCH"
-msgstr "French"
+msgstr "Fancy French"
 
 msgid "UI_LANGUAGE_PIRATE"
-msgstr "Pirate"
+msgstr "Pirate speak"
 
 msgid "UI_COLOR"
 msgstr "Color"
 
 msgid "UI_COLOR_RED"
-msgstr "Red"
+msgstr "Crimson"
 
 msgid "UI_COLOR_GREEN"
-msgstr "Green"
+msgstr "Sea green"
 
 msgid "UI_COLOR_BLUE"
-msgstr "Blue"
+msgstr "Ocean blue"
 
 msgid "UI_COLOR_YELLOW"
-msgstr "Yellow"
+msgstr "Doubloon gold"
 
 msgid "UI_COLOR_PURPLE"
-msgstr "Purple"
+msgstr "Royal purple"
 
 msgid "UI_COLOR_ORANGE"
-msgstr "Orange"
+msgstr "Sunset orange"
 
 msgid "UI_CREATOR_DEFAULT_DISPLAY_NAME"
-msgstr "Custom level"
+msgstr "Custom voyage"
 
 msgid "UI_CREATOR_SHAPE_DEFAULT_NAME"
 msgstr "Shape %d"
 
 msgid "UI_CREATOR_READY"
-msgstr "Ready"
+msgstr "Ready, Cap’n"

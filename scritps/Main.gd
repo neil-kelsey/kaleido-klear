@@ -70,17 +70,31 @@ func _ready() -> void:
 	game_over_modal.level_select_pressed.connect(_on_game_over_level_select_pressed)
 	UiTheme.style_hud_button(back_button)
 	back_button.icon = load("res://assets/icons/back_icon.svg")
-	back_button.text = "  " + tr("UI_BACK")
 	UiTheme.style_hud_button(undo_button)
 	undo_button.icon = load("res://assets/icons/undo_icon.svg")
-	undo_button.tooltip_text = tr("UI_UNDO_MOVE")
 	UiTheme.style_hud_button(restart_button)
 	restart_button.icon = load("res://assets/icons/refresh_icon.svg")
-	restart_button.tooltip_text = tr("UI_RESTART_LEVEL")
+	_apply_translations()
 	_update_lives_label(board.get_lives())
 	lives_label.add_theme_color_override("font_color", UiTheme.TEXT)
 	_update_undo_button()
 	_play_level_intro()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		if not is_node_ready():
+			return
+		_apply_translations()
+		_update_lives_label(board.get_lives() if board else 0)
+
+
+func _apply_translations() -> void:
+	if back_button == null:
+		return
+	back_button.text = "  " + tr("UI_BACK")
+	undo_button.tooltip_text = tr("UI_UNDO_MOVE")
+	restart_button.tooltip_text = tr("UI_RESTART_LEVEL")
 
 
 func _on_viewport_size_changed() -> void:
@@ -515,7 +529,7 @@ func _on_remove_ads_pressed() -> void:
 
 func _on_share_pressed() -> void:
 	var stars := GameSession.get_level_stars(_current_level.level_id)
-	var share_text := tr("UI_SHARE_MESSAGE") % [tr(_current_level.level_name_key), stars]
+	var share_text := tr("UI_SHARE_MESSAGE") % [stars, tr(_current_level.level_name_key)]
 	DisplayServer.clipboard_set(share_text)
 	print(share_text)
 

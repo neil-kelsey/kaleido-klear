@@ -109,8 +109,64 @@ static func style_menu_section_title(label: Label) -> void:
 
 
 static func style_settings_row_label(label: Label) -> void:
-	label.add_theme_color_override("font_color", TEXT)
+	## Settings panel sits on a dark surface — use light text.
+	label.add_theme_color_override("font_color", TEXT_ON_DARK)
 	apply_label_font(label, 56, MIN_MENU_FONT_SIZE)
+
+
+static func settings_option_field_stylebox(focused: bool = false) -> StyleBoxFlat:
+	var style := text_field_stylebox(focused)
+	style.corner_radius_top_left = 16
+	style.corner_radius_top_right = 16
+	style.corner_radius_bottom_left = 16
+	style.corner_radius_bottom_right = 16
+	style.content_margin_left = 24
+	style.content_margin_top = 18
+	style.content_margin_right = 48
+	style.content_margin_bottom = 18
+	return style
+
+
+static func style_settings_option_field(option: OptionButton) -> void:
+	## Match settings row type scale so the language picker isn't tiny on phone.
+	var font_size := menu_font_size(48, 44)
+	var min_height := maxi(MIN_MENU_BUTTON_HEIGHT - 12, 96)
+	_apply_option_field_theme(
+		option,
+		settings_option_field_stylebox(false),
+		settings_option_field_stylebox(true),
+		min_height,
+		font_size
+	)
+	option.custom_minimum_size = Vector2(maxi(int(option.custom_minimum_size.x), 360), min_height)
+	option.add_theme_constant_override("arrow_margin", 20)
+	option.fit_to_longest_item = true
+	var popup := option.get_popup()
+	popup.add_theme_font_size_override("font_size", font_size)
+	popup.add_theme_constant_override("item_start_padding", 20)
+	popup.add_theme_constant_override("item_end_padding", 20)
+	popup.add_theme_constant_override("v_separation", 12)
+	var panel := StyleBoxFlat.new()
+	panel.bg_color = Color(0.12, 0.13, 0.17, 1.0)
+	panel.corner_radius_top_left = 16
+	panel.corner_radius_top_right = 16
+	panel.corner_radius_bottom_left = 16
+	panel.corner_radius_bottom_right = 16
+	panel.content_margin_left = 12
+	panel.content_margin_top = 12
+	panel.content_margin_right = 12
+	panel.content_margin_bottom = 12
+	popup.add_theme_stylebox_override("panel", panel)
+	var hover := StyleBoxFlat.new()
+	hover.bg_color = Color(0.22, 0.24, 0.32, 1.0)
+	hover.corner_radius_top_left = 12
+	hover.corner_radius_top_right = 12
+	hover.corner_radius_bottom_left = 12
+	hover.corner_radius_bottom_right = 12
+	popup.add_theme_stylebox_override("hover", hover)
+	popup.add_theme_color_override("font_color", TEXT_ON_DARK)
+	popup.add_theme_color_override("font_hover_color", TEXT_ON_DARK)
+	popup.add_theme_color_override("font_separator_color", TEXT_ON_DARK)
 
 
 static func text_field_stylebox(focused: bool = false) -> StyleBoxFlat:
