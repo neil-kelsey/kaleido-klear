@@ -20,13 +20,13 @@ msgid "UI_BROWSE_ARCHIVE"
 msgstr "Parcourir les archives"
 
 msgid "UI_SYSTEM_CONFIG"
-msgstr "Configuration système"
+msgstr "Configuration syst�me"
 
 msgid "UI_LEVEL_SELECT"
 msgstr "Dimensions"
 
 msgid "UI_SETTINGS"
-msgstr "Réglages"
+msgstr "R�glages"
 
 msgid "UI_BACK"
 msgstr "Retour"
@@ -41,28 +41,28 @@ msgid "UI_LEVEL_SELECT_TITLE"
 msgstr "Choisissez une dimension"
 
 msgid "UI_SETTINGS_TITLE"
-msgstr "Réglages"
+msgstr "R�glages"
 
 msgid "UI_DEMO_LEVEL"
-msgstr "Niveau démo"
+msgstr "Niveau d�mo"
 
 msgid "UI_DEMO_LEVEL_STANDARD"
-msgstr "Démo standard"
+msgstr "D�mo standard"
 
 msgid "UI_DEMO_LEVEL_MERGE"
-msgstr "Démo fusion"
+msgstr "D�mo fusion"
 
 msgid "UI_DEMO_LEVEL_STANDARD_2"
-msgstr "Démo standard 2"
+msgstr "D�mo standard 2"
 
 msgid "UI_DEMO_LEVEL_MERGE_2"
-msgstr "Démo fusion 2"
+msgstr "D�mo fusion 2"
 
 msgid "UI_MULTI_GOAL_DEMO_1"
-msgstr "Démo multi-objectifs"
+msgstr "D�mo multi-objectifs"
 
 msgid "UI_MULTI_GOAL_DEMO_2"
-msgstr "Démo multi-objectifs 2"
+msgstr "D�mo multi-objectifs 2"
 
 msgid "UI_SECTION_1"
 msgstr "Dimension 1"
@@ -106,14 +106,17 @@ msgstr "Dimension 10"
 msgid "UI_DIMENSION_MAP_HINT"
 msgstr "Molette pour zoomer · glisser pour déplacer · toucher un diamant"
 
+msgid "UI_LEVEL_MAP_HINT"
+msgstr "Toucher un niveau · pincer ou molette pour zoomer · glisser pour déplacer"
+
 msgid "UI_DIMENSION_EMPTY"
-msgstr "Aucun niveau dans cette dimension pour l’instant."
+msgstr "Aucun niveau dans cette dimension pour l'instant."
 
 msgid "UI_CURRENT"
 msgstr "Actuel"
 
 msgid "UI_LOCKED"
-msgstr "Verrouillé"
+msgstr "Verrouill�"
 
 msgid "UI_LANGUAGE"
 msgstr "Langue"
@@ -128,16 +131,16 @@ msgid "UI_MUSIC"
 msgstr "Musique"
 
 msgid "UI_DEVELOP_MODE"
-msgstr "Mode développeur"
+msgstr "Mode d�veloppeur"
 
 msgid "UI_COMING_SOON"
-msgstr "Bientôt disponible"
+msgstr "Bient�t disponible"
 
 msgid "UI_LEVEL_COMPLETE"
-msgstr "Niveau terminé"
+msgstr "Niveau termin�"
 
 msgid "UI_SECTION_COMPLETE"
-msgstr "Section terminée !"
+msgstr "Section termin�e !"
 
 msgid "UI_NEXT_LEVEL"
 msgstr "Niveau suivant"
@@ -158,10 +161,10 @@ msgid "UI_LIVES"
 msgstr "Vies : %d"
 
 msgid "UI_LEVEL_FAILED"
-msgstr "Niveau échoué"
+msgstr "Niveau �chou�"
 
 msgid "UI_TRY_AGAIN_PROMPT"
-msgstr "Voulez-vous réessayer ?"
+msgstr "Voulez-vous r�essayer ?"
 
 msgid "UI_REPLAY_LEVEL"
 msgstr "Rejouer le niveau"
@@ -173,13 +176,13 @@ msgid "UI_CLOSE"
 msgstr "Fermer"
 
 msgid "UI_SHARE_MESSAGE"
-msgstr "J’ai obtenu %d étoiles sur %s dans Kaleido Klear !"
+msgstr "J?ai obtenu %d �toiles sur %s dans Kaleido Klear !"
 
 msgid "UI_LEVEL_CREATOR"
-msgstr "Créateur de niveaux"
+msgstr "Cr�ateur de niveaux"
 
 msgid "UI_CREATOR_TAB_SETUP"
-msgstr "Réglages du niveau"
+msgstr "R�glages du niveau"
 
 msgid "UI_CREATOR_TAB_BLOCKS"
 msgstr "Blocs"
@@ -188,13 +191,13 @@ msgid "UI_CREATOR_TAB_GOALS"
 msgstr "Objectifs"
 
 msgid "UI_CREATOR_LEVEL_SETUP"
-msgstr "Réglages du niveau"
+msgstr "R�glages du niveau"
 
 msgid "UI_CREATOR_LEVEL_ID"
 msgstr "ID du niveau"
 
 msgid "UI_CREATOR_DISPLAY_NAME"
-msgstr "Nom affiché"
+msgstr "Nom affich�"
 
 msgid "UI_CREATOR_SECTION"
 msgstr "Section"
@@ -245,25 +248,25 @@ msgid "UI_CREATOR_SQUARE_ADDED"
 msgstr "Case remise sur la grille."
 
 msgid "UI_CREATOR_SQUARE_REMOVED"
-msgstr "Case retirée — les blocs ne peuvent pas y passer."
+msgstr "Case retir�e ? les blocs ne peuvent pas y passer."
 
 msgid "UI_CREATOR_SQUARE_OCCUPIED"
-msgstr "Impossible de retirer une case occupée par un bloc."
+msgstr "Impossible de retirer une case occup�e par un bloc."
 
 msgid "UI_CREATOR_CELL_DISABLED"
-msgstr "Cette case est un trou — passez en Réglages du niveau et utilisez Dessiner pour la remettre."
+msgstr "Cette case est un trou ? passez en R�glages du niveau et utilisez Dessiner pour la remettre."
 
 msgid "UI_CREATOR_ACTIONS"
 msgstr "Actions"
 
 msgid "UI_CREATOR_PAINT_HINT"
-msgstr "Créez une forme, sélectionnez-la, puis dessinez des cases connectées une par une. Utilisez Effacer pour retirer des cases."
+msgstr "Cr�ez une forme, s�lectionnez-la, puis dessinez des cases connect�es une par une. Utilisez Effacer pour retirer des cases."
 
 msgid "UI_CREATOR_CREATE_SHAPE"
-msgstr "Créer une forme"
+msgstr "Cr�er une forme"
 
 msgid "UI_CREATOR_SELECT_SHAPE"
-msgstr "Sélectionner"
+msgstr "S�lectionner"
 
 msgid "UI_CREATOR_SHAPE_NAME"
 msgstr "Nom"
@@ -275,22 +278,22 @@ msgid "UI_CREATOR_SHAPE_COLOR"
 msgstr "Couleur"
 
 msgid "UI_CREATOR_NO_SHAPE_SELECTED"
-msgstr "Créez ou sélectionnez d’abord une forme."
+msgstr "Cr�ez ou s�lectionnez d?abord une forme."
 
 msgid "UI_CREATOR_CELL_ADDED"
-msgstr "Case ajoutée à la forme."
+msgstr "Case ajout�e � la forme."
 
 msgid "UI_CREATOR_CELL_REMOVED"
-msgstr "Case retirée."
+msgstr "Case retir�e."
 
 msgid "UI_CREATOR_SHAPE_CREATED"
-msgstr "Nouvelle forme créée — dessinez sur la grille."
+msgstr "Nouvelle forme cr��e ? dessinez sur la grille."
 
 msgid "UI_CREATOR_SHAPE_DELETED"
-msgstr "Forme supprimée."
+msgstr "Forme supprim�e."
 
 msgid "UI_CREATOR_INVALID_CELL"
-msgstr "Cette case ne peut pas être placée ici — elle doit toucher la forme et ne pas chevaucher les autres."
+msgstr "Cette case ne peut pas �tre plac�e ici ? elle doit toucher la forme et ne pas chevaucher les autres."
 
 msgid "UI_CREATOR_GOALS"
 msgstr "Objectifs"
@@ -317,10 +320,10 @@ msgid "UI_CREATOR_ADD_GOAL"
 msgstr "Ajouter un objectif"
 
 msgid "UI_CREATOR_GOAL_LIMIT_UNLIMITED"
-msgstr "Limite d’objectif illimitée"
+msgstr "Limite d?objectif illimit�e"
 
 msgid "UI_CREATOR_GOAL_LIMIT"
-msgstr "Limite d’objectif"
+msgstr "Limite d?objectif"
 
 msgid "UI_CREATOR_GOAL_LIMIT_COUNT"
 msgstr "Limite : %d blocs"
@@ -332,7 +335,7 @@ msgid "UI_CREATOR_ADD_PHASE"
 msgstr "Ajouter une phase"
 
 msgid "UI_CREATOR_BOTTOM_GOAL_NOTE"
-msgstr "Les objectifs du bas sont enregistrés pour plus tard. Le jeu utilise actuellement gauche, haut et droite."
+msgstr "Les objectifs du bas sont enregistr�s pour plus tard. Le jeu utilise actuellement gauche, haut et droite."
 
 msgid "UI_CREATOR_SAVE"
 msgstr "Enregistrer"
@@ -347,34 +350,34 @@ msgid "UI_CREATOR_CLEAR"
 msgstr "Effacer"
 
 msgid "UI_CREATOR_CLEAR_CONFIRM"
-msgstr "Effacer toutes les données. Confirmer ?"
+msgstr "Effacer toutes les donn�es. Confirmer ?"
 
 msgid "UI_CREATOR_BACK_CONFIRM"
-msgstr "Confirmer ? Retourner aux réglages perdra toutes les données non enregistrées."
+msgstr "Confirmer ? Retourner aux r�glages perdra toutes les donn�es non enregistr�es."
 
 msgid "UI_CANCEL"
 msgstr "Annuler"
 
 msgid "UI_CREATOR_LOAD_PLACEHOLDER"
-msgstr "Charger un niveau…"
+msgstr "Charger un niveau?"
 
 msgid "UI_CREATOR_NEW_LEVEL"
-msgstr "Nouveau niveau commencé."
+msgstr "Nouveau niveau commenc�."
 
 msgid "UI_CREATOR_GRID_APPLIED"
-msgstr "Taille de grille appliquée."
+msgstr "Taille de grille appliqu�e."
 
 msgid "UI_CREATOR_INVALID_PLACEMENT"
-msgstr "Ce bloc ne peut pas être placé ici."
+msgstr "Ce bloc ne peut pas �tre plac� ici."
 
 msgid "UI_CREATOR_BLOCK_PLACED"
-msgstr "Bloc placé."
+msgstr "Bloc plac�."
 
 msgid "UI_CREATOR_ERROR_ID"
-msgstr "L’ID du niveau est requis."
+msgstr "L?ID du niveau est requis."
 
 msgid "UI_CREATOR_ERROR_DISPLAY_NAME"
-msgstr "Entrez un nom affiché avant d’enregistrer."
+msgstr "Entrez un nom affich� avant d?enregistrer."
 
 msgid "UI_CREATOR_DISPLAY_NAME_PLACEHOLDER"
 msgstr "Mon niveau perso"
@@ -383,37 +386,37 @@ msgid "UI_CREATOR_ERROR_BLOCKS"
 msgstr "Ajoutez au moins un bloc avant de continuer."
 
 msgid "UI_CREATOR_ERROR_SAVE"
-msgstr "Impossible d’enregistrer le niveau (erreur %s)."
+msgstr "Impossible d?enregistrer le niveau (erreur %s)."
 
 msgid "UI_CREATOR_SAVED"
-msgstr "Niveau enregistré : %s"
+msgstr "Niveau enregistr� : %s"
 
 msgid "UI_CREATOR_ERROR_LOAD"
 msgstr "Impossible de charger ce niveau."
 
 msgid "UI_CREATOR_LOADED"
-msgstr "Niveau chargé : %s"
+msgstr "Niveau charg� : %s"
 
 msgid "UI_PLAYTEST_SUCCESS_TITLE"
-msgstr "Réussi"
+msgstr "R�ussi"
 
 msgid "UI_PLAYTEST_SUCCESS_MESSAGE"
-msgstr "Votre niveau est complétable."
+msgstr "Votre niveau est compl�table."
 
 msgid "UI_BACK_TO_LEVEL_CREATOR"
-msgstr "Retour au créateur"
+msgstr "Retour au cr�ateur"
 
 msgid "UI_CREATOR_RETURNED_FROM_PLAYTEST"
 msgstr "Retour du test de jeu."
 
 msgid "UI_CREATOR_PLAYTEST_PASSED"
-msgstr "Test réussi — vous pouvez enregistrer ce niveau."
+msgstr "Test r�ussi ? vous pouvez enregistrer ce niveau."
 
 msgid "UI_CREATOR_SAVE_NEEDS_PLAYTEST"
-msgstr "Testez et terminez le niveau avant d’enregistrer."
+msgstr "Testez et terminez le niveau avant d?enregistrer."
 
 msgid "UI_LANGUAGE_FRENCH"
-msgstr "Français"
+msgstr "Fran�ais"
 
 msgid "UI_LANGUAGE_PIRATE"
 msgstr "Pirate"
@@ -440,10 +443,130 @@ msgid "UI_COLOR_ORANGE"
 msgstr "Orange"
 
 msgid "UI_CREATOR_DEFAULT_DISPLAY_NAME"
-msgstr "Niveau personnalisé"
+msgstr "Niveau personnalis�"
 
 msgid "UI_CREATOR_SHAPE_DEFAULT_NAME"
 msgstr "Forme %d"
 
 msgid "UI_CREATOR_READY"
-msgstr "Prêt"
+msgstr "Pr�t"
+
+msgid "UI_EXIT_GAME"
+msgstr "Quitter le jeu"
+
+msgid "UI_EXIT_GAME_CONFIRM"
+msgstr "Voulez-vous vraiment quitter ?"
+
+msgid "UI_YES"
+msgstr "Oui"
+
+msgid "UI_NO"
+msgstr "Non"
+
+msgid "UI_DAILY_PUZZLES"
+msgstr "Puzzles du jour"
+
+msgid "UI_DAILY_PUZZLE"
+msgstr "Puzzle %d"
+
+msgid "UI_DAILY_EMPTY"
+msgstr "Aucun puzzle du jour."
+
+msgid "UI_MONTH_1"
+msgstr "janvier"
+
+msgid "UI_MONTH_2"
+msgstr "f�vrier"
+
+msgid "UI_MONTH_3"
+msgstr "mars"
+
+msgid "UI_MONTH_4"
+msgstr "avril"
+
+msgid "UI_MONTH_5"
+msgstr "mai"
+
+msgid "UI_MONTH_6"
+msgstr "juin"
+
+msgid "UI_MONTH_7"
+msgstr "juillet"
+
+msgid "UI_MONTH_8"
+msgstr "ao�t"
+
+msgid "UI_MONTH_9"
+msgstr "septembre"
+
+msgid "UI_MONTH_10"
+msgstr "octobre"
+
+msgid "UI_MONTH_11"
+msgstr "novembre"
+
+msgid "UI_MONTH_12"
+msgstr "d�cembre"
+
+msgid "UI_CREATOR_DAILY_DATE"
+msgstr "Date du puzzle"
+
+msgid "UI_CREATOR_ERROR_DAILY_DATE"
+msgstr "Choisissez une date pour ce puzzle du jour."
+
+msgid "UI_LEVEL_AUDIT"
+msgstr "Audit des niveaux"
+
+msgid "UI_AUDIT_TITLE"
+msgstr "Audit des niveaux"
+
+msgid "UI_AUDIT_EMPTY"
+msgstr "Aucun niveau trouv?."
+
+msgid "UI_AUDIT_TOTAL"
+msgstr "Niveaux au total : %d"
+
+msgid "UI_AUDIT_DAILY_TOTAL"
+msgstr "Puzzles du jour : %d sur %d dates"
+
+msgid "UI_AUDIT_DAILY_NONE"
+msgstr "Aucun puzzle du jour cr?? pour l'instant."
+
+msgid "UI_AUDIT_DAILY_COMPLETE"
+msgstr "Chaque date de la plage cr??e a au moins un puzzle."
+
+msgid "UI_AUDIT_DAILY_GAPS"
+msgstr "Dates quotidiennes manquantes : %s"
+
+msgid "UI_AUDIT_DAILY_MORE"
+msgstr " (+%d de plus)"
+
+msgid "UI_AUDIT_EDIT"
+msgstr "Modifier"
+
+msgid "UI_AUDIT_DELETE"
+msgstr "Supprimer"
+
+msgid "UI_AUDIT_SAVE"
+msgstr "Enregistrer"
+
+msgid "UI_AUDIT_EDIT_TITLE"
+msgstr "Modifier l'emplacement"
+
+msgid "UI_AUDIT_DELETE_TITLE"
+msgstr "Supprimer le niveau"
+
+msgid "UI_AUDIT_DELETE_CONFIRM"
+msgstr "Supprimer � %s � ? Cette action est d�finitive."
+
+msgid "UI_RESET_PROGRESS"
+msgstr "R�initialiser la progression"
+
+msgid "UI_RESET_PROGRESS_TITLE"
+msgstr "R�initialiser toute la progression ?"
+
+msgid "UI_RESET_PROGRESS_CONFIRM"
+msgstr "Cela supprime d�finitivement toutes les �toiles, d�blocages et progressions de niveaux. La langue et les autres r�glages sont conserv�s. Cette action est irr�versible."
+
+msgid "UI_RESET_PROGRESS_YES"
+msgstr "Oui, tout supprimer"

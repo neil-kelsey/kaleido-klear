@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://prism_main_menu"]
+[gd_scene load_steps=6 format=3 uid="uid://prism_main_menu"]
 
 [ext_resource type="Script" path="res://scritps/ui/MainMenu.gd" id="1"]
 [ext_resource type="Script" path="res://scritps/ui/BrandTitleLine.gd" id="2_brand"]
 [ext_resource type="Texture2D" path="res://assets/branding/kaleido_icon.jpg" id="3_icon"]
 [ext_resource type="Script" path="res://scritps/ui/MenuActionButton.gd" id="4_action"]
+[ext_resource type="PackedScene" path="res://scenes/ui/exit_confirm_modal.tscn" id="5_exit"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -31,13 +32,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 136
-theme_override_constants/margin_top = 56
+theme_override_constants/margin_top = 28
 theme_override_constants/margin_right = 136
-theme_override_constants/margin_bottom = 64
+theme_override_constants/margin_bottom = 48
 
 [node name="VBox" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
 theme_override_constants/separation = 20
+
+[node name="BrandTopSpacer" type="Control" parent="Margin/VBox"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.15
 
 [node name="TitleBlock" type="VBoxContainer" parent="Margin/VBox"]
 layout_mode = 2
@@ -83,7 +90,7 @@ effect_radius = 26.0
 custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 1.0
+size_flags_stretch_ratio = 0.75
 
 [node name="PlayButton" type="Button" parent="Margin/VBox"]
 unique_name_in_owner = true
@@ -92,14 +99,14 @@ layout_mode = 2
 flat = false
 script = ExtResource("4_action")
 kind = 0
-label_text = "START GAME"
+label_text = "DIMENSIONS"
 icon_style = 0
 
 [node name="MiddleSpacer" type="Control" parent="Margin/VBox"]
 custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 1.0
+size_flags_stretch_ratio = 0.35
 
 [node name="LevelSelectButton" type="Button" parent="Margin/VBox"]
 unique_name_in_owner = true
@@ -108,7 +115,7 @@ layout_mode = 2
 flat = false
 script = ExtResource("4_action")
 kind = 1
-label_text = "DIMENSIONS"
+label_text = "DAILY PUZZLES"
 icon_style = 0
 
 [node name="SettingsButton" type="Button" parent="Margin/VBox"]
@@ -121,6 +128,11 @@ kind = 1
 label_text = "SETTINGS"
 icon_style = 1
 
+[node name="ExitConfirmModal" parent="." instance=ExtResource("5_exit")]
+unique_name_in_owner = true
+
 [connection signal="pressed" from="Margin/VBox/PlayButton" to="." method="_on_play_button_pressed"]
 [connection signal="pressed" from="Margin/VBox/LevelSelectButton" to="." method="_on_level_select_button_pressed"]
 [connection signal="pressed" from="Margin/VBox/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="confirmed" from="ExitConfirmModal" to="." method="_on_exit_confirmed"]
+[connection signal="cancelled" from="ExitConfirmModal" to="." method="_on_exit_cancelled"]

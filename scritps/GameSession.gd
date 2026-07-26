@@ -2,6 +2,8 @@ extends Node
 
 const SETTINGS_PATH := "user://settings.cfg"
 const DEV_SETTINGS_PATH := "user://dev_settings.cfg"
+## Dedicated progress file — survives app restarts on phone (JSON is reliable on Android).
+const PROGRESS_PATH := "user://progress.json"
 
 ## Supported app locales (code must match Language: header in locales/*.po).
 const AVAILABLE_LOCALES: Array[Dictionary] = [
@@ -21,12 +23,27 @@ var playtest_passed: bool = false
 ## Last / current dimension on the star map (section index).
 var current_dimension_index: int = 0
 var locale: String = "en"
+## Scene to return to from gameplay (dimensions map, daily list, etc.).
+var return_scene_path: String = "res://scenes/ui/dimension_map.tscn"
+## Optional ordered playlist (daily puzzles). Empty = campaign catalog order.
+var active_level_playlist: Array[LevelConfig] = []
 
 
 func _ready() -> void:
 	_load_settings()
+	_load_progress()
 	## Defer so scene @onready nodes exist before TRANSLATION_CHANGED fires.
 	call_deferred("_boot_locale")
+
+
+func _notification(what: int) -> void:
+	## Flush progress if Android sends the app to background / closes it.
+	if (
+		what == NOTIFICATION_APPLICATION_PAUSED
+		or what == NOTIFICATION_APPLICATION_FOCUS_OUT
+		or what == NOTIFICATION_WM_CLOSE_REQUEST
+	):
+		_save_progress()
 
 
 func _boot_locale() -> void:
@@ -43,7 +60,50 @@ func set_level(level: LevelConfig) -> void:
 
 
 func set_current_dimension(section_index: int) -> void:
-	current_dimension_index = clampi(section_index, 0, LevelCatalog.get_dimension_count() - 1)
+	var next := clampi(section_index, 0, LevelCatalog.get_dimension_count() - 1)
+	if next == current_dimension_index:
+		return
+	current_dimension_index = next
+	_save_progress()
+
+
+func change_scene(path: String) -> void:
+	## Prefer this over node.get_tree() during input — autoload stays in the tree
+	## even after the current scene starts tearing down.
+	if path.strip_edges().is_empty():
+		return
+	var tree := get_tree()
+	if tree == null:
+		push_warning("GameSession.change_scene: SceneTree missing for %s" % path)
+		return
+	tree.change_scene_to_file(path)
+
+
+func set_return_scene(path: String) -> void:
+	if path.strip_edges().is_empty():
+		return_scene_path = "res://scenes/ui/dimension_map.tscn"
+	else:
+		return_scene_path = path
+
+
+func get_return_scene() -> String:
+	if return_scene_path.strip_edges().is_empty():
+		return "res://scenes/ui/dimension_map.tscn"
+	return return_scene_path
+
+
+func set_level_playlist(levels: Array[LevelConfig]) -> void:
+	active_level_playlist = levels.duplicate()
+
+
+func clear_level_playlist() -> void:
+	active_level_playlist.clear()
+
+
+func is_last_in_playlist(level: LevelConfig) -> bool:
+	if level == null or active_level_playlist.is_empty():
+		return false
+	return active_level_playlist[active_level_playlist.size() - 1].level_id == level.level_id
 
 
 func restart_level(level: LevelConfig) -> void:
@@ -92,12 +152,26 @@ func consume_level() -> LevelConfig:
 func record_level_stars(level: LevelConfig, stars: int) -> void:
 	if level == null:
 		return
-	var previous: int = level_stars.get(level.level_id, 0)
-	level_stars[level.level_id] = maxi(previous, stars)
+	var previous: int = int(level_stars.get(level.level_id, 0))
+	var next := maxi(previous, clampi(stars, 0, 3))
+	if next == previous and previous > 0:
+		return
+	level_stars[level.level_id] = next
+	## Write immediately so a phone close after clear still keeps the stars.
+	_save_progress()
 
 
 func get_level_stars(level_id: String) -> int:
-	return level_stars.get(level_id, 0)
+	return int(level_stars.get(level_id, 0))
+
+
+func reset_progress() -> void:
+	## Clears stars / unlocks. Keeps language and develop-mode prefs.
+	level_stars.clear()
+	current_dimension_index = 0
+	selected_level = null
+	clear_level_playlist()
+	_save_progress()
 
 
 func is_level_unlocked(level: LevelConfig) -> bool:
@@ -107,16 +181,34 @@ func is_level_unlocked(level: LevelConfig) -> bool:
 		return false
 	if CustomLevelStore.has_level(level.level_id):
 		return true
-	var all_levels := LevelCatalog.get_all_levels()
-	for i in all_levels.size():
-		if all_levels[i].level_id == level.level_id:
-			if i == 0:
-				return true
-			return get_level_stars(all_levels[i - 1].level_id) > 0
-	return false
+	var context: Dictionary = LevelCatalog.find_level_context(level.level_id)
+	if context.is_empty():
+		return false
+	var section_index: int = int(context.section_index)
+	if not LevelCatalog.is_dimension_unlocked(section_index):
+		return false
+	var section_levels := LevelCatalog.get_section_levels(section_index)
+	var level_index: int = int(context.level_index)
+	if level_index <= 0:
+		return true
+	if level_index >= section_levels.size():
+		return false
+	return get_level_stars(section_levels[level_index - 1].level_id) > 0
+
+
+func is_perfect_clear(level_id: String) -> bool:
+	## Perfect = cleared without losing a life (3 remaining lives → 3 stars).
+	return get_level_stars(level_id) >= 3
 
 
 func get_next_level(current: LevelConfig) -> LevelConfig:
+	if current != null and not active_level_playlist.is_empty():
+		for i in active_level_playlist.size():
+			if active_level_playlist[i].level_id == current.level_id:
+				if i + 1 < active_level_playlist.size():
+					return active_level_playlist[i + 1]
+				return null
+		return null
 	return LevelCatalog.get_next_level(current)
 
 
@@ -173,4 +265,51 @@ func _save_settings() -> void:
 	var config := ConfigFile.new()
 	config.set_value("dev", "develop_mode", develop_mode)
 	config.set_value("i18n", "locale", locale)
-	config.save(SETTINGS_PATH)
+	var err := config.save(SETTINGS_PATH)
+	if err != OK:
+		push_warning("Failed to save settings.cfg: %s" % error_string(err))
+
+
+func _load_progress() -> void:
+	level_stars.clear()
+	current_dimension_index = 0
+	if FileAccess.file_exists(PROGRESS_PATH):
+		var file := FileAccess.open(PROGRESS_PATH, FileAccess.READ)
+		if file != null:
+			var parsed: Variant = JSON.parse_string(file.get_as_text())
+			file.close()
+			if typeof(parsed) == TYPE_DICTIONARY:
+				_apply_progress_dict(parsed as Dictionary)
+				return
+	## Migrate older builds that stored stars inside settings.cfg.
+	var config := ConfigFile.new()
+	if config.load(SETTINGS_PATH) == OK:
+		var stored: Variant = config.get_value("progress", "level_stars", {})
+		if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty():
+			_apply_progress_dict({
+				"level_stars": stored,
+				"current_dimension_index": int(config.get_value("progress", "current_dimension_index", 0)),
+			})
+			_save_progress()
+
+
+func _apply_progress_dict(data: Dictionary) -> void:
+	var stars_raw: Variant = data.get("level_stars", {})
+	if typeof(stars_raw) == TYPE_DICTIONARY:
+		for key in (stars_raw as Dictionary).keys():
+			level_stars[str(key)] = clampi(int(stars_raw[key]), 0, 3)
+	current_dimension_index = maxi(0, int(data.get("current_dimension_index", 0)))
+
+
+func _save_progress() -> void:
+	var payload := {
+		"level_stars": level_stars.duplicate(),
+		"current_dimension_index": current_dimension_index,
+	}
+	var file := FileAccess.open(PROGRESS_PATH, FileAccess.WRITE)
+	if file == null:
+		push_warning("Failed to open progress.json for write: %s" % error_string(FileAccess.get_open_error()))
+		return
+	file.store_string(JSON.stringify(payload))
+	file.flush()
+	file.close()

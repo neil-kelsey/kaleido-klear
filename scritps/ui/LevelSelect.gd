@@ -79,3 +79,7 @@ func _on_level_pressed(level: LevelConfig) -> void:
 
 func _on_back_button_pressed() -> void:
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+
+
+func handle_back() -> void:
+	_on_back_button_pressed()

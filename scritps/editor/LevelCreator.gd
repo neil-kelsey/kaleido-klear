@@ -37,6 +37,10 @@ var _disabled_cells: Array[Vector2i] = []
 
 var _display_name_edit: LineEdit
 var _section_option: OptionButton
+var _daily_date_box: VBoxContainer
+var _daily_year_spin: SpinBox
+var _daily_month_option: OptionButton
+var _daily_day_spin: SpinBox
 var _columns_field: LineEdit
 var _rows_field: LineEdit
 var _shapes_list_box: VBoxContainer
@@ -91,7 +95,7 @@ func _ready() -> void:
 	goals_tab_button.pressed.connect(_on_goals_tab_pressed)
 
 	_display_name_edit.text_changed.connect(_on_level_field_changed)
-	_section_option.item_selected.connect(_on_level_field_changed)
+	## Section visibility is handled by _on_section_changed (connected in setup build).
 
 	_refresh_save_button()
 
@@ -138,10 +142,10 @@ func _style_segment_tab_button(button: Button) -> void:
 	inactive.corner_radius_bottom_right = radius
 
 	var inactive_hover := inactive.duplicate()
-	inactive_hover.bg_color = Color(1, 1, 1, 0.04)
+	inactive_hover.bg_color = Color(1, 1, 1, 0.08)
 
 	var active := StyleBoxFlat.new()
-	active.bg_color = Color(0.24, 0.26, 0.34, 1.0)
+	active.bg_color = Color(0.28, 0.32, 0.42, 1.0)
 	active.corner_radius_top_left = radius
 	active.corner_radius_top_right = radius
 	active.corner_radius_bottom_left = radius
@@ -155,10 +159,12 @@ func _style_segment_tab_button(button: Button) -> void:
 	button.add_theme_stylebox_override("pressed", active)
 	button.add_theme_stylebox_override("hover_pressed", active)
 	button.add_theme_stylebox_override("focus", inactive)
-	button.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
-	button.add_theme_color_override("font_hover_color", UiTheme.TEXT)
-	button.add_theme_color_override("font_pressed_color", UiTheme.TEXT)
-	button.add_theme_color_override("font_hover_pressed_color", UiTheme.TEXT)
+	## Dark track needs light type — UiTheme.TEXT is near-black (for white menus).
+	var inactive_text := Color(0.88, 0.90, 0.95, 1.0)
+	button.add_theme_color_override("font_color", inactive_text)
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color.WHITE)
+	button.add_theme_color_override("font_hover_pressed_color", Color.WHITE)
 	button.add_theme_font_size_override("font_size", 16)
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 
@@ -258,9 +264,48 @@ func _build_setup_panel() -> void:
 	for i in LevelCatalog.SECTIONS.size():
 		var title_key: String = LevelCatalog.SECTIONS[i]["title_key"]
 		_section_option.add_item(tr(title_key), i)
+	_section_option.add_item(tr("UI_DAILY_PUZZLES"), DailyCatalog.SECTION_DAILY)
 	UiTheme.style_option_field(_section_option)
-	_section_option.item_selected.connect(_on_level_field_changed)
+	_section_option.item_selected.connect(_on_section_changed)
 	section_box.add_child(_section_option)
+
+	_daily_date_box = VBoxContainer.new()
+	_daily_date_box.add_theme_constant_override("separation", 8)
+	_daily_date_box.visible = false
+	section_box.add_child(_daily_date_box)
+	var date_label := Label.new()
+	date_label.text = tr("UI_CREATOR_DAILY_DATE")
+	date_label.add_theme_color_override("font_color", UiTheme.TEXT)
+	date_label.add_theme_font_size_override("font_size", 18)
+	_daily_date_box.add_child(date_label)
+	var date_row := HBoxContainer.new()
+	date_row.add_theme_constant_override("separation", 8)
+	_daily_date_box.add_child(date_row)
+
+	_daily_day_spin = SpinBox.new()
+	_daily_day_spin.min_value = 1
+	_daily_day_spin.max_value = 31
+	_daily_day_spin.value = 1
+	_daily_day_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_daily_day_spin.value_changed.connect(_on_daily_date_changed)
+	date_row.add_child(_daily_day_spin)
+
+	_daily_month_option = OptionButton.new()
+	for m in range(1, 13):
+		_daily_month_option.add_item(tr("UI_MONTH_%d" % m), m)
+	_daily_month_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	UiTheme.style_option_field(_daily_month_option)
+	_daily_month_option.item_selected.connect(_on_daily_month_selected)
+	date_row.add_child(_daily_month_option)
+
+	_daily_year_spin = SpinBox.new()
+	_daily_year_spin.min_value = 2024
+	_daily_year_spin.max_value = 2100
+	_daily_year_spin.value = 2026
+	_daily_year_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_daily_year_spin.value_changed.connect(_on_daily_date_changed)
+	date_row.add_child(_daily_year_spin)
+	_set_daily_date_controls_to_today()
 
 	var size_row := HBoxContainer.new()
 	size_row.add_theme_constant_override("separation", 12)
@@ -516,6 +561,7 @@ func _new_level() -> void:
 	_draft.level_id = "custom_level_%d" % stamp
 	_draft.display_name = tr("UI_CREATOR_DEFAULT_DISPLAY_NAME")
 	_draft.section_index = 0
+	_draft.daily_date = ""
 	_draft.sort_index = stamp
 	_draft.columns = 8
 	_draft.rows = 8
@@ -547,7 +593,12 @@ func _new_level() -> void:
 
 func _apply_draft_to_ui() -> void:
 	_display_name_edit.text = _draft.display_name
-	_section_option.select(clampi(_draft.section_index, 0, _section_option.item_count - 1))
+	_select_section_option(_draft.section_index if _draft.daily_date.is_empty() else DailyCatalog.SECTION_DAILY)
+	if not _draft.daily_date.is_empty():
+		_set_daily_date_controls_from_key(_draft.daily_date)
+	else:
+		_set_daily_date_controls_to_today()
+	_refresh_daily_date_visibility()
 	_columns_field.text = str(_draft.columns)
 	_rows_field.text = str(_draft.rows)
 
@@ -580,6 +631,12 @@ func _apply_edge_goals_to_ui(edge_key: String, phases: Array[GoalPhase]) -> void
 func _collect_draft_from_ui() -> void:
 	_draft.display_name = _display_name_edit.text.strip_edges()
 	_draft.section_index = _section_option.get_selected_id()
+	if _draft.section_index == DailyCatalog.SECTION_DAILY:
+		_draft.daily_date = _daily_date_key_from_controls()
+		## Keep campaign index unused for dailies.
+		_draft.section_index = DailyCatalog.SECTION_DAILY
+	else:
+		_draft.daily_date = ""
 	_draft.columns = _read_number_field(_columns_field, 3, 12, 8)
 	_draft.rows = _read_number_field(_rows_field, 3, 16, 8)
 	_draft.multi_goal_mode = _any_edge_has_goals()
@@ -1186,10 +1243,20 @@ func _on_save_pressed() -> void:
 		return
 	if _draft.level_id.is_empty():
 		var stamp := int(Time.get_unix_time_from_system())
-		_draft.level_id = "custom_level_%d" % stamp
+		if not _draft.daily_date.is_empty():
+			_draft.level_id = "daily_%s_%d" % [_draft.daily_date, stamp]
+		else:
+			_draft.level_id = "custom_level_%d" % stamp
 		_draft.sort_index = stamp
 	elif _draft.sort_index <= 0:
 		_draft.sort_index = int(Time.get_unix_time_from_system())
+	## Keep daily ids aligned with their date when reassigned.
+	if not _draft.daily_date.is_empty() and not _draft.level_id.begins_with("daily_%s_" % _draft.daily_date):
+		var stamp2 := int(Time.get_unix_time_from_system())
+		_draft.level_id = "daily_%s_%d" % [_draft.daily_date, stamp2]
+	if _draft.section_index == DailyCatalog.SECTION_DAILY and _draft.daily_date.is_empty():
+		_set_status(tr("UI_CREATOR_ERROR_DAILY_DATE"))
+		return
 	if not _has_valid_blocks():
 		_set_status(tr("UI_CREATOR_ERROR_BLOCKS"))
 		return
@@ -1228,6 +1295,96 @@ func _on_level_field_changed(_value: Variant = null) -> void:
 	_refresh_save_button()
 
 
+func _on_section_changed(_index: int = 0) -> void:
+	_refresh_daily_date_visibility()
+	_on_level_field_changed()
+
+
+func _on_daily_month_selected(_index: int = 0) -> void:
+	_clamp_daily_day_to_month()
+	_on_level_field_changed()
+
+
+func _on_daily_date_changed(_value: float = 0.0) -> void:
+	_clamp_daily_day_to_month()
+	_on_level_field_changed()
+
+
+func _refresh_daily_date_visibility() -> void:
+	if _daily_date_box == null or _section_option == null:
+		return
+	var selected_id := _section_option.get_selected_id()
+	var show_date := selected_id == DailyCatalog.SECTION_DAILY
+	_daily_date_box.visible = show_date
+	## Keep layout from collapsing oddly in the scroll panel.
+	_daily_date_box.custom_minimum_size = Vector2(0, 96) if show_date else Vector2.ZERO
+
+
+func _select_section_option(section_id: int) -> void:
+	if _section_option == null:
+		return
+	var idx := _section_option.get_item_index(section_id)
+	if idx < 0:
+		idx = 0
+	_section_option.select(idx)
+
+
+func _set_daily_date_controls_to_today() -> void:
+	_set_daily_date_controls_from_key(DailyCatalog.today_key())
+
+
+func _set_daily_date_controls_from_key(date_key: String) -> void:
+	var parts := date_key.split("-")
+	if parts.size() != 3:
+		return
+	var year := int(parts[0])
+	var month := int(parts[1])
+	var day := int(parts[2])
+	if _daily_year_spin:
+		_daily_year_spin.value = year
+	if _daily_month_option:
+		var m_idx := _daily_month_option.get_item_index(month)
+		if m_idx >= 0:
+			_daily_month_option.select(m_idx)
+	if _daily_day_spin:
+		_daily_day_spin.value = day
+	_clamp_daily_day_to_month()
+
+
+func _daily_date_key_from_controls() -> String:
+	if _daily_year_spin == null or _daily_month_option == null or _daily_day_spin == null:
+		return DailyCatalog.today_key()
+	_clamp_daily_day_to_month()
+	var year := int(_daily_year_spin.value)
+	var month := _daily_month_option.get_selected_id()
+	var day := int(_daily_day_spin.value)
+	return "%04d-%02d-%02d" % [year, month, day]
+
+
+func _clamp_daily_day_to_month() -> void:
+	if _daily_year_spin == null or _daily_month_option == null or _daily_day_spin == null:
+		return
+	var year := int(_daily_year_spin.value)
+	var month := _daily_month_option.get_selected_id()
+	var max_day := _days_in_month(year, month)
+	_daily_day_spin.max_value = max_day
+	if int(_daily_day_spin.value) > max_day:
+		_daily_day_spin.value = max_day
+
+
+func _days_in_month(year: int, month: int) -> int:
+	match month:
+		1, 3, 5, 7, 8, 10, 12:
+			return 31
+		4, 6, 9, 11:
+			return 30
+		2:
+			var leap := (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+			return 29 if leap else 28
+		_:
+			return 31
+
+
 func _is_playtest_passed() -> bool:
 	return not _passed_signature.is_empty() and _passed_signature == _current_signature()
 
@@ -1252,6 +1409,8 @@ func _current_signature() -> String:
 	_collect_draft_from_ui()
 	var parts: Array = []
 	parts.append("%dx%d" % [_draft.columns, _draft.rows])
+	parts.append("section:%d" % _draft.section_index)
+	parts.append("daily:%s" % _draft.daily_date)
 	parts.append("mg:%s" % str(_draft.multi_goal_mode))
 
 	var block_parts: Array = []
@@ -1321,6 +1480,10 @@ func _on_back_pressed() -> void:
 		_on_back_confirmed()
 		return
 	_back_confirm.popup_centered()
+
+
+func handle_back() -> void:
+	_on_back_pressed()
 
 
 func _on_back_confirmed() -> void:
@@ -1471,7 +1634,9 @@ func _style_compact_secondary_button(button: Button) -> void:
 	button.add_theme_stylebox_override("hover", UiTheme.rounded_stylebox(UiTheme.BUTTON_HOVER, radius))
 	button.add_theme_stylebox_override("pressed", UiTheme.rounded_stylebox(UiTheme.BUTTON_PRESSED, radius))
 	button.add_theme_stylebox_override("focus", UiTheme.rounded_stylebox(UiTheme.BUTTON_HOVER, radius))
-	button.add_theme_color_override("font_color", UiTheme.TEXT)
+	button.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
+	button.add_theme_color_override("font_hover_color", UiTheme.TEXT_ON_DARK)
+	button.add_theme_color_override("font_pressed_color", UiTheme.TEXT_ON_DARK)
 	button.add_theme_font_size_override("font_size", 18)
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 
@@ -1482,7 +1647,7 @@ func _apply_compact_disabled_style(button: Button) -> void:
 		"disabled",
 		UiTheme.rounded_stylebox(Color(0.12, 0.13, 0.17, 1.0), radius)
 	)
-	button.add_theme_color_override("font_disabled_color", UiTheme.TEXT_MUTED)
+	button.add_theme_color_override("font_disabled_color", Color(0.55, 0.57, 0.62, 1.0))
 
 
 func _style_selectable_tool_button(button: Button) -> void:
@@ -1495,7 +1660,8 @@ func _style_selectable_tool_button(button: Button) -> void:
 		UiTheme.rounded_stylebox(UiTheme.ACCENT.lightened(0.12), radius)
 	)
 	button.add_theme_stylebox_override("focus", UiTheme.rounded_stylebox(UiTheme.BUTTON_HOVER, radius))
-	button.add_theme_color_override("font_color", UiTheme.TEXT)
+	button.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
+	button.add_theme_color_override("font_hover_color", UiTheme.TEXT_ON_DARK)
 	button.add_theme_color_override("font_pressed_color", Color.WHITE)
 	button.add_theme_color_override("font_hover_pressed_color", Color.WHITE)
 	button.add_theme_font_size_override("font_size", 18)
@@ -1518,7 +1684,8 @@ func _style_color_tool_button(button: Button, tile_color: Block.TileColor) -> vo
 	button.add_theme_stylebox_override("pressed", on)
 	button.add_theme_stylebox_override("hover_pressed", on_hover)
 	button.add_theme_stylebox_override("focus", off)
-	button.add_theme_color_override("font_color", UiTheme.TEXT)
+	button.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
+	button.add_theme_color_override("font_hover_color", UiTheme.TEXT_ON_DARK)
 	button.add_theme_color_override("font_pressed_color", text_on)
 	button.add_theme_color_override("font_hover_pressed_color", text_on)
 	button.add_theme_font_size_override("font_size", 18)

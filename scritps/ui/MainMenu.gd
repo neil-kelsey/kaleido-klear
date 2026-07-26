@@ -1,7 +1,7 @@
 extends Control
 
-const GAME_SCENE := "res://scenes/main.tscn"
-const STANDARD_LEVEL := preload("res://resources/levels/demo_level.tres")
+const DIMENSION_MAP_SCENE := "res://scenes/ui/dimension_map.tscn"
+const DAILY_PUZZLES_SCENE := "res://scenes/ui/daily_puzzles.tscn"
 
 ## Klear size relative to the fitted Kaleido size (logo proportion).
 const KLEAR_TO_KALEIDO_RATIO := 0.68
@@ -17,6 +17,7 @@ const MENU_SIDE_MARGIN_RATIO := 0.15
 @onready var play_button: MenuActionButton = %PlayButton
 @onready var level_select_button: MenuActionButton = %LevelSelectButton
 @onready var settings_button: MenuActionButton = %SettingsButton
+@onready var exit_confirm_modal: Control = %ExitConfirmModal
 
 
 func _ready() -> void:
@@ -31,6 +32,14 @@ func _notification(what: int) -> void:
 		if not is_node_ready():
 			return
 		_apply_translations()
+
+
+func handle_back() -> void:
+	if exit_confirm_modal != null and exit_confirm_modal.visible:
+		exit_confirm_modal.hide_modal()
+		return
+	if exit_confirm_modal != null:
+		exit_confirm_modal.show_modal()
 
 
 func _on_viewport_resized() -> void:
@@ -63,19 +72,27 @@ func _fit_brand_titles() -> void:
 func _apply_translations() -> void:
 	if play_button == null or level_select_button == null or settings_button == null:
 		return
-	play_button.set_label(tr("UI_START_GAME"))
-	level_select_button.set_label(tr("UI_LEVEL_SELECT"))
+	play_button.set_label(tr("UI_LEVEL_SELECT"))
+	level_select_button.set_label(tr("UI_DAILY_PUZZLES"))
 	settings_button.set_label(tr("UI_SETTINGS"))
 
 
 func _on_play_button_pressed() -> void:
-	GameSession.set_level(STANDARD_LEVEL)
-	get_tree().change_scene_to_file(GAME_SCENE)
+	GameSession.set_return_scene("res://scenes/ui/dimension_map.tscn")
+	get_tree().change_scene_to_file("res://scenes/ui/dimension_map.tscn")
 
 
 func _on_level_select_button_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/ui/dimension_map.tscn")
+	get_tree().change_scene_to_file("res://scenes/ui/daily_puzzles.tscn")
 
 
 func _on_settings_button_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/ui/settings.tscn")
+
+
+func _on_exit_confirmed() -> void:
+	get_tree().quit()
+
+
+func _on_exit_cancelled() -> void:
+	pass

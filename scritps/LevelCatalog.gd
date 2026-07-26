@@ -88,6 +88,13 @@ func reload_levels() -> void:
 		var level := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
 		if level == null:
 			continue
+		## Daily puzzles live in DailyCatalog, not on the dimension map.
+		if (
+			DailyCatalog.is_daily_level(level)
+			or level.section_index == DailyCatalog.SECTION_DAILY
+			or level.section_index < 0
+		):
+			continue
 		var index := clampi(level.section_index, 0, SECTIONS.size() - 1)
 		(_project_levels_by_section[index] as Array).append(level)
 
@@ -183,6 +190,12 @@ func get_section_levels(section_index: int) -> Array[LevelConfig]:
 func _custom_levels_for_section(section_index: int) -> Array[LevelConfig]:
 	var levels: Array[LevelConfig] = []
 	for level in CustomLevelStore.list_levels():
+		if (
+			DailyCatalog.is_daily_level(level)
+			or level.section_index == DailyCatalog.SECTION_DAILY
+			or level.section_index < 0
+		):
+			continue
 		var index := clampi(level.section_index, 0, SECTIONS.size() - 1)
 		if index == section_index:
 			levels.append(level)
@@ -269,4 +282,24 @@ func build_dimension_positions(step_distance: float = 280.0) -> Array[Vector2]:
 	for i in range(1, count):
 		var sway := sways[i] if i < sways.size() else ((1.0 if i % 2 == 0 else -1.0) * 80.0)
 		positions[i] = Vector2(sway, -step_distance * float(i))
+	return positions
+
+
+## Level-select grid under a hub at the origin. 5 columns, rows grow +Y.
+## Index 0 is top-left of the grid (under the hub).
+func build_level_grid_positions(
+	level_count: int,
+	columns: int = 5,
+	col_spacing: float = 100.0,
+	row_spacing: float = 100.0,
+	hub_gap: float = 160.0
+) -> Array[Vector2]:
+	var positions: Array[Vector2] = []
+	var cols := maxi(columns, 1)
+	for i in level_count:
+		var col := i % cols
+		var row := int(i / cols)
+		var x := (float(col) - float(cols - 1) * 0.5) * col_spacing
+		var y := hub_gap + float(row) * row_spacing
+		positions.append(Vector2(x, y))
 	return positions

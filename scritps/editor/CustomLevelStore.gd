@@ -70,6 +70,29 @@ func list_levels() -> Array[LevelConfig]:
 	return levels
 
 
+func list_all_levels() -> Array[LevelConfig]:
+	## Project + on-device drafts, deduped by level_id (project wins).
+	var levels: Array[LevelConfig] = []
+	var known_ids: Dictionary = {}
+	for path in list_project_level_paths():
+		var level := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
+		if level == null or level.level_id.strip_edges().is_empty():
+			continue
+		if known_ids.has(level.level_id):
+			continue
+		known_ids[level.level_id] = true
+		levels.append(level)
+	for level in list_levels():
+		if level == null or level.level_id.strip_edges().is_empty():
+			continue
+		if known_ids.has(level.level_id):
+			continue
+		known_ids[level.level_id] = true
+		levels.append(level)
+	levels.sort_custom(_sort_audit_levels)
+	return levels
+
+
 func list_project_level_paths() -> PackedStringArray:
 	## Packed registry works in Android APKs (DirAccess cannot list res:// there).
 	var paths: PackedStringArray = []
@@ -125,7 +148,10 @@ func delete_level(level_id: String) -> Error:
 	var user_path := _user_level_path(level_id)
 	if not FileAccess.file_exists(user_path):
 		return ERR_FILE_NOT_FOUND
-	return DirAccess.remove_absolute(user_path)
+	var user_err := DirAccess.remove_absolute(user_path)
+	if user_err == OK and LevelCatalog != null:
+		LevelCatalog.reload_levels()
+	return user_err
 
 
 func _save_project_level(level: LevelConfig) -> Error:
@@ -166,6 +192,21 @@ func _sort_levels(a: LevelConfig, b: LevelConfig) -> bool:
 	if a.sort_index == b.sort_index:
 		return a.level_id < b.level_id
 	return a.sort_index < b.sort_index
+
+
+func _sort_audit_levels(a: LevelConfig, b: LevelConfig) -> bool:
+	var a_daily := DailyCatalog.is_daily_level(a) or a.section_index == DailyCatalog.SECTION_DAILY
+	var b_daily := DailyCatalog.is_daily_level(b) or b.section_index == DailyCatalog.SECTION_DAILY
+	if a_daily != b_daily:
+		return not a_daily
+	if a_daily:
+		var date_cmp := a.daily_date.strip_edges() < b.daily_date.strip_edges()
+		if a.daily_date.strip_edges() != b.daily_date.strip_edges():
+			return date_cmp
+	else:
+		if a.section_index != b.section_index:
+			return a.section_index < b.section_index
+	return _sort_levels(a, b)
 
 
 func _project_level_path(level_id: String) -> String:

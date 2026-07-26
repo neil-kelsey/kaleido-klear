@@ -229,7 +229,8 @@ func _input(event: InputEvent) -> void:
 	if _is_modal_open():
 		return
 	if event.is_action_pressed("ui_cancel"):
-		_go_back()
+		handle_back()
+		get_viewport().set_input_as_handled()
 		return
 
 	# Never pan the map while a tile swipe is in progress.
@@ -423,7 +424,7 @@ func _is_modal_open() -> bool:
 
 
 func _go_to_level_select() -> void:
-	get_tree().change_scene_to_file(LEVEL_SELECT_SCENE)
+	get_tree().change_scene_to_file(GameSession.get_return_scene())
 
 
 func _go_to_level_creator() -> void:
@@ -436,6 +437,16 @@ func _go_back() -> void:
 		_go_to_level_creator()
 	else:
 		_go_to_level_select()
+
+
+func handle_back() -> void:
+	if level_complete_modal.visible:
+		level_complete_modal.hide()
+		return
+	if game_over_modal.visible:
+		game_over_modal.hide()
+		return
+	_go_back()
 
 
 func _on_back_button_pressed() -> void:
@@ -483,8 +494,13 @@ func _on_level_cleared(remaining_lives: int) -> void:
 		return
 	var stars := clampi(remaining_lives, 1, 3)
 	GameSession.record_level_stars(_current_level, stars)
-	var section_complete := LevelCatalog.is_last_level_in_section(_current_level)
-	var has_next_section := LevelCatalog.has_next_section(_current_level)
+	var section_complete := false
+	var has_next_section := false
+	if not GameSession.active_level_playlist.is_empty():
+		section_complete = GameSession.is_last_in_playlist(_current_level)
+	else:
+		section_complete = LevelCatalog.is_last_level_in_section(_current_level)
+		has_next_section = LevelCatalog.has_next_section(_current_level)
 	level_complete_modal.show_result(stars, section_complete, has_next_section)
 
 
@@ -514,12 +530,12 @@ func _on_next_level_pressed() -> void:
 		GameSession.set_level(next_level)
 		get_tree().change_scene_to_file(GAME_SCENE)
 		return
-	if LevelCatalog.has_next_section(_current_level):
+	if GameSession.active_level_playlist.is_empty() and LevelCatalog.has_next_section(_current_level):
 		var first_level := LevelCatalog.get_first_level_of_next_section(_current_level)
 		GameSession.set_level(first_level)
 		get_tree().change_scene_to_file(GAME_SCENE)
 		return
-	get_tree().change_scene_to_file(LEVEL_SELECT_SCENE)
+	get_tree().change_scene_to_file(GameSession.get_return_scene())
 
 
 func _on_remove_ads_pressed() -> void:

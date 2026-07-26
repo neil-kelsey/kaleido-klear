@@ -106,6 +106,9 @@ msgstr "Dimension 10"
 msgid "UI_DIMENSION_MAP_HINT"
 msgstr "Scroll to zoom · drag to pan · tap a diamond"
 
+msgid "UI_LEVEL_MAP_HINT"
+msgstr "Tap a level · pinch or scroll to zoom · drag to pan"
+
 msgid "UI_DIMENSION_EMPTY"
 msgstr "No levels in this dimension yet."
 
@@ -447,3 +450,123 @@ msgstr "Shape %d"
 
 msgid "UI_CREATOR_READY"
 msgstr "Ready"
+
+msgid "UI_EXIT_GAME"
+msgstr "Exit game"
+
+msgid "UI_EXIT_GAME_CONFIRM"
+msgstr "Are you sure you want to exit?"
+
+msgid "UI_YES"
+msgstr "Yes"
+
+msgid "UI_NO"
+msgstr "No"
+
+msgid "UI_DAILY_PUZZLES"
+msgstr "Daily puzzles"
+
+msgid "UI_DAILY_PUZZLE"
+msgstr "Puzzle %d"
+
+msgid "UI_DAILY_EMPTY"
+msgstr "No daily puzzles today."
+
+msgid "UI_MONTH_1"
+msgstr "January"
+
+msgid "UI_MONTH_2"
+msgstr "February"
+
+msgid "UI_MONTH_3"
+msgstr "March"
+
+msgid "UI_MONTH_4"
+msgstr "April"
+
+msgid "UI_MONTH_5"
+msgstr "May"
+
+msgid "UI_MONTH_6"
+msgstr "June"
+
+msgid "UI_MONTH_7"
+msgstr "July"
+
+msgid "UI_MONTH_8"
+msgstr "August"
+
+msgid "UI_MONTH_9"
+msgstr "September"
+
+msgid "UI_MONTH_10"
+msgstr "October"
+
+msgid "UI_MONTH_11"
+msgstr "November"
+
+msgid "UI_MONTH_12"
+msgstr "December"
+
+msgid "UI_CREATOR_DAILY_DATE"
+msgstr "Daily date"
+
+msgid "UI_CREATOR_ERROR_DAILY_DATE"
+msgstr "Choose a date for this daily puzzle."
+
+msgid "UI_LEVEL_AUDIT"
+msgstr "Level audit"
+
+msgid "UI_AUDIT_TITLE"
+msgstr "Level audit"
+
+msgid "UI_AUDIT_EMPTY"
+msgstr "No levels found."
+
+msgid "UI_AUDIT_TOTAL"
+msgstr "Total levels: %d"
+
+msgid "UI_AUDIT_DAILY_TOTAL"
+msgstr "Daily puzzles: %d across %d dates"
+
+msgid "UI_AUDIT_DAILY_NONE"
+msgstr "No daily puzzles authored yet."
+
+msgid "UI_AUDIT_DAILY_COMPLETE"
+msgstr "Every date in the authored range has at least one puzzle."
+
+msgid "UI_AUDIT_DAILY_GAPS"
+msgstr "Missing daily dates: %s"
+
+msgid "UI_AUDIT_DAILY_MORE"
+msgstr " (+%d more)"
+
+msgid "UI_AUDIT_EDIT"
+msgstr "Edit"
+
+msgid "UI_AUDIT_DELETE"
+msgstr "Delete"
+
+msgid "UI_AUDIT_SAVE"
+msgstr "Save"
+
+msgid "UI_AUDIT_EDIT_TITLE"
+msgstr "Edit placement"
+
+msgid "UI_AUDIT_DELETE_TITLE"
+msgstr "Delete level"
+
+msgid "UI_AUDIT_DELETE_CONFIRM"
+msgstr "Delete \"%s\"? This cannot be undone."
+
+msgid "UI_RESET_PROGRESS"
+msgstr "Reset progress"
+
+msgid "UI_RESET_PROGRESS_TITLE"
+msgstr "Reset all progress?"
+
+msgid "UI_RESET_PROGRESS_CONFIRM"
+msgstr "This permanently deletes all stars, unlocks, and level progress. Language and other settings are kept. This cannot be undone."
+
+msgid "UI_RESET_PROGRESS_YES"
+msgstr "Yes, delete all progress"

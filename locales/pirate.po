@@ -106,6 +106,9 @@ msgstr "Sea 10"
 msgid "UI_DIMENSION_MAP_HINT"
 msgstr "Scroll to spyglass · drag to sail · tap a diamond"
 
+msgid "UI_LEVEL_MAP_HINT"
+msgstr "Tap a voyage · pinch to spyglass · drag to sail"
+
 msgid "UI_DIMENSION_EMPTY"
 msgstr "No plunder on this sea yet, matey."
 
@@ -447,3 +450,123 @@ msgstr "Shape %d"
 
 msgid "UI_CREATOR_READY"
 msgstr "Ready, Cap’n"
+
+msgid "UI_EXIT_GAME"
+msgstr "Abandon ship"
+
+msgid "UI_EXIT_GAME_CONFIRM"
+msgstr "Ye sure ye want to leave the voyage?"
+
+msgid "UI_YES"
+msgstr "Aye"
+
+msgid "UI_NO"
+msgstr "Nay"
+
+msgid "UI_DAILY_PUZZLES"
+msgstr "Daily voyages"
+
+msgid "UI_DAILY_PUZZLE"
+msgstr "Voyage %d"
+
+msgid "UI_DAILY_EMPTY"
+msgstr "No voyages charted for this day."
+
+msgid "UI_MONTH_1"
+msgstr "January"
+
+msgid "UI_MONTH_2"
+msgstr "February"
+
+msgid "UI_MONTH_3"
+msgstr "March"
+
+msgid "UI_MONTH_4"
+msgstr "April"
+
+msgid "UI_MONTH_5"
+msgstr "May"
+
+msgid "UI_MONTH_6"
+msgstr "June"
+
+msgid "UI_MONTH_7"
+msgstr "July"
+
+msgid "UI_MONTH_8"
+msgstr "August"
+
+msgid "UI_MONTH_9"
+msgstr "September"
+
+msgid "UI_MONTH_10"
+msgstr "October"
+
+msgid "UI_MONTH_11"
+msgstr "November"
+
+msgid "UI_MONTH_12"
+msgstr "December"
+
+msgid "UI_CREATOR_DAILY_DATE"
+msgstr "Voyage date"
+
+msgid "UI_CREATOR_ERROR_DAILY_DATE"
+msgstr "Pick a date for this daily voyage."
+
+msgid "UI_LEVEL_AUDIT"
+msgstr "Chart audit"
+
+msgid "UI_AUDIT_TITLE"
+msgstr "Chart audit"
+
+msgid "UI_AUDIT_EMPTY"
+msgstr "No charts on the books."
+
+msgid "UI_AUDIT_TOTAL"
+msgstr "Charts aboard: %d"
+
+msgid "UI_AUDIT_DAILY_TOTAL"
+msgstr "Daily voyages: %d across %d dates"
+
+msgid "UI_AUDIT_DAILY_NONE"
+msgstr "No daily voyages plotted yet."
+
+msgid "UI_AUDIT_DAILY_COMPLETE"
+msgstr "Every date in the plotted range has at least one voyage."
+
+msgid "UI_AUDIT_DAILY_GAPS"
+msgstr "Missing voyage dates: %s"
+
+msgid "UI_AUDIT_DAILY_MORE"
+msgstr " (+%d more)"
+
+msgid "UI_AUDIT_EDIT"
+msgstr "Amend"
+
+msgid "UI_AUDIT_DELETE"
+msgstr "Scuttle"
+
+msgid "UI_AUDIT_SAVE"
+msgstr "Stow"
+
+msgid "UI_AUDIT_EDIT_TITLE"
+msgstr "Amend berth"
+
+msgid "UI_AUDIT_DELETE_TITLE"
+msgstr "Scuttle chart"
+
+msgid "UI_AUDIT_DELETE_CONFIRM"
+msgstr "Scuttle \"%s\"? That chart be gone for good."
+
+msgid "UI_RESET_PROGRESS"
+msgstr "Wipe the slate"
+
+msgid "UI_RESET_PROGRESS_TITLE"
+msgstr "Wipe all progress?"
+
+msgid "UI_RESET_PROGRESS_CONFIRM"
+msgstr "This scuttles every star, unlock, and voyage mark forever. Yer tongue and other settings stay. There be no sailing back."
+
+msgid "UI_RESET_PROGRESS_YES"
+msgstr "Aye, wipe it all"

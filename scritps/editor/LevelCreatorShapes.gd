@@ -113,4 +113,5 @@ static func largest_connected_component(cells: Array[Vector2i]) -> Array[Vector2
 
 
 static func default_shape_name(index: int) -> String:
-	return tr("UI_CREATOR_SHAPE_DEFAULT_NAME") % (index + 1)
+	var template := TranslationServer.translate("UI_CREATOR_SHAPE_DEFAULT_NAME")
+	return template % (index + 1)

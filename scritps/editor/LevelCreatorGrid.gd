@@ -3,6 +3,11 @@ class_name LevelCreatorGrid
 
 signal cell_clicked(cell: Vector2i, button_index: int)
 
+## High-contrast editor grid (playfield colors are too close to see seams).
+const GRID_FILL := Color(0.26, 0.28, 0.34, 1.0)
+const GRID_BORDER := Color(0.08, 0.09, 0.12, 1.0)
+const GRID_HOLE := Color(0.12, 0.12, 0.14, 1.0)
+
 var columns: int = 8
 var rows: int = 8
 var cell_size: int = 48
@@ -69,7 +74,8 @@ func _on_resized() -> void:
 		return
 	cell_size = mini(int(size.x / columns), int(size.y / rows))
 	var grid_pixel := Vector2(columns * cell_size, rows * cell_size)
-	grid_origin = (size - grid_pixel) * 0.5
+	## Integer origin keeps every cell edge on a whole pixel.
+	grid_origin = ((size - grid_pixel) * 0.5).floor()
 	queue_redraw()
 
 
@@ -112,18 +118,23 @@ func _update_hover_preview() -> void:
 
 
 func _draw() -> void:
-	if columns <= 0 or rows <= 0:
+	if columns <= 0 or rows <= 0 or cell_size <= 2:
 		return
 
+	## Same approach as the playfield: full cell = border color, inset = fill.
+	## Dark border on lighter fill keeps every seam visible under UI scale.
 	for y in rows:
 		for x in columns:
 			var cell := Vector2i(x, y)
 			var rect := _cell_rect(cell)
 			if is_cell_disabled(cell):
-				draw_rect(rect, UiTheme.HOLE_TINT)
+				draw_rect(rect, GRID_HOLE)
 				continue
-			draw_rect(rect, UiTheme.PLAYFIELD_TILE_BORDER)
-			draw_rect(rect.grow(-1.0), UiTheme.PLAYFIELD_TILE)
+			draw_rect(rect, GRID_BORDER)
+			draw_rect(
+				Rect2(rect.position + Vector2.ONE, Vector2(cell_size - 2, cell_size - 2)),
+				GRID_FILL
+			)
 
 	for i in shapes.size():
 		_draw_shape(i)
@@ -173,7 +184,7 @@ func _draw_hover_preview() -> void:
 
 func _cell_rect(cell: Vector2i) -> Rect2:
 	return Rect2(
-		grid_origin + Vector2(cell) * float(cell_size),
+		grid_origin + Vector2(cell.x * cell_size, cell.y * cell_size),
 		Vector2(cell_size, cell_size)
 	)
 

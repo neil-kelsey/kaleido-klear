@@ -68,6 +68,21 @@ static func style_menu_button(button: Button) -> void:
 	)
 
 
+static func style_danger_menu_button(button: Button) -> void:
+	## Destructive actions (reset progress, etc.).
+	button.add_theme_stylebox_override("normal", rounded_stylebox(PLAY, 20))
+	button.add_theme_stylebox_override("hover", rounded_stylebox(PLAY_HOVER, 20))
+	button.add_theme_stylebox_override("pressed", rounded_stylebox(PLAY_PRESSED, 20))
+	button.add_theme_stylebox_override("focus", rounded_stylebox(PLAY_HOVER, 20))
+	button.add_theme_color_override("font_color", TEXT_ON_DARK)
+	button.add_theme_font_size_override("font_size", menu_font_size(MENU_BUTTON_FONT_SIZE))
+	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, float(MIN_MENU_BUTTON_HEIGHT))
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.expand_icon = true
+	button.add_theme_constant_override("icon_max_width", MENU_BUTTON_ICON_SIZE)
+	button.add_theme_constant_override("h_separation", 16)
+
+
 static func style_hud_button(button: Button) -> void:
 	## In-game chrome — readable on phone, smaller than full menu rows.
 	_style_text_button(button, menu_font_size(32, 28), 72, 28, 14)

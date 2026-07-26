@@ -2,6 +2,7 @@ extends Control
 
 const MAIN_MENU_SCENE := "res://scenes/ui/main_menu.tscn"
 const LEVEL_CREATOR_SCENE := "res://scenes/editor/level_creator.tscn"
+const LEVEL_AUDIT_SCENE := "res://scenes/ui/level_audit.tscn"
 
 @onready var title_label: Label = %TitleLabel
 @onready var back_button: Button = %BackButton
@@ -13,7 +14,10 @@ const LEVEL_CREATOR_SCENE := "res://scenes/editor/level_creator.tscn"
 @onready var develop_mode_label: Label = %DevelopModeLabel
 @onready var develop_mode_checkbox: CheckBox = %DevelopModeCheckBox
 @onready var level_creator_button: Button = %LevelCreatorButton
+@onready var level_audit_button: Button = %LevelAuditButton
+@onready var reset_progress_button: Button = %ResetProgressButton
 @onready var coming_soon_label: Label = %ComingSoonLabel
+@onready var reset_confirm_modal: Control = %ResetConfirmModal
 
 var _updating_language_option := false
 
@@ -29,15 +33,19 @@ func _ready() -> void:
 	UiTheme.style_settings_row_label(sound_label)
 	UiTheme.style_settings_row_label(music_label)
 	UiTheme.style_settings_row_label(develop_mode_label)
+	UiTheme.style_danger_menu_button(reset_progress_button)
 	UiTheme.style_menu_hint(coming_soon_label)
 	if OS.is_debug_build():
 		develop_mode_checkbox.button_pressed = GameSession.develop_mode
 		develop_mode_checkbox.custom_minimum_size = Vector2(64, 64)
 		UiTheme.style_menu_button(level_creator_button)
+		UiTheme.style_menu_button(level_audit_button)
 		level_creator_button.visible = GameSession.develop_mode
+		level_audit_button.visible = GameSession.develop_mode
 	else:
 		develop_mode_row.visible = false
 		level_creator_button.visible = false
+		level_audit_button.visible = false
 
 
 func _notification(what: int) -> void:
@@ -72,6 +80,8 @@ func _apply_translations() -> void:
 	music_label.text = tr("UI_MUSIC")
 	develop_mode_label.text = tr("UI_DEVELOP_MODE")
 	level_creator_button.text = tr("UI_LEVEL_CREATOR")
+	level_audit_button.text = tr("UI_LEVEL_AUDIT")
+	reset_progress_button.text = tr("UI_RESET_PROGRESS")
 	coming_soon_label.text = tr("UI_COMING_SOON")
 	## Refresh option labels in the newly selected tongue.
 	_populate_language_option()
@@ -87,11 +97,36 @@ func _on_language_option_item_selected(index: int) -> void:
 func _on_develop_mode_checkbox_toggled(enabled: bool) -> void:
 	GameSession.set_develop_mode(enabled)
 	level_creator_button.visible = enabled
+	level_audit_button.visible = enabled
 
 
 func _on_level_creator_button_pressed() -> void:
 	get_tree().change_scene_to_file(LEVEL_CREATOR_SCENE)
 
 
+func _on_level_audit_button_pressed() -> void:
+	get_tree().change_scene_to_file(LEVEL_AUDIT_SCENE)
+
+
+func _on_reset_progress_button_pressed() -> void:
+	reset_confirm_modal.show_modal(
+		"UI_RESET_PROGRESS_TITLE",
+		"UI_RESET_PROGRESS_CONFIRM",
+		"UI_RESET_PROGRESS_YES",
+		"UI_NO"
+	)
+
+
+func _on_reset_confirm_modal_confirmed() -> void:
+	GameSession.reset_progress()
+
+
 func _on_back_button_pressed() -> void:
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+
+
+func handle_back() -> void:
+	if reset_confirm_modal != null and reset_confirm_modal.visible:
+		reset_confirm_modal.hide_modal()
+		return
+	_on_back_button_pressed()

@@ -1,8 +1,8 @@
 extends RefCounted
 class_name StarChartBaker
 
-## One-shot baker for the dimension-map sky chart.
-## Renders the circular planisphere into a vertical strip covering the linear path.
+## One-shot baker for star-map sky charts (dimension path + level grid).
+## Renders the circular planisphere into a crop strip (1px = 1 world unit).
 
 ## Large enough that Dimension 10 (≈ y -2700) sits well inside the circle.
 const CHART_RADIUS := 3400.0
@@ -21,22 +21,40 @@ const GUIDE_OUTER := Color(0.25, 0.35, 0.55, 0.45)
 const STAR_COLOR := Color(0.18, 0.28, 0.48, 0.85)
 const CONSTELLATION_COLOR := Color(0.22, 0.32, 0.55, 0.4)
 
-## World-space crop covering the linear dimension path (1px = 1 world unit).
+## World-space crop covering the linear dimension path.
 ## Keep in sync with DimensionMap.STRIP_WORLD.
 const STRIP_WORLD := Rect2(-560, -3600, 1120, 4300)
 const OUTPUT_PATH := "res://assets/backgrounds/dimension_star_chart.jpg"
 
+## Crop for level select: hub at (0,0), ~100 levels in 5 columns growing +Y.
+## Keep in sync with DimensionLevels.STRIP_WORLD.
+## Capacity: hub gap 160 + 20 rows × 100 spacing + bottom margin.
+const LEVEL_STRIP_WORLD := Rect2(-420, -180, 840, 2520)
+const LEVEL_OUTPUT_PATH := "res://assets/backgrounds/level_star_chart.jpg"
+
+static var _active_strip: Rect2 = STRIP_WORLD
+
 
 static func bake_and_save(path: String = OUTPUT_PATH) -> Error:
+	return _bake_and_save_strip(STRIP_WORLD, path)
+
+
+static func bake_level_chart_and_save(path: String = LEVEL_OUTPUT_PATH) -> Error:
+	return _bake_and_save_strip(LEVEL_STRIP_WORLD, path)
+
+
+static func _bake_and_save_strip(strip: Rect2, path: String) -> Error:
+	_active_strip = strip
 	var image := bake_strip_image()
+	_active_strip = STRIP_WORLD
 	var abs_path := ProjectSettings.globalize_path(path)
 	DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
 	return image.save_jpg(abs_path, 0.92)
 
 
 static func bake_strip_image() -> Image:
-	var w := int(STRIP_WORLD.size.x)
-	var h := int(STRIP_WORLD.size.y)
+	var w := int(_active_strip.size.x)
+	var h := int(_active_strip.size.y)
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
 	img.fill(CHART_BG)
 
@@ -56,8 +74,12 @@ static func strip_world_rect() -> Rect2:
 	return STRIP_WORLD
 
 
+static func level_strip_world_rect() -> Rect2:
+	return LEVEL_STRIP_WORLD
+
+
 static func _world_to_pixel(world: Vector2) -> Vector2:
-	return world - STRIP_WORLD.position
+	return world - _active_strip.position
 
 
 static func _hash01(i: int, salt: int) -> float:
