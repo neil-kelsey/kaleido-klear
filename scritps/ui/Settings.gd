@@ -26,20 +26,20 @@ func _ready() -> void:
 	_populate_language_option()
 	_apply_translations()
 	UiTheme.style_menu_title(title_label)
-	UiTheme.style_menu_button(back_button)
+	UiTheme.style_nav_button(back_button)
 	back_button.icon = load("res://assets/icons/back_icon.svg")
 	UiTheme.style_settings_row_label(language_label)
 	UiTheme.style_settings_option_field(language_option)
 	UiTheme.style_settings_row_label(sound_label)
 	UiTheme.style_settings_row_label(music_label)
 	UiTheme.style_settings_row_label(develop_mode_label)
-	UiTheme.style_danger_menu_button(reset_progress_button)
+	UiTheme.style_danger_button(reset_progress_button)
 	UiTheme.style_menu_hint(coming_soon_label)
 	if OS.is_debug_build():
 		develop_mode_checkbox.button_pressed = GameSession.develop_mode
 		develop_mode_checkbox.custom_minimum_size = Vector2(64, 64)
-		UiTheme.style_menu_button(level_creator_button)
-		UiTheme.style_menu_button(level_audit_button)
+		UiTheme.style_secondary_button(level_creator_button)
+		UiTheme.style_secondary_button(level_audit_button)
 		level_creator_button.visible = GameSession.develop_mode
 		level_audit_button.visible = GameSession.develop_mode
 	else:

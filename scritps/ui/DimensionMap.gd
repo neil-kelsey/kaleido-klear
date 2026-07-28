@@ -69,7 +69,7 @@ func _ready() -> void:
 	_selected_index = _focus_dimension_index()
 	camera.make_current()
 	back_button.pressed.connect(_on_back_pressed)
-	UiTheme.style_menu_button(back_button)
+	UiTheme.style_nav_button(back_button)
 	back_button.icon = load("res://assets/icons/back_icon.svg")
 	back_button.text = "  " + tr("UI_BACK")
 	hint_label.text = tr("UI_DIMENSION_MAP_HINT")

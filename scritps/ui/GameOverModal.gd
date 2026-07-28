@@ -14,8 +14,8 @@ signal closed
 func _ready() -> void:
 	visible = false
 	_apply_translations()
-	UiTheme.style_menu_button(replay_button)
-	UiTheme.style_menu_button(level_select_button)
+	UiTheme.style_primary_button(replay_button)
+	UiTheme.style_secondary_button(level_select_button)
 	UiTheme.style_close_button(close_button)
 	close_button.tooltip_text = tr("UI_CLOSE")
 

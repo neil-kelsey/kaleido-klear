@@ -79,7 +79,7 @@ func _ready() -> void:
 
 	camera.make_current()
 	back_button.pressed.connect(_on_back_pressed)
-	UiTheme.style_menu_button(back_button)
+	UiTheme.style_nav_button(back_button)
 	back_button.icon = load("res://assets/icons/back_icon.svg")
 	_apply_translations()
 	UiTheme.style_menu_hint(hint_label)
@@ -224,19 +224,7 @@ func _draw() -> void:
 func _draw_map_lines() -> void:
 	if _level_positions.is_empty():
 		return
-	## Spokes from hub into the first row — the meeting point at the map center.
-	var first_row := mini(COLUMNS, _level_positions.size())
-	for i in first_row:
-		var to_c: Vector2 = _level_positions[i]
-		var unlocked := GameSession.is_level_unlocked(_levels[i])
-		var from_p := _diamond_edge_point(_hub_pos, to_c, HUB_DIAMOND_SIZE)
-		var to_p := _diamond_edge_point(to_c, _hub_pos, LEVEL_DIAMOND_SIZE)
-		if unlocked:
-			draw_line(from_p, to_p, _theme_color, LINE_WIDTH, true)
-		else:
-			_draw_dashed_line(from_p, to_p, LOCKED_GREY, LINE_WIDTH)
-
-	## Vertical links down each column.
+	## Vertical links down each column (no spokes from the dimension hub).
 	for i in _level_positions.size():
 		var below := i + COLUMNS
 		if below >= _level_positions.size():

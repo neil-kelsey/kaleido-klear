@@ -25,9 +25,9 @@ var _playtest_mode: bool = false
 func _ready() -> void:
 	visible = false
 	_apply_translations()
-	UiTheme.style_menu_button(next_level_button)
-	UiTheme.style_menu_button(remove_ads_button)
-	UiTheme.style_menu_button(share_button)
+	UiTheme.style_primary_button(next_level_button)
+	UiTheme.style_secondary_button(remove_ads_button)
+	UiTheme.style_secondary_button(share_button)
 	UiTheme.style_close_button(close_button)
 	close_button.tooltip_text = tr("UI_CLOSE")
 

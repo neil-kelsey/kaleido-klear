@@ -17,13 +17,35 @@ const HOLE_TINT := Color(0, 0, 0, 0.1)
 const PLAYFIELD_TILE := Color(0.16, 0.16, 0.2, 1.0)
 const PLAYFIELD_TILE_BORDER := Color(0.12, 0.12, 0.15, 1.0)
 
+## Brand CTA palette — single source of truth for primary / secondary buttons.
+## Keep in sync with MenuActionButton (home hero CTAs use these same tokens).
+const PRIMARY := Color(0.0, 0.28, 0.66, 1.0) ## #0047A8
+const PRIMARY_HOVER := Color(0.04, 0.34, 0.74, 1.0)
+const PRIMARY_PRESSED := Color(0.0, 0.22, 0.56, 1.0)
+const SECONDARY_BG := Color(1.0, 1.0, 1.0, 1.0)
+const SECONDARY_BG_HOVER := Color(0.96, 0.97, 1.0, 1.0)
+const SECONDARY_BG_PRESSED := Color(0.9, 0.92, 0.96, 1.0)
+const BUTTON_CORNER_RADIUS := 40
+const BUTTON_BORDER_WIDTH := 3
+const BUTTON_FONT := preload("res://assets/fonts/Quicksand-Medium.ttf")
+const BUTTON_LETTER_SPACING := 3
+const BUTTON_WORD_SPACING := 10
+
+enum ButtonRole { PRIMARY, SECONDARY, DANGER }
+enum ButtonScale { STANDARD, HUD, COMPACT }
+
 ## Floor sizes so phone / small preview windows stay readable.
 const MIN_MENU_FONT_SIZE := 56
 const MIN_MENU_TITLE_FONT_SIZE := 64
 const MIN_MENU_HINT_FONT_SIZE := 36
 const MIN_MENU_BUTTON_HEIGHT := 108
-const MENU_BUTTON_FONT_SIZE := 64
+const MENU_BUTTON_FONT_SIZE := 40
 const MENU_BUTTON_ICON_SIZE := 44
+const HUD_BUTTON_HEIGHT := 72
+const HUD_BUTTON_FONT_SIZE := 28
+const COMPACT_BUTTON_HEIGHT := 48
+const COMPACT_BUTTON_FONT_SIZE := 18
+const COMPACT_BUTTON_RADIUS := 22
 
 
 static func menu_font_size(desired: int, minimum: int = MIN_MENU_FONT_SIZE) -> int:
@@ -32,6 +54,14 @@ static func menu_font_size(desired: int, minimum: int = MIN_MENU_FONT_SIZE) -> i
 
 static func apply_label_font(label: Label, desired: int, minimum: int = MIN_MENU_FONT_SIZE) -> void:
 	label.add_theme_font_size_override("font_size", menu_font_size(desired, minimum))
+
+
+static func button_typeface() -> Font:
+	var font := FontVariation.new()
+	font.base_font = BUTTON_FONT
+	font.spacing_glyph = BUTTON_LETTER_SPACING
+	font.spacing_space = BUTTON_WORD_SPACING
+	return font
 
 
 static func circle_stylebox(color: Color, radius: float = 999.0) -> StyleBoxFlat:
@@ -58,54 +88,145 @@ static func rounded_stylebox(color: Color, radius: int = 20) -> StyleBoxFlat:
 	return style
 
 
-static func style_menu_button(button: Button) -> void:
-	_style_text_button(
-		button,
-		menu_font_size(MENU_BUTTON_FONT_SIZE),
-		MIN_MENU_BUTTON_HEIGHT,
-		MENU_BUTTON_ICON_SIZE,
-		20
-	)
+static func brand_button_stylebox(
+	role: ButtonRole,
+	state: StringName,
+	scale: ButtonScale = ButtonScale.STANDARD
+) -> StyleBoxFlat:
+	var radius := COMPACT_BUTTON_RADIUS if scale == ButtonScale.COMPACT else BUTTON_CORNER_RADIUS
+	var style := StyleBoxFlat.new()
+	style.set_corner_radius_all(radius)
+	match role:
+		ButtonRole.PRIMARY:
+			match state:
+				&"hover", &"focus":
+					style.bg_color = PRIMARY_HOVER
+				&"pressed":
+					style.bg_color = PRIMARY_PRESSED
+				_:
+					style.bg_color = PRIMARY
+			style.set_border_width_all(0)
+		ButtonRole.DANGER:
+			match state:
+				&"hover", &"focus":
+					style.bg_color = PLAY_HOVER
+				&"pressed":
+					style.bg_color = PLAY_PRESSED
+				_:
+					style.bg_color = PLAY
+			style.set_border_width_all(0)
+		_:
+			match state:
+				&"hover", &"focus":
+					style.bg_color = SECONDARY_BG_HOVER
+				&"pressed":
+					style.bg_color = SECONDARY_BG_PRESSED
+				_:
+					style.bg_color = SECONDARY_BG
+			style.border_color = PRIMARY
+			style.set_border_width_all(BUTTON_BORDER_WIDTH)
+	var pad_h := 16 if scale == ButtonScale.COMPACT else 28
+	var pad_v := 10 if scale == ButtonScale.COMPACT else (16 if scale == ButtonScale.HUD else 22)
+	style.content_margin_left = pad_h
+	style.content_margin_right = pad_h
+	style.content_margin_top = pad_v
+	style.content_margin_bottom = pad_v
+	if role == ButtonRole.SECONDARY and state != &"pressed":
+		style.shadow_color = Color(0, 0, 0, 0.12)
+		style.shadow_size = 4 if scale != ButtonScale.STANDARD else 6
+		style.shadow_offset = Vector2(0, 2 if scale != ButtonScale.STANDARD else 3)
+	return style
 
 
-static func style_danger_menu_button(button: Button) -> void:
-	## Destructive actions (reset progress, etc.).
-	button.add_theme_stylebox_override("normal", rounded_stylebox(PLAY, 20))
-	button.add_theme_stylebox_override("hover", rounded_stylebox(PLAY_HOVER, 20))
-	button.add_theme_stylebox_override("pressed", rounded_stylebox(PLAY_PRESSED, 20))
-	button.add_theme_stylebox_override("focus", rounded_stylebox(PLAY_HOVER, 20))
-	button.add_theme_color_override("font_color", TEXT_ON_DARK)
-	button.add_theme_font_size_override("font_size", menu_font_size(MENU_BUTTON_FONT_SIZE))
-	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, float(MIN_MENU_BUTTON_HEIGHT))
-	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.expand_icon = true
-	button.add_theme_constant_override("icon_max_width", MENU_BUTTON_ICON_SIZE)
-	button.add_theme_constant_override("h_separation", 16)
-
-
-static func style_hud_button(button: Button) -> void:
-	## In-game chrome — readable on phone, smaller than full menu rows.
-	_style_text_button(button, menu_font_size(32, 28), 72, 28, 14)
-
-
-static func _style_text_button(
+## Single entry point for branded buttons. Prefer the role wrappers below.
+static func style_button(
 	button: Button,
-	font_size: int,
-	min_height: int,
-	icon_size: int,
-	corner_radius: int
+	role: ButtonRole,
+	scale: ButtonScale = ButtonScale.STANDARD,
+	left_align: bool = false
 ) -> void:
-	button.add_theme_stylebox_override("normal", rounded_stylebox(BUTTON, corner_radius))
-	button.add_theme_stylebox_override("hover", rounded_stylebox(BUTTON_HOVER, corner_radius))
-	button.add_theme_stylebox_override("pressed", rounded_stylebox(BUTTON_PRESSED, corner_radius))
-	button.add_theme_stylebox_override("focus", rounded_stylebox(BUTTON_HOVER, corner_radius))
-	button.add_theme_color_override("font_color", TEXT_ON_DARK)
+	button.add_theme_stylebox_override("normal", brand_button_stylebox(role, &"normal", scale))
+	button.add_theme_stylebox_override("hover", brand_button_stylebox(role, &"hover", scale))
+	button.add_theme_stylebox_override("pressed", brand_button_stylebox(role, &"pressed", scale))
+	button.add_theme_stylebox_override("focus", brand_button_stylebox(role, &"focus", scale))
+	button.add_theme_stylebox_override("disabled", brand_button_stylebox(role, &"pressed", scale))
+
+	var font_color := Color.WHITE
+	if role == ButtonRole.SECONDARY:
+		font_color = PRIMARY
+	button.add_theme_color_override("font_color", font_color)
+	button.add_theme_color_override("font_hover_color", font_color)
+	button.add_theme_color_override("font_pressed_color", font_color)
+	button.add_theme_color_override("font_focus_color", font_color)
+	button.add_theme_color_override("font_disabled_color", Color(font_color, 0.45))
+
+	button.add_theme_font_override("font", button_typeface())
+	var font_size := MENU_BUTTON_FONT_SIZE
+	var min_height := MIN_MENU_BUTTON_HEIGHT
+	var icon_size := MENU_BUTTON_ICON_SIZE
+	match scale:
+		ButtonScale.HUD:
+			font_size = HUD_BUTTON_FONT_SIZE
+			min_height = HUD_BUTTON_HEIGHT
+			icon_size = 28
+		ButtonScale.COMPACT:
+			font_size = COMPACT_BUTTON_FONT_SIZE
+			min_height = COMPACT_BUTTON_HEIGHT
+			icon_size = 22
+		_:
+			pass
 	button.add_theme_font_size_override("font_size", font_size)
 	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, float(min_height))
-	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT if left_align else HORIZONTAL_ALIGNMENT_CENTER
 	button.expand_icon = true
 	button.add_theme_constant_override("icon_max_width", icon_size)
 	button.add_theme_constant_override("h_separation", 16)
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+
+static func style_primary_button(
+	button: Button,
+	scale: ButtonScale = ButtonScale.STANDARD
+) -> void:
+	style_button(button, ButtonRole.PRIMARY, scale)
+
+
+static func style_secondary_button(
+	button: Button,
+	scale: ButtonScale = ButtonScale.STANDARD,
+	left_align: bool = false
+) -> void:
+	style_button(button, ButtonRole.SECONDARY, scale, left_align)
+
+
+static func style_danger_button(
+	button: Button,
+	scale: ButtonScale = ButtonScale.STANDARD
+) -> void:
+	style_button(button, ButtonRole.DANGER, scale)
+
+
+## Nav / list rows that need an icon on the left (Back, level rows).
+static func style_nav_button(
+	button: Button,
+	scale: ButtonScale = ButtonScale.STANDARD
+) -> void:
+	style_secondary_button(button, scale, true)
+
+
+static func style_menu_button(button: Button) -> void:
+	## Legacy alias — prefer style_nav_button / style_secondary_button.
+	style_nav_button(button)
+
+
+static func style_danger_menu_button(button: Button) -> void:
+	## Legacy alias — prefer style_danger_button.
+	style_danger_button(button)
+
+
+static func style_hud_button(button: Button) -> void:
+	## In-game chrome — compact secondary.
+	style_secondary_button(button, ButtonScale.HUD, true)
 
 
 static func style_menu_title(label: Label) -> void:
@@ -251,8 +372,8 @@ static func _apply_option_field_theme(
 ) -> void:
 	option.custom_minimum_size = Vector2(0, min_height)
 	option.add_theme_stylebox_override("normal", normal_style)
-	option.add_theme_stylebox_override("hover", focus_style)
 	option.add_theme_stylebox_override("pressed", normal_style)
+	option.add_theme_stylebox_override("hover", focus_style)
 	option.add_theme_stylebox_override("focus", focus_style)
 	option.add_theme_color_override("font_color", TEXT_ON_DARK)
 	option.add_theme_font_size_override("font_size", font_size)
@@ -278,20 +399,8 @@ static func style_row_option_field(option: OptionButton) -> void:
 	)
 
 
-static func style_play_button(button: Button) -> void:
-	var size := 200
-	button.custom_minimum_size = Vector2(size, size)
-	button.add_theme_stylebox_override("normal", circle_stylebox(PLAY))
-	button.add_theme_stylebox_override("hover", circle_stylebox(PLAY_HOVER))
-	button.add_theme_stylebox_override("pressed", circle_stylebox(PLAY_PRESSED))
-	button.add_theme_stylebox_override("focus", circle_stylebox(PLAY_HOVER))
-	button.icon = load("res://assets/icons/play_icon.svg")
-	button.expand_icon = true
-	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_constant_override("icon_max_width", 80)
-
-
 static func style_close_button(button: Button) -> void:
+	## Compact circular primary control for modal dismiss.
 	var size := 44
 	button.custom_minimum_size = Vector2(size, size)
 	button.text = ""
@@ -299,7 +408,8 @@ static func style_close_button(button: Button) -> void:
 	button.expand_icon = true
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.add_theme_constant_override("icon_max_width", 20)
-	button.add_theme_stylebox_override("normal", circle_stylebox(BUTTON))
-	button.add_theme_stylebox_override("hover", circle_stylebox(BUTTON_HOVER))
-	button.add_theme_stylebox_override("pressed", circle_stylebox(BUTTON_PRESSED))
-	button.add_theme_stylebox_override("focus", circle_stylebox(BUTTON_HOVER))
+	button.add_theme_stylebox_override("normal", circle_stylebox(PRIMARY))
+	button.add_theme_stylebox_override("hover", circle_stylebox(PRIMARY_HOVER))
+	button.add_theme_stylebox_override("pressed", circle_stylebox(PRIMARY_PRESSED))
+	button.add_theme_stylebox_override("focus", circle_stylebox(PRIMARY_HOVER))
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND

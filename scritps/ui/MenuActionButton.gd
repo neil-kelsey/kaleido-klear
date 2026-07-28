@@ -1,23 +1,15 @@
 extends Button
 class_name MenuActionButton
 
-## Primary (blue + shine) or secondary (white + soft shadow) menu CTA.
-## Styled to match the design reference: moderate radius, medium type, >> / gear.
+## Home hero CTA. Visual language comes from UiTheme brand tokens;
+## this component adds shine, icons, and press scale on top.
 
 enum Kind { PRIMARY, SECONDARY }
 enum IconStyle { CHEVRON, GEAR }
 
-const FONT := preload("res://assets/fonts/Quicksand-Medium.ttf")
 const SHINE_SHADER := preload("res://assets/shaders/button_shine.gdshader")
 const CHEVRON_ICON := preload("res://assets/icons/chevron_double.svg")
 
-## Royal blue from design (~#0047A8), slightly darker than the reference mid-tone.
-const PRIMARY_BLUE := Color(0.0, 0.28, 0.66, 1.0)
-const PRIMARY_BLUE_HOVER := Color(0.04, 0.34, 0.74, 1.0)
-const PRIMARY_BLUE_PRESSED := Color(0.0, 0.22, 0.56, 1.0)
-const SECONDARY_BG := Color(1, 1, 1, 1)
-const SECONDARY_BORDER_WIDTH := 3
-const CORNER_RADIUS := 18
 const PRESS_SCALE := 0.97
 const SHINE_CYCLE_SEC := 2.8
 const CTA_FONT_SIZE := 40
@@ -80,28 +72,23 @@ func _clear_button_chrome() -> void:
 		add_theme_stylebox_override(state, empty)
 
 
-func _cta_font() -> Font:
-	## Quicksand Medium — rounded geometric, softer than Montserrat.
-	var font := FontVariation.new()
-	font.base_font = FONT
-	font.spacing_glyph = 2
-	font.spacing_space = 8
-	return font
-
-
 func _face_style(bg: Color, with_shadow: bool) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
+	var role := (
+		UiTheme.ButtonRole.PRIMARY if kind == Kind.PRIMARY else UiTheme.ButtonRole.SECONDARY
+	)
+	var state := &"normal"
+	if button_pressed:
+		state = &"pressed"
+	elif _hovering:
+		state = &"hover"
+	var style := UiTheme.brand_button_stylebox(role, state)
 	style.bg_color = bg
-	style.set_corner_radius_all(CORNER_RADIUS)
-	if kind == Kind.SECONDARY:
-		style.border_color = PRIMARY_BLUE
-		style.set_border_width_all(SECONDARY_BORDER_WIDTH)
-	else:
-		style.set_border_width_all(0)
-	if with_shadow:
+	if with_shadow and kind == Kind.SECONDARY and not button_pressed:
 		style.shadow_color = Color(0, 0, 0, 0.12)
 		style.shadow_size = 6
 		style.shadow_offset = Vector2(0, 3)
+	elif not with_shadow:
+		style.shadow_size = 0
 	return style
 
 
@@ -129,11 +116,11 @@ func _build() -> void:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
-	var text_color := Color.WHITE if kind == Kind.PRIMARY else PRIMARY_BLUE
-	var face_color := PRIMARY_BLUE if kind == Kind.PRIMARY else SECONDARY_BG
+	var text_color := Color.WHITE if kind == Kind.PRIMARY else UiTheme.PRIMARY
+	var face_color := UiTheme.PRIMARY if kind == Kind.PRIMARY else UiTheme.SECONDARY_BG
 
 	_label = Label.new()
-	_label.add_theme_font_override("font", _cta_font())
+	_label.add_theme_font_override("font", UiTheme.button_typeface())
 	_label.add_theme_font_size_override("font_size", CTA_FONT_SIZE)
 	_label.add_theme_color_override("font_color", text_color)
 	if kind == Kind.PRIMARY:
@@ -194,11 +181,11 @@ func _layout() -> void:
 func _base_color() -> Color:
 	if kind == Kind.PRIMARY:
 		if button_pressed:
-			return PRIMARY_BLUE_PRESSED
+			return UiTheme.PRIMARY_PRESSED
 		if _hovering:
-			return PRIMARY_BLUE_HOVER
-		return PRIMARY_BLUE
-	return SECONDARY_BG
+			return UiTheme.PRIMARY_HOVER
+		return UiTheme.PRIMARY
+	return UiTheme.SECONDARY_BG
 
 
 func _refresh_face_color() -> void:

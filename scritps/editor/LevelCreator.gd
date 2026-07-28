@@ -1610,35 +1610,11 @@ func _color_label(color: Block.TileColor) -> String:
 
 
 func _style_compact_action_button(button: Button) -> void:
-	var radius := 10
-	button.add_theme_stylebox_override("normal", UiTheme.rounded_stylebox(UiTheme.ACCENT, radius))
-	button.add_theme_stylebox_override(
-		"hover",
-		UiTheme.rounded_stylebox(UiTheme.ACCENT.lightened(0.12), radius)
-	)
-	button.add_theme_stylebox_override(
-		"pressed",
-		UiTheme.rounded_stylebox(UiTheme.ACCENT.darkened(0.08), radius)
-	)
-	button.add_theme_stylebox_override("focus", UiTheme.rounded_stylebox(UiTheme.ACCENT, radius))
-	button.add_theme_color_override("font_color", Color.WHITE)
-	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	button.add_theme_color_override("font_pressed_color", Color.WHITE)
-	button.add_theme_font_size_override("font_size", 18)
-	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	UiTheme.style_primary_button(button, UiTheme.ButtonScale.COMPACT)
 
 
 func _style_compact_secondary_button(button: Button) -> void:
-	var radius := 10
-	button.add_theme_stylebox_override("normal", UiTheme.rounded_stylebox(UiTheme.BUTTON, radius))
-	button.add_theme_stylebox_override("hover", UiTheme.rounded_stylebox(UiTheme.BUTTON_HOVER, radius))
-	button.add_theme_stylebox_override("pressed", UiTheme.rounded_stylebox(UiTheme.BUTTON_PRESSED, radius))
-	button.add_theme_stylebox_override("focus", UiTheme.rounded_stylebox(UiTheme.BUTTON_HOVER, radius))
-	button.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
-	button.add_theme_color_override("font_hover_color", UiTheme.TEXT_ON_DARK)
-	button.add_theme_color_override("font_pressed_color", UiTheme.TEXT_ON_DARK)
-	button.add_theme_font_size_override("font_size", 18)
-	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	UiTheme.style_secondary_button(button, UiTheme.ButtonScale.COMPACT)
 
 
 func _apply_compact_disabled_style(button: Button) -> void:

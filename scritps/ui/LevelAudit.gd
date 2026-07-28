@@ -33,7 +33,7 @@ func _ready() -> void:
 	UiTheme.style_menu_title(title_label)
 	UiTheme.style_menu_hint(summary_label)
 	UiTheme.style_menu_hint(empty_label)
-	UiTheme.style_menu_button(back_button)
+	UiTheme.style_nav_button(back_button)
 	back_button.icon = load("res://assets/icons/back_icon.svg")
 	_refresh()
 
@@ -288,14 +288,14 @@ func _make_row(level: LevelConfig) -> Control:
 	var edit_button := Button.new()
 	edit_button.text = tr("UI_AUDIT_EDIT")
 	edit_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	UiTheme.style_hud_button(edit_button)
+	UiTheme.style_secondary_button(edit_button, UiTheme.ButtonScale.HUD)
 	edit_button.pressed.connect(_on_edit_pressed.bind(level.level_id))
 	actions.add_child(edit_button)
 
 	var delete_button := Button.new()
 	delete_button.text = tr("UI_AUDIT_DELETE")
 	delete_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	UiTheme.style_hud_button(delete_button)
+	UiTheme.style_danger_button(delete_button, UiTheme.ButtonScale.HUD)
 	delete_button.pressed.connect(_on_delete_pressed.bind(level.level_id))
 	actions.add_child(delete_button)
 

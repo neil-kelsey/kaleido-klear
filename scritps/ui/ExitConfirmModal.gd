@@ -18,8 +18,8 @@ func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_apply_translations()
-	UiTheme.style_menu_button(yes_button)
-	UiTheme.style_menu_button(no_button)
+	UiTheme.style_primary_button(yes_button)
+	UiTheme.style_secondary_button(no_button)
 
 
 func _notification(what: int) -> void:

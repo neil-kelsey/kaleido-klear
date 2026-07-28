@@ -103,10 +103,10 @@ label_text = "DIMENSIONS"
 icon_style = 0
 
 [node name="MiddleSpacer" type="Control" parent="Margin/VBox"]
-custom_minimum_size = Vector2(0, 12)
+custom_minimum_size = Vector2(0, 4)
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 0.35
+size_flags_stretch_ratio = 0.12
 
 [node name="LevelSelectButton" type="Button" parent="Margin/VBox"]
 unique_name_in_owner = true

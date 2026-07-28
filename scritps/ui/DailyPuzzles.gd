@@ -20,7 +20,7 @@ func _ready() -> void:
 	UiTheme.style_menu_title(title_label)
 	UiTheme.style_menu_hint(date_label)
 	date_label.add_theme_color_override("font_color", Color(0.25, 0.35, 0.55, 0.9))
-	UiTheme.style_menu_button(back_button)
+	UiTheme.style_nav_button(back_button)
 	back_button.icon = load("res://assets/icons/back_icon.svg")
 	UiTheme.style_menu_hint(empty_label)
 	_build_levels()
@@ -60,12 +60,12 @@ func _build_levels() -> void:
 		if unlocked:
 			button.text = "  %s   %s" % [label, star_text]
 			button.icon = load("res://assets/icons/play_icon.svg")
-			UiTheme.style_menu_button(button)
+			UiTheme.style_nav_button(button)
 			button.pressed.connect(_on_level_pressed.bind(level))
 		else:
 			button.text = "  %s  —  %s" % [label, tr("UI_LOCKED")]
 			button.disabled = true
-			UiTheme.style_menu_button(button)
+			UiTheme.style_nav_button(button)
 		levels_container.add_child(button)
 
 

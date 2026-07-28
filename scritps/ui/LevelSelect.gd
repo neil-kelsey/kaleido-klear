@@ -11,7 +11,7 @@ const GAME_SCENE := "res://scenes/main.tscn"
 func _ready() -> void:
 	_apply_translations()
 	UiTheme.style_menu_title(title_label)
-	UiTheme.style_menu_button(back_button)
+	UiTheme.style_nav_button(back_button)
 	back_button.icon = load("res://assets/icons/back_icon.svg")
 	_build_sections()
 
@@ -45,7 +45,7 @@ func _build_sections() -> void:
 			var button := Button.new()
 			button.custom_minimum_size = Vector2(0, UiTheme.MIN_MENU_BUTTON_HEIGHT)
 			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-			UiTheme.style_menu_button(button)
+			UiTheme.style_nav_button(button)
 			var level_label := LevelCatalog.get_level_label(level)
 			var unlocked := GameSession.is_level_unlocked(level)
 			if unlocked:
