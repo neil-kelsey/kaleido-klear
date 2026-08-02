@@ -32,19 +32,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 136
-theme_override_constants/margin_top = 28
+theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 136
-theme_override_constants/margin_bottom = 48
+theme_override_constants/margin_bottom = 36
 
 [node name="VBox" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 18
 
 [node name="BrandTopSpacer" type="Control" parent="Margin/VBox"]
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 1.15
+size_flags_stretch_ratio = 0.28
 
 [node name="TitleBlock" type="VBoxContainer" parent="Margin/VBox"]
 layout_mode = 2
@@ -87,14 +87,14 @@ glow_strength = 0.85
 effect_radius = 26.0
 
 [node name="TopSpacer" type="Control" parent="Margin/VBox"]
-custom_minimum_size = Vector2(0, 12)
+custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 0.75
+size_flags_stretch_ratio = 0.22
 
 [node name="PlayButton" type="Button" parent="Margin/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 140)
+custom_minimum_size = Vector2(0, 260)
 layout_mode = 2
 flat = false
 script = ExtResource("4_action")
@@ -106,7 +106,7 @@ icon_style = 0
 custom_minimum_size = Vector2(0, 4)
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 0.12
+size_flags_stretch_ratio = 0.08
 
 [node name="LevelSelectButton" type="Button" parent="Margin/VBox"]
 unique_name_in_owner = true
@@ -127,6 +127,12 @@ script = ExtResource("4_action")
 kind = 1
 label_text = "SETTINGS"
 icon_style = 1
+
+[node name="BottomSpacer" type="Control" parent="Margin/VBox"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.35
 
 [node name="ExitConfirmModal" parent="." instance=ExtResource("5_exit")]
 unique_name_in_owner = true

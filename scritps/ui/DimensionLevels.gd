@@ -23,10 +23,9 @@ const INTRO_ZOOM_DURATION := 0.95
 
 const HUB_DIAMOND_SIZE := 84.0
 const LEVEL_DIAMOND_SIZE := 52.0
-const LINE_WIDTH := 2.2
-const DASH_LEN := 12.0
-const GAP_LEN := 9.0
 const FOCUS_TOP_MARGIN_PX := 96.0
+const GROUP_GAP := 56.0
+const GROUP_HEADER_FONT_SIZE := 15
 
 const CHART_BG := Color(0.97, 0.97, 0.985, 1.0)
 const STAR_COLOR := Color(0.18, 0.28, 0.48, 0.85)
@@ -47,6 +46,7 @@ const PAN_MAX_SPEED := 4200.0
 var _dimension_index: int = 0
 var _levels: Array[LevelConfig] = []
 var _level_positions: Array[Vector2] = []
+var _group_headers: Array = []
 var _hub_pos := Vector2.ZERO
 var _theme_color: Color = LevelCatalog.PRIMARY_BLUE
 var _star_chart_tex: Texture2D
@@ -69,9 +69,11 @@ func _ready() -> void:
 	_dimension_index = clampi(GameSession.current_dimension_index, 0, LevelCatalog.get_dimension_count() - 1)
 	_theme_color = LevelCatalog.get_dimension_color(_dimension_index)
 	_levels = LevelCatalog.get_section_levels(_dimension_index)
-	_level_positions = LevelCatalog.build_level_grid_positions(
-		_levels.size(), COLUMNS, COL_SPACING, ROW_SPACING, HUB_GAP
+	var layout: Dictionary = LevelCatalog.build_grouped_level_layout(
+		_levels, COLUMNS, COL_SPACING, ROW_SPACING, HUB_GAP, GROUP_GAP
 	)
+	_level_positions = layout.positions
+	_group_headers = layout.headers
 	_hub_pos = Vector2.ZERO
 	_star_chart_tex = load(STAR_CHART_PATH) as Texture2D
 	if _star_chart_tex == null:
@@ -215,29 +217,35 @@ func _draw() -> void:
 	else:
 		draw_rect(STRIP_WORLD, CHART_BG, true)
 
-	_draw_map_lines()
 	_draw_hub_diamond()
+	_draw_group_headers()
 	for i in _levels.size():
 		_draw_level_diamond(i)
 
 
-func _draw_map_lines() -> void:
-	if _level_positions.is_empty():
-		return
-	## Vertical links down each column (no spokes from the dimension hub).
-	for i in _level_positions.size():
-		var below := i + COLUMNS
-		if below >= _level_positions.size():
+func _draw_group_headers() -> void:
+	for header in _group_headers:
+		var key := str(header.get("title_key", ""))
+		if key.is_empty():
 			continue
-		var from_c: Vector2 = _level_positions[i]
-		var to_c: Vector2 = _level_positions[below]
-		var unlocked := GameSession.is_level_unlocked(_levels[below])
-		var from_p := _diamond_edge_point(from_c, to_c, LEVEL_DIAMOND_SIZE)
-		var to_p := _diamond_edge_point(to_c, from_c, LEVEL_DIAMOND_SIZE)
-		if unlocked:
-			draw_line(from_p, to_p, _theme_color.lightened(0.08), LINE_WIDTH, true)
-		else:
-			_draw_dashed_line(from_p, to_p, LOCKED_GREY, LINE_WIDTH)
+		var text := tr(key)
+		var pos: Vector2 = header.position
+		var text_size := _map_font.get_string_size(
+			text, HORIZONTAL_ALIGNMENT_LEFT, -1, GROUP_HEADER_FONT_SIZE
+		)
+		var text_pos := Vector2(
+			pos.x - text_size.x * 0.5,
+			pos.y + (_map_font.get_ascent(GROUP_HEADER_FONT_SIZE) - _map_font.get_descent(GROUP_HEADER_FONT_SIZE)) * 0.5
+		)
+		draw_string(
+			_map_font,
+			text_pos,
+			text,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			GROUP_HEADER_FONT_SIZE,
+			Color(0.22, 0.28, 0.42, 0.88)
+		)
 
 
 func _draw_hub_diamond() -> void:
@@ -297,16 +305,6 @@ func _diamond_points(center: Vector2, size: float) -> PackedVector2Array:
 	])
 
 
-func _diamond_edge_point(center: Vector2, toward: Vector2, size: float) -> Vector2:
-	var dir := toward - center
-	if dir.length_squared() < 0.0001:
-		return center
-	dir = dir.normalized()
-	var half := size * 0.5 + LINE_WIDTH * 0.5 + 1.0
-	var t := half / (absf(dir.x) + absf(dir.y))
-	return center + dir * t
-
-
 func _draw_selection_glow(center: Vector2, size: float, accent: Color) -> void:
 	var outer := _diamond_points(center, size * 1.45)
 	draw_colored_polygon(outer, Color(accent.r, accent.g, accent.b, 0.12))
@@ -328,24 +326,6 @@ func _draw_star_badge(center: Vector2, radius: float) -> void:
 		pts.append(center + Vector2(cos(inner_a), sin(inner_a)) * radius * 0.42)
 	draw_colored_polygon(pts, Color(0.95, 0.78, 0.2, 1.0))
 	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(1, 1, 1, 0.75), 1.2, true)
-
-
-func _draw_dashed_line(from_p: Vector2, to_p: Vector2, color: Color, width: float) -> void:
-	var delta := to_p - from_p
-	var length := delta.length()
-	if length < 1.0:
-		return
-	var dir := delta / length
-	var drawn := 0.0
-	var draw_on := true
-	while drawn < length:
-		var seg := DASH_LEN if draw_on else GAP_LEN
-		var a := from_p + dir * drawn
-		var b := from_p + dir * minf(drawn + seg, length)
-		if draw_on:
-			draw_line(a, b, color, width, true)
-		drawn += seg
-		draw_on = not draw_on
 
 
 func _unhandled_input(event: InputEvent) -> void:

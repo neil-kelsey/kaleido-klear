@@ -41,7 +41,16 @@ func _build_sections() -> void:
 		sections_container.add_child(section_title)
 
 		var section_levels := LevelCatalog.get_section_levels(section_index)
+		var prev_group := ""
 		for level in section_levels:
+			var group := level.group_title_key.strip_edges()
+			if not group.is_empty() and group != prev_group:
+				var group_title := Label.new()
+				group_title.text = tr(group)
+				UiTheme.style_menu_section_title(group_title)
+				group_title.add_theme_font_size_override("font_size", UiTheme.menu_font_size(22, 18))
+				sections_container.add_child(group_title)
+				prev_group = group
 			var button := Button.new()
 			button.custom_minimum_size = Vector2(0, UiTheme.MIN_MENU_BUTTON_HEIGHT)
 			button.alignment = HORIZONTAL_ALIGNMENT_LEFT

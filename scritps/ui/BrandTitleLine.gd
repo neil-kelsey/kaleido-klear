@@ -3,11 +3,12 @@ class_name BrandTitleLine
 
 ## Logo-style title with Montserrat ExtraBold + scrolling rainbow.
 ## Soft glow/shadow are layered offset copies (reliable across renderers).
+## Rainbow palette/phase come from BrandRainbow (shared with button borders).
 
 enum Style { RAINBOW_FILL, WHITE_RAINBOW_GLOW }
 
-const SHADER := preload("res://assets/shaders/brand_title.gdshader")
 const LOGO_FONT := preload("res://assets/fonts/Montserrat-ExtraBold.ttf")
+const BRAND_RAINBOW := preload("res://scritps/ui/BrandRainbow.gd")
 
 @export var title_text: String = "Kaleido"
 @export var style: Style = Style.RAINBOW_FILL
@@ -16,7 +17,6 @@ const LOGO_FONT := preload("res://assets/fonts/Montserrat-ExtraBold.ttf")
 @export var glow_strength: float = 0.9
 @export var effect_radius: float = 14.0
 
-var _phase: float = 0.0
 var _font: Font
 var _viewport: SubViewport
 var _label: Label
@@ -36,10 +36,11 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	_phase = fposmod(_phase + delta * scroll_speed, 1.0)
-	_fill_mat.set_shader_parameter("phase", _phase)
+	## Shared phase so title rainbow stays locked to button borders.
+	BRAND_RAINBOW.tick(delta)
+	BRAND_RAINBOW.sync_material(_fill_mat)
 	for mat in _effect_mats:
-		mat.set_shader_parameter("phase", _phase)
+		BRAND_RAINBOW.sync_material(mat)
 
 
 func set_title(text: String) -> void:
@@ -64,7 +65,6 @@ func fit_to_width(target_width: float) -> void:
 		else:
 			hi = mid - 1
 	font_size = best
-	# Keep glow/shadow proportional to type size (tighter for hero readability)
 	effect_radius = maxf(float(font_size) * 0.14, 10.0)
 	_refresh()
 
@@ -99,11 +99,8 @@ func _build() -> void:
 	_layer_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_layer_root)
 
-	_fill_mat = ShaderMaterial.new()
-	_fill_mat.shader = SHADER
-
+	_fill_mat = BRAND_RAINBOW.make_title_material(0)
 	_rebuild_effect_layers()
-
 	_fill_rect = _make_rect(_fill_mat, Color.WHITE)
 	add_child(_fill_rect)
 
@@ -128,10 +125,7 @@ func _make_rect(mat: ShaderMaterial, modulate: Color) -> TextureRect:
 
 
 func _add_effect_copy(offset: Vector2, alpha: float, mode: int) -> void:
-	var mat := ShaderMaterial.new()
-	mat.shader = SHADER
-	mat.set_shader_parameter("mode", mode)
-	mat.set_shader_parameter("phase", _phase)
+	var mat := BRAND_RAINBOW.make_title_material(mode)
 	_effect_mats.append(mat)
 	var rect := _make_rect(mat, Color(1, 1, 1, alpha))
 	rect.position = offset
@@ -142,7 +136,6 @@ func _rebuild_effect_layers() -> void:
 	_clear_effect_layers()
 	match style:
 		Style.RAINBOW_FILL:
-			# Soft, light drop shadow — tighter spread for contrast on white.
 			_fill_mat.set_shader_parameter("mode", 0)
 			var rings := 8
 			for ring in rings:
@@ -155,7 +148,6 @@ func _rebuild_effect_layers() -> void:
 					var offset := Vector2(cos(ang), sin(ang)) * radius + Vector2(0.0, effect_radius * 0.22)
 					_add_effect_copy(offset, alpha, 3)
 		Style.WHITE_RAINBOW_GLOW:
-			# Soft neon aura: larger, thinner layers so it fades instead of forming a bubble.
 			_fill_mat.set_shader_parameter("mode", 2)
 			var rings := 11
 			for ring in rings:
@@ -178,7 +170,6 @@ func _refresh() -> void:
 	_label.text = title_text
 	_rebuild_effect_layers()
 
-	# Keep horizontal room for glow, but don't inflate vertical gaps between titles/icon.
 	var pad_x := maxf(effect_radius * 2.6, 28.0)
 	var pad_y := maxf(effect_radius * 0.7, 8.0)
 	var text_size := _font.get_string_size(title_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)

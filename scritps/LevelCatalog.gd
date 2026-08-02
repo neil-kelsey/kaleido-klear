@@ -67,6 +67,15 @@ const SECTIONS: Array[Dictionary] = [
 		"background": "",
 		"parent": 8,
 	},
+	## Side branch for level-design experiments — sits next to Dimension 1.
+	{
+		"title_key": "UI_DIMENSION_TEST",
+		"color": Color(0.55, 0.52, 0.62, 1.0),
+		"background": "",
+		"parent": 0,
+		"starts_unlocked": true,
+		"map_offset": Vector2(210.0, 35.0),
+	},
 ]
 
 ## Cached project levels grouped by dimension index.
@@ -133,8 +142,9 @@ func is_dimension_unlocked(section_index: int) -> bool:
 	if section_index < 0 or section_index >= SECTIONS.size():
 		return false
 	## Dimension progression is always enforced on the star map (even in develop mode).
-	## Dimension 1 is always available; each next unlocks after the previous is cleared.
-	if section_index == 0:
+	## Dimension 1 is always available; marked test branches can start unlocked too.
+	var section: Dictionary = SECTIONS[section_index]
+	if section_index == 0 or bool(section.get("starts_unlocked", false)):
 		return true
 	return is_dimension_complete(section_index - 1)
 
@@ -272,6 +282,7 @@ func get_first_level_of_next_section(current: LevelConfig) -> LevelConfig:
 
 ## Linear path upward with a gentle zig-zag (not a perfectly straight line).
 ## Dimension 1 stays at the origin; each next step is above with a slight side sway.
+## Entries with `map_offset` are placed relative to their parent (side branches).
 func build_dimension_positions(step_distance: float = 280.0) -> Array[Vector2]:
 	var count := SECTIONS.size()
 	var positions: Array[Vector2] = []
@@ -280,6 +291,12 @@ func build_dimension_positions(step_distance: float = 280.0) -> Array[Vector2]:
 	## Alternating lean amounts so the path feels organic but readable.
 	var sways: Array[float] = [0.0, 95.0, -70.0, 110.0, -85.0, 75.0, -100.0, 60.0, -90.0, 80.0]
 	for i in range(1, count):
+		var section: Dictionary = SECTIONS[i]
+		if section.has("map_offset"):
+			var parent_i := int(section.get("parent", -1))
+			var base := positions[parent_i] if parent_i >= 0 and parent_i < i else Vector2.ZERO
+			positions[i] = base + (section["map_offset"] as Vector2)
+			continue
 		var sway := sways[i] if i < sways.size() else ((1.0 if i % 2 == 0 else -1.0) * 80.0)
 		positions[i] = Vector2(sway, -step_distance * float(i))
 	return positions
@@ -303,3 +320,48 @@ func build_level_grid_positions(
 		var y := hub_gap + float(row) * row_spacing
 		positions.append(Vector2(x, y))
 	return positions
+
+
+## Like build_level_grid_positions, but starts a new row (+ header gap) when
+## level.group_title_key changes. Returns { positions, headers }.
+## headers: Array[{ "title_key": String, "position": Vector2 }]
+func build_grouped_level_layout(
+	levels: Array[LevelConfig],
+	columns: int = 5,
+	col_spacing: float = 100.0,
+	row_spacing: float = 100.0,
+	hub_gap: float = 160.0,
+	group_gap: float = 56.0
+) -> Dictionary:
+	var positions: Array[Vector2] = []
+	var headers: Array = []
+	var cols := maxi(columns, 1)
+	var col := 0
+	var row_y := hub_gap
+	var prev_group := ""
+	var first := true
+
+	for level in levels:
+		var group := level.group_title_key.strip_edges() if level != null else ""
+		if first or group != prev_group:
+			if not first:
+				if col != 0:
+					col = 0
+					row_y += row_spacing
+				row_y += group_gap
+			if not group.is_empty():
+				headers.append({
+					"title_key": group,
+					"position": Vector2(0.0, row_y - group_gap * 0.55),
+				})
+			prev_group = group
+			first = false
+
+		var x := (float(col) - float(cols - 1) * 0.5) * col_spacing
+		positions.append(Vector2(x, row_y))
+		col += 1
+		if col >= cols:
+			col = 0
+			row_y += row_spacing
+
+	return {"positions": positions, "headers": headers}

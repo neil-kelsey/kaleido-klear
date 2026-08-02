@@ -103,6 +103,9 @@ msgstr "Dimension 9"
 msgid "UI_DIMENSION_10"
 msgstr "Dimension 10"
 
+msgid "UI_DIMENSION_TEST"
+msgstr "Test"
+
 msgid "UI_DIMENSION_MAP_HINT"
 msgstr "Scroll to zoom · drag to pan · tap a diamond"
 
@@ -570,3 +573,15 @@ msgstr "This permanently deletes all stars, unlocks, and level progress. Languag
 
 msgid "UI_RESET_PROGRESS_YES"
 msgstr "Yes, delete all progress"
+
+msgid "UI_GROUP_BASIC_TRAINING"
+msgstr "Basic Training"
+
+msgid "UI_GROUP_SHIFTING_GOALS"
+msgstr "Shifting Goals"
+
+msgid "UI_GROUP_WALLS"
+msgstr "Walls"
+
+msgid "UI_GROUP_BIGGER_BOARDS"
+msgstr "Bigger Boards"

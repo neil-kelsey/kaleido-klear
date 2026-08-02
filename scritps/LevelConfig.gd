@@ -36,3 +36,18 @@ class_name LevelConfig
 @export var block_kinds: Array[Block.BlockKind] = []
 @export var block_cell_patterns: Array = []
 @export var block_shape_names: Array[String] = []
+
+@export_group("Level select grouping")
+## Localization key for an in-dimension chapter header (e.g. UI_GROUP_BASIC_TRAINING).
+## Empty = no header; levels with the same key stay in one group.
+@export var group_title_key: String = ""
+
+@export_group("Automation / curation")
+## True when a headless solver (or creator playtest) has cleared this level.
+@export var verified_solvable: bool = false
+## Shortest known clear length from the solver (-1 = unknown).
+@export var min_moves: int = -1
+## Heuristic complexity used to place levels into dimensions.
+@export var difficulty_score: float = 0.0
+## 1 (tutorial-easy) … 5 (late-game hard).
+@export_range(0, 5, 1) var difficulty_tier: int = 0

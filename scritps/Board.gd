@@ -1403,6 +1403,9 @@ func _lose_life() -> void:
 
 
 func _check_win() -> void:
-	if placed_blocks.is_empty():
-		game_ended = true
-		level_cleared.emit(lives)
+	## Walls are permanent obstacles — clear = no movable / scoreable blocks left.
+	for block in placed_blocks:
+		if not Block.is_wall_kind(block.block_kind):
+			return
+	game_ended = true
+	level_cleared.emit(lives)

@@ -1,22 +1,27 @@
 extends Button
 class_name MenuActionButton
 
-## Home hero CTA. Visual language comes from UiTheme brand tokens;
-## this component adds shine, icons, and press scale on top.
+## Home hero CTA. Primary fill is ONE baked nebula texture (no tiled procedural UV).
 
 enum Kind { PRIMARY, SECONDARY }
 enum IconStyle { CHEVRON, GEAR }
 
-const SHINE_SHADER := preload("res://assets/shaders/button_shine.gdshader")
+const NEBULA_SHADER := preload("res://assets/shaders/button_nebula.gdshader")
+const NEBULA_FILL := preload("res://scritps/ui/NebulaFill.gd")
+const BRAND_RAINBOW := preload("res://scritps/ui/BrandRainbow.gd")
 const CHEVRON_ICON := preload("res://assets/icons/chevron_double.svg")
 
 const PRESS_SCALE := 0.97
-const SHINE_CYCLE_SEC := 2.8
 const CTA_FONT_SIZE := 40
 const CTA_ICON_SIZE := 54
 const CTA_MIN_HEIGHT := 140
 const CTA_PAD_H := 36
 const CTA_PAD_V := 34
+const PRIMARY_FONT_SIZE := 56
+const PRIMARY_ICON_SIZE := 72
+const PRIMARY_MIN_HEIGHT := 260
+const PRIMARY_PAD_H := 44
+const PRIMARY_PAD_V := 52
 
 @export var kind: Kind = Kind.PRIMARY
 @export var label_text: String = "START GAME"
@@ -25,10 +30,11 @@ const CTA_PAD_V := 34
 var _face: Panel
 var _label: Label
 var _icon: Control
-var _shine: ColorRect
-var _shine_mat: ShaderMaterial
+var _nebula: TextureRect
+var _nebula_mat: ShaderMaterial
+var _rainbow_border: ColorRect
 var _press_tween: Tween
-var _shine_phase: float = 0.0
+var _fx_time: float = 0.0
 var _hovering := false
 
 
@@ -39,7 +45,7 @@ func _ready() -> void:
 	text = ""
 	clip_contents = false
 	_clear_button_chrome()
-	custom_minimum_size.y = maxf(custom_minimum_size.y, float(CTA_MIN_HEIGHT))
+	custom_minimum_size.y = maxf(custom_minimum_size.y, float(_min_height()))
 	_build()
 	_apply_label()
 	_refresh_face_color()
@@ -50,15 +56,45 @@ func _ready() -> void:
 	button_up.connect(_set_pressed_visual.bind(false))
 	await get_tree().process_frame
 	_layout()
-	if kind == Kind.PRIMARY:
-		set_process(true)
+	set_process(true)
+
+
+func _min_height() -> int:
+	return PRIMARY_MIN_HEIGHT if kind == Kind.PRIMARY else CTA_MIN_HEIGHT
+
+
+func _font_size() -> int:
+	return PRIMARY_FONT_SIZE if kind == Kind.PRIMARY else CTA_FONT_SIZE
+
+
+func _icon_size() -> int:
+	return PRIMARY_ICON_SIZE if kind == Kind.PRIMARY else CTA_ICON_SIZE
+
+
+func _pad_h() -> int:
+	return PRIMARY_PAD_H if kind == Kind.PRIMARY else CTA_PAD_H
+
+
+func _pad_v() -> int:
+	return PRIMARY_PAD_V if kind == Kind.PRIMARY else CTA_PAD_V
 
 
 func _process(delta: float) -> void:
-	if _shine_mat == null:
+	_fx_time += delta
+	BRAND_RAINBOW.tick(delta)
+	if _rainbow_border != null:
+		UiTheme.sync_rainbow_border(_rainbow_border, size)
+	if _nebula_mat == null:
 		return
-	_shine_phase = fposmod(_shine_phase + delta / SHINE_CYCLE_SEC, 1.0)
-	_shine_mat.set_shader_parameter("phase", _shine_phase)
+	_nebula_mat.set_shader_parameter("time_sec", _fx_time)
+	## Whole-button breathe only — nothing spatial that can read as a seam.
+	var pulse := 0.97 + 0.03 * sin(_fx_time * 0.55)
+	var brightness := pulse
+	if button_pressed:
+		brightness *= 0.82
+	elif _hovering:
+		brightness *= 1.06
+	_nebula_mat.set_shader_parameter("brightness", brightness)
 
 
 func set_label(text_value: String) -> void:
@@ -83,6 +119,10 @@ func _face_style(bg: Color, with_shadow: bool) -> StyleBoxFlat:
 		state = &"hover"
 	var style := UiTheme.brand_button_stylebox(role, state)
 	style.bg_color = bg
+	style.anti_aliasing = false
+	if kind == Kind.SECONDARY:
+		## Rainbow stroke is drawn by BrandRainbow overlay — no solid blue border.
+		style.set_border_width_all(0)
 	if with_shadow and kind == Kind.SECONDARY and not button_pressed:
 		style.shadow_color = Color(0, 0, 0, 0.12)
 		style.shadow_size = 6
@@ -103,28 +143,28 @@ func _build() -> void:
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", CTA_PAD_H)
-	margin.add_theme_constant_override("margin_right", CTA_PAD_H)
-	margin.add_theme_constant_override("margin_top", CTA_PAD_V)
-	margin.add_theme_constant_override("margin_bottom", CTA_PAD_V)
+	margin.add_theme_constant_override("margin_left", _pad_h())
+	margin.add_theme_constant_override("margin_right", _pad_h())
+	margin.add_theme_constant_override("margin_top", _pad_v())
+	margin.add_theme_constant_override("margin_bottom", _pad_v())
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_face.add_child(margin)
 
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 24)
+	row.add_theme_constant_override("separation", 24 if kind != Kind.PRIMARY else 32)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
 	var text_color := Color.WHITE if kind == Kind.PRIMARY else UiTheme.PRIMARY
-	var face_color := UiTheme.PRIMARY if kind == Kind.PRIMARY else UiTheme.SECONDARY_BG
+	var face_color := UiTheme.PRIMARY_FILL if kind == Kind.PRIMARY else UiTheme.SECONDARY_BG
 
 	_label = Label.new()
 	_label.add_theme_font_override("font", UiTheme.button_typeface())
-	_label.add_theme_font_size_override("font_size", CTA_FONT_SIZE)
+	_label.add_theme_font_size_override("font_size", _font_size())
 	_label.add_theme_color_override("font_color", text_color)
 	if kind == Kind.PRIMARY:
-		_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.28))
+		_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.35))
 		_label.add_theme_constant_override("shadow_offset_x", 1)
 		_label.add_theme_constant_override("shadow_offset_y", 1)
 		_label.add_theme_constant_override("shadow_outline_size", 2)
@@ -133,7 +173,7 @@ func _build() -> void:
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_label)
 
-	var icon_px := float(CTA_ICON_SIZE)
+	var icon_px := float(_icon_size())
 	match icon_style:
 		IconStyle.GEAR:
 			var gear := _GearIcon.new()
@@ -154,16 +194,30 @@ func _build() -> void:
 	row.add_child(_icon)
 
 	if kind == Kind.PRIMARY:
-		_shine = ColorRect.new()
-		_shine.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		_shine.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_shine_mat = ShaderMaterial.new()
-		_shine_mat.shader = SHINE_SHADER
-		_shine_mat.set_shader_parameter("band_width", 0.28)
-		_shine_mat.set_shader_parameter("strength", 0.22)
-		_shine.material = _shine_mat
-		_shine.color = Color(1, 1, 1, 1)
-		_face.add_child(_shine)
+		## No StyleBoxFlat on primary (known mid-seam bug). One baked texture only.
+		_face.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		_nebula = TextureRect.new()
+		_nebula.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_nebula.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_nebula.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_nebula.stretch_mode = TextureRect.STRETCH_SCALE
+		_nebula.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		_nebula.texture = NEBULA_FILL.texture()
+		_nebula_mat = ShaderMaterial.new()
+		_nebula_mat.shader = NEBULA_SHADER
+		_nebula_mat.set_shader_parameter("corner_radius_px", float(UiTheme.BUTTON_CORNER_RADIUS))
+		_nebula_mat.set_shader_parameter("brightness", 1.0)
+		_nebula.material = _nebula_mat
+		_face.add_child(_nebula)
+		_face.move_child(_nebula, 0)
+		margin.move_to_front()
+	else:
+		## Shared BrandRainbow stroke (same palette/phase as Klear title).
+		_rainbow_border = UiTheme.attach_rainbow_border(
+			_face,
+			float(UiTheme.BUTTON_CORNER_RADIUS),
+			float(UiTheme.BUTTON_BORDER_WIDTH)
+		)
 		margin.move_to_front()
 
 
@@ -176,26 +230,41 @@ func _layout() -> void:
 	pivot_offset = size * 0.5
 	if _face:
 		_face.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_sync_fx_rect()
+
+
+func _sync_fx_rect() -> void:
+	var rect := size
+	if rect.x < 2.0 or rect.y < 2.0:
+		return
+	if _nebula_mat != null:
+		_nebula_mat.set_shader_parameter("rect_size", rect)
+	if _rainbow_border != null:
+		UiTheme.sync_rainbow_border(_rainbow_border, rect)
 
 
 func _base_color() -> Color:
 	if kind == Kind.PRIMARY:
 		if button_pressed:
-			return UiTheme.PRIMARY_PRESSED
+			return UiTheme.PRIMARY_FILL_PRESSED
 		if _hovering:
-			return UiTheme.PRIMARY_HOVER
-		return UiTheme.PRIMARY
+			return UiTheme.PRIMARY_FILL_HOVER
+		return UiTheme.PRIMARY_FILL
 	return UiTheme.SECONDARY_BG
 
 
 func _refresh_face_color() -> void:
 	if _face == null:
 		return
-	var shadow := not button_pressed
-	var bg := _base_color()
-	_face.add_theme_stylebox_override("panel", _face_style(bg, shadow))
+	if kind == Kind.PRIMARY:
+		_face.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	else:
+		var shadow := not button_pressed
+		_face.add_theme_stylebox_override("panel", _face_style(_base_color(), shadow))
 	if _icon is _GearIcon:
-		(_icon as _GearIcon).set_hole_color(bg)
+		(_icon as _GearIcon).set_hole_color(
+			UiTheme.PRIMARY_FILL if kind == Kind.PRIMARY else _base_color()
+		)
 
 
 func _on_hover(hovering: bool) -> void:

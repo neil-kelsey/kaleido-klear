@@ -1,6 +1,8 @@
 extends RefCounted
 class_name UiTheme
 
+const _BRAND_RAINBOW := preload("res://scritps/ui/BrandRainbow.gd")
+
 const BG := Color(1.0, 1.0, 1.0, 1.0)
 const PANEL := Color(0.14, 0.14, 0.18, 1.0)
 const TEXT := Color(0.12, 0.13, 0.16, 1.0)
@@ -19,9 +21,14 @@ const PLAYFIELD_TILE_BORDER := Color(0.12, 0.12, 0.15, 1.0)
 
 ## Brand CTA palette — single source of truth for primary / secondary buttons.
 ## Keep in sync with MenuActionButton (home hero CTAs use these same tokens).
+## PRIMARY stays the accent for secondary borders / text; PRIMARY_FILL is the
+## deep-space fallback under the nebula shader (and flat primary buttons).
 const PRIMARY := Color(0.0, 0.28, 0.66, 1.0) ## #0047A8
 const PRIMARY_HOVER := Color(0.04, 0.34, 0.74, 1.0)
 const PRIMARY_PRESSED := Color(0.0, 0.22, 0.56, 1.0)
+const PRIMARY_FILL := Color(0.08, 0.05, 0.22, 1.0) ## deep nebula navy
+const PRIMARY_FILL_HOVER := Color(0.12, 0.07, 0.30, 1.0)
+const PRIMARY_FILL_PRESSED := Color(0.05, 0.03, 0.16, 1.0)
 const SECONDARY_BG := Color(1.0, 1.0, 1.0, 1.0)
 const SECONDARY_BG_HOVER := Color(0.96, 0.97, 1.0, 1.0)
 const SECONDARY_BG_PRESSED := Color(0.9, 0.92, 0.96, 1.0)
@@ -100,12 +107,15 @@ static func brand_button_stylebox(
 		ButtonRole.PRIMARY:
 			match state:
 				&"hover", &"focus":
-					style.bg_color = PRIMARY_HOVER
+					style.bg_color = PRIMARY_FILL_HOVER
 				&"pressed":
-					style.bg_color = PRIMARY_PRESSED
+					style.bg_color = PRIMARY_FILL_PRESSED
 				_:
-					style.bg_color = PRIMARY
+					style.bg_color = PRIMARY_FILL
 			style.set_border_width_all(0)
+			style.shadow_color = Color(0.45, 0.2, 0.75, 0.28)
+			style.shadow_size = 8 if scale == ButtonScale.STANDARD else 5
+			style.shadow_offset = Vector2(0, 2)
 		ButtonRole.DANGER:
 			match state:
 				&"hover", &"focus":
@@ -408,8 +418,42 @@ static func style_close_button(button: Button) -> void:
 	button.expand_icon = true
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.add_theme_constant_override("icon_max_width", 20)
-	button.add_theme_stylebox_override("normal", circle_stylebox(PRIMARY))
-	button.add_theme_stylebox_override("hover", circle_stylebox(PRIMARY_HOVER))
-	button.add_theme_stylebox_override("pressed", circle_stylebox(PRIMARY_PRESSED))
-	button.add_theme_stylebox_override("focus", circle_stylebox(PRIMARY_HOVER))
+	button.add_theme_stylebox_override("normal", circle_stylebox(PRIMARY_FILL))
+	button.add_theme_stylebox_override("hover", circle_stylebox(PRIMARY_FILL_HOVER))
+	button.add_theme_stylebox_override("pressed", circle_stylebox(PRIMARY_FILL_PRESSED))
+	button.add_theme_stylebox_override("focus", circle_stylebox(PRIMARY_FILL_HOVER))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+
+## Attach a scrolling BrandRainbow border to a Control that owns its own face
+## (e.g. MenuActionButton). Returns the overlay for resize-sync.
+static func attach_rainbow_border(
+	host: Control,
+	corner_radius_px: float = float(BUTTON_CORNER_RADIUS),
+	border_width_px: float = float(BUTTON_BORDER_WIDTH)
+) -> ColorRect:
+	var existing := host.get_node_or_null("RainbowBorder")
+	if existing != null:
+		existing.queue_free()
+	var border := ColorRect.new()
+	border.name = "RainbowBorder"
+	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	border.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	border.color = Color(1, 1, 1, 1)
+	var mat := _BRAND_RAINBOW.make_border_material(corner_radius_px, border_width_px)
+	border.material = mat
+	border.set_meta("brand_rainbow_mat", mat)
+	host.add_child(border)
+	return border
+
+
+static func sync_rainbow_border(border: ColorRect, rect_size: Vector2) -> void:
+	if border == null:
+		return
+	var mat: ShaderMaterial = border.get_meta("brand_rainbow_mat", null) as ShaderMaterial
+	if mat == null and border.material is ShaderMaterial:
+		mat = border.material as ShaderMaterial
+	if mat == null:
+		return
+	mat.set_shader_parameter("rect_size", rect_size)
+	_BRAND_RAINBOW.sync_material(mat)
