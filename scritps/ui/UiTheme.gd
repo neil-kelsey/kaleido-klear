@@ -34,6 +34,11 @@ const SECONDARY_BG_HOVER := Color(0.96, 0.97, 1.0, 1.0)
 const SECONDARY_BG_PRESSED := Color(0.9, 0.92, 0.96, 1.0)
 const BUTTON_CORNER_RADIUS := 40
 const BUTTON_BORDER_WIDTH := 3
+## Shared circular HUD / nav button sizes — change here to update everywhere.
+const CIRCLE_BUTTON_SIZE := 96
+const CIRCLE_BUTTON_EMPHASIS_SIZE := 120
+const CIRCLE_BUTTON_EDGE_INSET := 52
+const CIRCLE_BUTTON_CLUSTER_GAP := 16
 const BUTTON_FONT := preload("res://assets/fonts/Quicksand-Medium.ttf")
 const BUTTON_LETTER_SPACING := 3
 const BUTTON_WORD_SPACING := 10
@@ -422,6 +427,44 @@ static func style_close_button(button: Button) -> void:
 	button.add_theme_stylebox_override("hover", circle_stylebox(PRIMARY_FILL_HOVER))
 	button.add_theme_stylebox_override("pressed", circle_stylebox(PRIMARY_FILL_PRESSED))
 	button.add_theme_stylebox_override("focus", circle_stylebox(PRIMARY_FILL_HOVER))
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+
+static func style_circle_back_button(button: Button, size: int = -1) -> void:
+	var resolved := size if size > 0 else CIRCLE_BUTTON_SIZE
+	style_circle_icon_button(button, load("res://assets/icons/return_back_icon.svg"), resolved)
+
+
+static func style_circle_icon_button(button: Button, icon: Texture2D, size: int = -1) -> void:
+	## Thumb-friendly circular icon control (no label).
+	var resolved := size if size > 0 else CIRCLE_BUTTON_SIZE
+	button.custom_minimum_size = Vector2(resolved, resolved)
+	button.size = Vector2(resolved, resolved)
+	button.text = ""
+	button.icon = icon
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.add_theme_constant_override("icon_max_width", int(resolved * 0.58))
+	button.add_theme_constant_override("h_separation", 0)
+	var border_w := maxi(5, int(round(float(resolved) * 0.05)))
+	var normal := circle_stylebox(SECONDARY_BG)
+	normal.border_color = PRIMARY
+	normal.set_border_width_all(border_w)
+	var hover := circle_stylebox(SECONDARY_BG_HOVER)
+	hover.border_color = PRIMARY_HOVER
+	hover.set_border_width_all(border_w)
+	var pressed := circle_stylebox(SECONDARY_BG_PRESSED)
+	pressed.border_color = PRIMARY_PRESSED
+	pressed.set_border_width_all(border_w)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("focus", hover)
+	button.add_theme_stylebox_override("disabled", pressed)
+	button.add_theme_color_override("icon_normal_color", PRIMARY)
+	button.add_theme_color_override("icon_hover_color", PRIMARY_HOVER)
+	button.add_theme_color_override("icon_pressed_color", PRIMARY_PRESSED)
+	button.add_theme_color_override("icon_disabled_color", Color(PRIMARY, 0.45))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 

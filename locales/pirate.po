@@ -110,7 +110,10 @@ msgid "UI_DIMENSION_MAP_HINT"
 msgstr "Scroll to spyglass · drag to sail · tap a diamond"
 
 msgid "UI_LEVEL_MAP_HINT"
-msgstr "Tap a level · pinch or scroll to zoom · drag to pan"
+msgstr "Tap a level · swipe up or down for the next stretch"
+
+msgid "UI_LEVEL_MAP_HINT_COMPACT"
+msgstr "Tap a level"
 
 msgid "UI_DIMENSION_EMPTY"
 msgstr "No plunder on this sea yet, matey."
@@ -177,6 +180,12 @@ msgstr "Back to the seas"
 
 msgid "UI_CLOSE"
 msgstr "Stow it"
+
+msgid "UI_GOALS_INFO_TITLE"
+msgstr "Quests"
+
+msgid "UI_GOALS"
+msgstr "Quests"
 
 msgid "UI_SHARE_MESSAGE"
 msgstr "I scored %d stars on %s in Kaleido Klear, ye landlubbers!"
@@ -585,3 +594,30 @@ msgstr "Bulkheads"
 
 msgid "UI_GROUP_BIGGER_BOARDS"
 msgstr "Bigger Decks"
+
+msgid "UI_CREATOR_GOAL_MAP"
+msgstr "Deck"
+
+msgid "UI_CREATOR_ADD_GOAL_TITLE"
+msgstr "Add %s"
+
+msgid "UI_CREATOR_GOAL_INFINITE"
+msgstr "Endless"
+
+msgid "UI_CREATOR_GOAL_COUNT"
+msgstr "Count"
+
+msgid "UI_CREATOR_GOAL_TAP_REMOVE"
+msgstr "Tap to remove this goal"
+
+msgid "UI_CREATOR_EDIT_GOAL_TITLE"
+msgstr "Edit %s"
+
+msgid "UI_CREATOR_GOAL_SAVE"
+msgstr "Stow this goal"
+
+msgid "UI_CREATOR_GOAL_DELETE"
+msgstr "Dump this goal"
+
+msgid "UI_CREATOR_GOAL_TAP_EDIT"
+msgstr "Tap to tweak this goal"

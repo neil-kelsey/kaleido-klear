@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://prism_circle_back_button"]
+
+[ext_resource type="Script" path="res://scritps/ui/CircleBackButton.gd" id="1"]
+
+[node name="CircleBackButton" type="Button"]
+offset_right = 96.0
+offset_bottom = 96.0
+focus_mode = 2
+text = ""
+script = ExtResource("1")

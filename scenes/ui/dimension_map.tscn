@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://prism_dimension_map"]
+[gd_scene load_steps=3 format=3 uid="uid://prism_dimension_map"]
 
 [ext_resource type="Script" path="res://scritps/ui/DimensionMap.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://prism_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="2_back"]
 
 [node name="DimensionMap" type="Node2D"]
 script = ExtResource("1")
@@ -20,30 +21,33 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="TopBar" type="MarginContainer" parent="UI/Root"]
+[node name="HintLabel" type="Label" parent="UI/Root"]
+unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 12
+anchor_top = 1.0
 anchor_right = 1.0
-offset_bottom = 120.0
+anchor_bottom = 1.0
+offset_left = 200.0
+offset_top = -72.0
+offset_right = -36.0
+offset_bottom = -28.0
 grow_horizontal = 2
-theme_override_constants/margin_left = 36
-theme_override_constants/margin_top = 36
-theme_override_constants/margin_right = 36
-
-[node name="HBox" type="HBoxContainer" parent="UI/Root/TopBar"]
-layout_mode = 2
-theme_override_constants/separation = 20
-
-[node name="BackButton" type="Button" parent="UI/Root/TopBar/HBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(160, 72)
-layout_mode = 2
-text = "Back"
-
-[node name="HintLabel" type="Label" parent="UI/Root/TopBar/HBox"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
+grow_vertical = 0
+mouse_filter = 2
 theme_override_font_sizes/font_size = 28
 text = "Pinch or scroll to zoom · drag to pan"
+horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="BackButton" parent="UI/Root" instance=ExtResource("2_back")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 52.0
+offset_top = -52.0
+offset_right = 52.0
+offset_bottom = -52.0
+grow_vertical = 0

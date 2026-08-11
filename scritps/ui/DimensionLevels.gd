@@ -1,31 +1,40 @@
 extends Node2D
 
-## Per-dimension level map: hub diamond at top, levels in a 5-column grid below.
+## Per-dimension level map: hub at chart centre, levels below.
+## Section page-snap only kicks in when a dimension has many levels.
 
 const DIMENSION_MAP_SCENE := "res://scenes/ui/dimension_map.tscn"
 const GAME_SCENE := "res://scenes/main.tscn"
 const STAR_CHART_PATH := "res://assets/backgrounds/level_star_chart.jpg"
-## Must match StarChartBaker.LEVEL_STRIP_WORLD.
-const STRIP_WORLD := Rect2(-420, -180, 840, 2520)
+## Must match StarChartBaker.LEVEL_STRIP_WORLD (hub at 0,0 = radial centre).
+const STRIP_WORLD := Rect2(-420, -180, 840, 2800)
 
 const COLUMNS := 5
-const COL_SPACING := 100.0
-const ROW_SPACING := 100.0
-const HUB_GAP := 160.0
+const COL_SPACING := 118.0
+const ROW_SPACING := 122.0
+const HUB_GAP := 280.0
+const HUB_DIAMOND_SIZE := 114.0
+const LEVEL_DIAMOND_SIZE := 114.0
+const GROUP_GAP_COMPACT := 128.0
+## Hub sits slightly below world origin so it centres on the baked radial point.
+const HUB_RADIAL_OFFSET_Y := 22.0
+## Fraction of viewport width reserved as empty space on each side of the diamond grid.
+const SIDE_MARGIN_RATIO := 0.18
+## Screen Y for hub centre — clears the centered title above.
+const FOCUS_TOP_MARGIN_PX := 210.0
+const SECTION_TOP_MARGIN_PX := 148.0
+const BOTTOM_PAD_PX := 168.0
+const GROUP_HEADER_FONT_SIZE := 44
+## World gap from section title centre down to level-diamond centres.
+const HEADER_CLEARANCE := 96.0
+const TITLE_FONT_SIZE := 64
+## Page-snap only when a dimension has more levels than this.
+const PAGE_LEVEL_THRESHOLD := 24
 
-const ZOOM_MIN := 0.85
-const ZOOM_MAX := 4.5
-const WHEEL_ZOOM_STEP := 0.12
-const PINCH_ZOOM_SENSITIVITY := 1.0
-const INTRO_ZOOM_START := 1.15
-const INTRO_ZOOM_END := 1.85
-const INTRO_ZOOM_DURATION := 0.95
-
-const HUB_DIAMOND_SIZE := 84.0
-const LEVEL_DIAMOND_SIZE := 52.0
-const FOCUS_TOP_MARGIN_PX := 96.0
-const GROUP_GAP := 56.0
-const GROUP_HEADER_FONT_SIZE := 15
+const PAGE_SNAP_DURATION := 0.42
+const SNAP_VELOCITY := 220.0
+const SNAP_DISTANCE_RATIO := 0.22
+const FREE_SCROLL_STEP := 120.0
 
 const CHART_BG := Color(0.97, 0.97, 0.985, 1.0)
 const STAR_COLOR := Color(0.18, 0.28, 0.48, 0.85)
@@ -33,12 +42,8 @@ const LOCKED_GREY := Color(0.62, 0.64, 0.68, 1.0)
 const MAP_FONT := preload("res://assets/fonts/Quicksand-Medium.ttf")
 const LOCK_ICON := preload("res://assets/icons/lock_icon.svg")
 
-const PAN_FRICTION := 7.5
-const PAN_STOP_SPEED := 12.0
-const PAN_MAX_SPEED := 4200.0
-
 @onready var camera: Camera2D = $Camera2D
-@onready var back_button: Button = %BackButton
+@onready var back_button: CircleBackButton = %BackButton
 @onready var title_label: Label = %TitleLabel
 @onready var hint_label: Label = %HintLabel
 @onready var empty_label: Label = %EmptyLabel
@@ -51,17 +56,18 @@ var _hub_pos := Vector2.ZERO
 var _theme_color: Color = LevelCatalog.PRIMARY_BLUE
 var _star_chart_tex: Texture2D
 var _map_font: Font
-var _intro_tween: Tween
-var _intro_playing := false
 var _panning := false
 var _pan_pointer_id := -1
-var _pan_velocity := Vector2.ZERO
-var _pinch_active := false
-var _pinch_touches: Dictionary = {}
-var _pinch_start_distance := 0.0
-var _pinch_start_zoom := 1.0
-var _pinch_last_midpoint := Vector2.ZERO
+var _pan_velocity_y := 0.0
+var _pan_start_cam_y := 0.0
 var _navigating := false
+var _page_ys: Array[float] = []
+var _page_index := 0
+var _snap_tween: Tween
+var _group_gap := GROUP_GAP_COMPACT
+var _paging_enabled := false
+var _hub_nebula: NebulaDiamondFill
+var _chart_sprite: Sprite2D
 
 
 func _ready() -> void:
@@ -69,33 +75,35 @@ func _ready() -> void:
 	_dimension_index = clampi(GameSession.current_dimension_index, 0, LevelCatalog.get_dimension_count() - 1)
 	_theme_color = LevelCatalog.get_dimension_color(_dimension_index)
 	_levels = LevelCatalog.get_section_levels(_dimension_index)
-	var layout: Dictionary = LevelCatalog.build_grouped_level_layout(
-		_levels, COLUMNS, COL_SPACING, ROW_SPACING, HUB_GAP, GROUP_GAP
-	)
-	_level_positions = layout.positions
-	_group_headers = layout.headers
-	_hub_pos = Vector2.ZERO
+	_hub_pos = Vector2(0.0, HUB_RADIAL_OFFSET_Y)
+	_paging_enabled = _levels.size() > PAGE_LEVEL_THRESHOLD
 	_star_chart_tex = load(STAR_CHART_PATH) as Texture2D
 	if _star_chart_tex == null:
 		push_warning("Missing baked level star chart at %s — run bake_level_star_chart.gd" % STAR_CHART_PATH)
 
+	_ensure_chart_sprite()
+	_hub_nebula = NebulaDiamondFill.new()
+	add_child(_hub_nebula)
+	_hub_nebula.configure(_hub_pos, HUB_DIAMOND_SIZE)
+
 	camera.make_current()
 	back_button.pressed.connect(_on_back_pressed)
-	UiTheme.style_nav_button(back_button)
-	back_button.icon = load("res://assets/icons/back_icon.svg")
 	_apply_translations()
-	UiTheme.style_menu_hint(hint_label)
-	hint_label.add_theme_color_override("font_color", Color(0.25, 0.35, 0.55, 0.85))
+	hint_label.visible = false
 	UiTheme.style_menu_hint(empty_label)
 	empty_label.visible = _levels.is_empty()
+	UiTheme.style_menu_section_title(title_label)
 	title_label.add_theme_color_override("font_color", Color(0.12, 0.16, 0.28, 0.92))
-	title_label.add_theme_font_size_override("font_size", 36)
+	UiTheme.apply_label_font(title_label, TITLE_FONT_SIZE, 48)
 
-	get_viewport().size_changed.connect(_clamp_camera_to_strip)
-	queue_redraw()
+	get_viewport().size_changed.connect(_on_viewport_resized)
+	## Layout must exist before the first draw — an await here left positions empty and crashed.
+	_rebuild_map()
+	_go_to_page(0, false)
 	await get_tree().process_frame
-	_clamp_camera_to_strip()
-	_play_intro()
+	## Re-measure once the viewport size is final (esp. mobile / windowed).
+	_rebuild_map()
+	_go_to_page(0, false)
 
 
 func _notification(what: int) -> void:
@@ -107,40 +115,150 @@ func _notification(what: int) -> void:
 
 
 func _apply_translations() -> void:
-	back_button.text = "  " + tr("UI_BACK")
 	title_label.text = LevelCatalog.get_dimension_title(_dimension_index)
-	hint_label.text = tr("UI_LEVEL_MAP_HINT")
 	empty_label.text = tr("UI_DIMENSION_EMPTY")
 
 
-func _play_intro() -> void:
-	_intro_playing = true
-	camera.zoom = Vector2(INTRO_ZOOM_START, INTRO_ZOOM_START)
-	camera.position = _camera_pos_to_frame_hub()
-	_clamp_camera_to_strip()
-	if _intro_tween:
-		_intro_tween.kill()
-	_intro_tween = create_tween()
-	_intro_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_intro_tween.tween_method(_set_intro_zoom, INTRO_ZOOM_START, INTRO_ZOOM_END, INTRO_ZOOM_DURATION)
-	_intro_tween.tween_callback(func(): _intro_playing = false)
+func _on_viewport_resized() -> void:
+	var keep := _page_index
+	_rebuild_map()
+	_go_to_page(keep, false)
 
 
-func _set_intro_zoom(z: float) -> void:
+func _rebuild_map() -> void:
+	_paging_enabled = _levels.size() > PAGE_LEVEL_THRESHOLD
+	_apply_page_zoom()
+	_group_gap = _group_gap_for_paging() if _paging_enabled else GROUP_GAP_COMPACT
+	var layout: Dictionary = LevelCatalog.build_grouped_level_layout(
+		_levels,
+		COLUMNS,
+		COL_SPACING,
+		ROW_SPACING,
+		HUB_GAP + HUB_RADIAL_OFFSET_Y,
+		_group_gap,
+		HEADER_CLEARANCE
+	)
+	_level_positions.assign(layout.positions)
+	_group_headers = layout.headers
+	_rebuild_page_targets()
+	_clamp_camera_to_pages()
+	_apply_translations()
+	_sync_chart_sprite()
+	queue_redraw()
+
+
+func _content_width() -> float:
+	return COL_SPACING * float(COLUMNS - 1) + LEVEL_DIAMOND_SIZE
+
+
+func _apply_page_zoom() -> void:
+	var vp := get_viewport_rect().size
+	if vp.x <= 1.0:
+		return
+	var usable := clampf(1.0 - 2.0 * SIDE_MARGIN_RATIO, 0.35, 0.9)
+	var target_visible_w := _content_width() / usable
+	var z := vp.x / maxf(target_visible_w, 1.0)
 	camera.zoom = Vector2(z, z)
-	camera.position = _camera_pos_to_frame_hub()
-	_clamp_camera_to_strip()
+	camera.position.x = 0.0
 
 
-func _camera_pos_to_frame_hub() -> Vector2:
-	## Pin the hub near the top of the viewport so the level grid opens below.
+func _group_gap_for_paging() -> float:
+	var page_h := get_viewport_rect().size.y / maxf(camera.zoom.x, 0.001)
+	## Keep sections roughly one viewport apart so snaps feel like full-page jumps.
+	var section_body := ROW_SPACING + LEVEL_DIAMOND_SIZE * 0.35 + 48.0
+	return maxf(page_h - section_body, 240.0)
+
+
+func _camera_y_to_frame_world_y(world_y: float, top_margin_px: float) -> float:
 	var vp := get_viewport_rect().size
 	var z := maxf(camera.zoom.x, 0.001)
-	var desired_screen_y := FOCUS_TOP_MARGIN_PX
-	var cam := Vector2.ZERO
-	cam.x = _hub_pos.x
-	cam.y = _hub_pos.y - (desired_screen_y - vp.y * 0.5) / z
-	return cam
+	return world_y - (top_margin_px - vp.y * 0.5) / z
+
+
+func _content_bottom_y() -> float:
+	var bottom := _hub_pos.y + HUB_DIAMOND_SIZE * 0.5
+	for pos in _level_positions:
+		bottom = maxf(bottom, pos.y + LEVEL_DIAMOND_SIZE * 0.5)
+	for header in _group_headers:
+		bottom = maxf(bottom, float(header.position.y) + 24.0)
+	return bottom
+
+
+func _max_camera_y() -> float:
+	var vp := get_viewport_rect().size
+	var z := maxf(camera.zoom.x, 0.001)
+	var min_y := _camera_y_to_frame_world_y(_hub_pos.y, FOCUS_TOP_MARGIN_PX)
+	## Keep the last content above the footer hint.
+	var bottom_margin_world := BOTTOM_PAD_PX / z
+	var framed_bottom := _content_bottom_y() + bottom_margin_world - vp.y * 0.5 / z
+	return maxf(min_y, framed_bottom)
+
+
+func _rebuild_page_targets() -> void:
+	_page_ys.clear()
+	_page_ys.append(_camera_y_to_frame_world_y(_hub_pos.y, FOCUS_TOP_MARGIN_PX))
+	if _paging_enabled:
+		for i in range(1, _group_headers.size()):
+			var header_y: float = _group_headers[i].position.y
+			_page_ys.append(_camera_y_to_frame_world_y(header_y, SECTION_TOP_MARGIN_PX))
+	if _page_ys.is_empty():
+		_page_ys.append(0.0)
+	_page_index = clampi(_page_index, 0, _page_ys.size() - 1)
+
+
+func _clamp_camera_to_pages() -> void:
+	camera.position.x = 0.0
+	if _page_ys.is_empty():
+		return
+	var min_y := _page_ys[0]
+	var max_y := _page_ys[_page_ys.size() - 1] if _paging_enabled else _max_camera_y()
+	camera.position.y = clampf(camera.position.y, min_y, max_y)
+
+
+func _go_to_page(index: int, animate: bool) -> void:
+	if _page_ys.is_empty():
+		return
+	_page_index = clampi(index, 0, _page_ys.size() - 1)
+	var target := Vector2(0.0, _page_ys[_page_index])
+	if _snap_tween:
+		_snap_tween.kill()
+		_snap_tween = null
+	if not animate:
+		camera.position = target
+		_clamp_camera_to_pages()
+		return
+	_snap_tween = create_tween()
+	_snap_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_snap_tween.tween_property(camera, "position", target, PAGE_SNAP_DURATION)
+
+
+func _nearest_page_index(cam_y: float) -> int:
+	var best := 0
+	var best_d := INF
+	for i in _page_ys.size():
+		var d := absf(cam_y - _page_ys[i])
+		if d < best_d:
+			best_d = d
+			best = i
+	return best
+
+
+func _resolve_snap_page() -> int:
+	if _page_ys.is_empty():
+		return 0
+	var idx := _page_index
+	var page_span := 1.0
+	if _page_ys.size() >= 2:
+		page_span = absf(_page_ys[1] - _page_ys[0])
+	var drag := camera.position.y - _pan_start_cam_y
+	## Positive cam Y = looking further down the strip = next section.
+	if absf(_pan_velocity_y) >= SNAP_VELOCITY:
+		idx += 1 if _pan_velocity_y > 0.0 else -1
+	elif absf(drag) >= page_span * SNAP_DISTANCE_RATIO:
+		idx += 1 if drag > 0.0 else -1
+	else:
+		idx = _nearest_page_index(camera.position.y)
+	return clampi(idx, 0, _page_ys.size() - 1)
 
 
 func _screen_to_world(screen_pos: Vector2) -> Vector2:
@@ -151,90 +269,84 @@ func _world_mouse() -> Vector2:
 	return _screen_to_world(get_viewport().get_mouse_position())
 
 
-func _min_zoom_to_cover_strip() -> float:
-	var vp := get_viewport_rect().size
-	if STRIP_WORLD.size.x <= 0.0 or STRIP_WORLD.size.y <= 0.0:
-		return ZOOM_MIN
-	return maxf(vp.x / STRIP_WORLD.size.x, vp.y / STRIP_WORLD.size.y)
+func _apply_pan_delta(screen_delta: Vector2) -> void:
+	## Vertical only — ignore horizontal drag.
+	var world_dy := -screen_delta.y / maxf(camera.zoom.x, 0.001)
+	camera.position.y += world_dy
+	camera.position.x = 0.0
+	_clamp_camera_to_pages()
+	var dt := maxf(get_process_delta_time(), 0.0001)
+	_pan_velocity_y = lerpf(_pan_velocity_y, world_dy / dt, 0.55)
 
 
-func _clamp_camera_to_strip() -> void:
+func _nudge_scroll(world_dy: float) -> void:
+	camera.position.y += world_dy
+	camera.position.x = 0.0
+	_clamp_camera_to_pages()
+
+
+func _ensure_chart_sprite() -> void:
+	## Chart sits behind nebula fills (z -10) so diamonds can layer correctly.
+	if _chart_sprite != null and is_instance_valid(_chart_sprite):
+		_sync_chart_sprite()
+		return
+	_chart_sprite = Sprite2D.new()
+	_chart_sprite.z_index = -10
+	_chart_sprite.centered = true
+	_chart_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	add_child(_chart_sprite)
+	_sync_chart_sprite()
+
+
+func _sync_chart_sprite() -> void:
+	if _chart_sprite == null:
+		return
+	var chart_rect := _chart_draw_rect()
+	_chart_sprite.position = chart_rect.get_center()
+	if _star_chart_tex != null:
+		_chart_sprite.texture = _star_chart_tex
+		var tex_size := _star_chart_tex.get_size()
+		if tex_size.x > 0.0 and tex_size.y > 0.0:
+			_chart_sprite.scale = Vector2(
+				chart_rect.size.x / tex_size.x,
+				chart_rect.size.y / tex_size.y
+			)
+		_chart_sprite.modulate = Color.WHITE
+	else:
+		_chart_sprite.texture = null
+
+
+func _chart_draw_rect() -> Rect2:
+	## Expand past the baked strip so zoomed-out side margins still show chart, not bare white.
 	var vp := get_viewport_rect().size
 	var z := maxf(camera.zoom.x, 0.001)
-	var cover := _min_zoom_to_cover_strip()
-	if z < cover:
-		z = cover
-		camera.zoom = Vector2(z, z)
-	var half := vp / (2.0 * z)
-	var b := STRIP_WORLD
-	var min_pos := b.position + half
-	var max_pos := b.end - half
-	var pos := camera.position
-	if min_pos.x > max_pos.x:
-		pos.x = b.get_center().x
-	else:
-		pos.x = clampf(pos.x, min_pos.x, max_pos.x)
-	if min_pos.y > max_pos.y:
-		pos.y = b.get_center().y
-	else:
-		pos.y = clampf(pos.y, min_pos.y, max_pos.y)
-	camera.position = pos
-
-
-func _process(delta: float) -> void:
-	if _intro_playing or _panning:
-		return
-	if _pan_velocity.length_squared() < PAN_STOP_SPEED * PAN_STOP_SPEED:
-		_pan_velocity = Vector2.ZERO
-		set_process(false)
-		return
-	var intended := camera.position + _pan_velocity * delta
-	camera.position = intended
-	_clamp_camera_to_strip()
-	if absf(camera.position.x - intended.x) > 0.01:
-		_pan_velocity.x = 0.0
-	if absf(camera.position.y - intended.y) > 0.01:
-		_pan_velocity.y = 0.0
-	_pan_velocity *= exp(-PAN_FRICTION * delta)
-
-
-func _apply_pan_delta(screen_delta: Vector2, record_velocity: bool = true) -> void:
-	var world_delta := -screen_delta / camera.zoom.x
-	camera.position += world_delta
-	_clamp_camera_to_strip()
-	if not record_velocity:
-		_pan_velocity = Vector2.ZERO
-		return
-	var dt := maxf(get_process_delta_time(), 0.0001)
-	var sample := (world_delta / dt).limit_length(PAN_MAX_SPEED)
-	_pan_velocity = _pan_velocity.lerp(sample, 0.55)
-	set_process(true)
+	var visible_half_w := vp.x / (2.0 * z) + 80.0
+	var half_w := maxf(STRIP_WORLD.size.x * 0.5, visible_half_w)
+	return Rect2(-half_w, STRIP_WORLD.position.y, half_w * 2.0, STRIP_WORLD.size.y)
 
 
 func _draw() -> void:
-	if _star_chart_tex != null:
-		draw_texture_rect(_star_chart_tex, STRIP_WORLD, false)
-	else:
-		draw_rect(STRIP_WORLD, CHART_BG, true)
-
+	## Background chart is a Sprite2D behind nebula; draw map chrome here.
+	if _star_chart_tex == null:
+		draw_rect(_chart_draw_rect(), CHART_BG, true)
 	_draw_hub_diamond()
 	_draw_group_headers()
-	for i in _levels.size():
+	var count := mini(_levels.size(), _level_positions.size())
+	for i in count:
 		_draw_level_diamond(i)
 
 
 func _draw_group_headers() -> void:
+	## Left edge of the leftmost level diamond in the grid.
+	var grid_left := -(float(COLUMNS - 1) * 0.5) * COL_SPACING - LEVEL_DIAMOND_SIZE * 0.5
 	for header in _group_headers:
 		var key := str(header.get("title_key", ""))
 		if key.is_empty():
 			continue
 		var text := tr(key)
 		var pos: Vector2 = header.position
-		var text_size := _map_font.get_string_size(
-			text, HORIZONTAL_ALIGNMENT_LEFT, -1, GROUP_HEADER_FONT_SIZE
-		)
 		var text_pos := Vector2(
-			pos.x - text_size.x * 0.5,
+			grid_left,
 			pos.y + (_map_font.get_ascent(GROUP_HEADER_FONT_SIZE) - _map_font.get_descent(GROUP_HEADER_FONT_SIZE)) * 0.5
 		)
 		draw_string(
@@ -251,13 +363,17 @@ func _draw_group_headers() -> void:
 func _draw_hub_diamond() -> void:
 	var pts := _diamond_points(_hub_pos, HUB_DIAMOND_SIZE)
 	var outline := pts + PackedVector2Array([pts[0]])
+	## Theme-coloured outer glow; nebula child supplies the centre fill.
 	_draw_selection_glow(_hub_pos, HUB_DIAMOND_SIZE, _theme_color)
-	draw_colored_polygon(pts, _theme_color)
+	if _hub_nebula != null:
+		_hub_nebula.configure(_hub_pos, HUB_DIAMOND_SIZE)
 	draw_polyline(outline, Color(1, 1, 1, 0.95), 3.0, true)
-	draw_circle(_hub_pos, 5.0, Color(1, 1, 1, 1))
-	draw_circle(_hub_pos, 3.4, STAR_COLOR)
+	draw_polyline(outline, Color(_theme_color.r, _theme_color.g, _theme_color.b, 0.85), 1.6, true)
 	if LevelCatalog.is_dimension_complete(_dimension_index):
-		_draw_star_badge(_hub_pos + Vector2(HUB_DIAMOND_SIZE * 0.42, -HUB_DIAMOND_SIZE * 0.12), 10.0)
+		_draw_star_badge(_hub_pos, HUB_DIAMOND_SIZE * 0.22)
+	else:
+		draw_circle(_hub_pos, 5.0, Color(1, 1, 1, 1))
+		draw_circle(_hub_pos, 3.4, STAR_COLOR)
 
 
 func _draw_level_diamond(index: int) -> void:
@@ -265,22 +381,23 @@ func _draw_level_diamond(index: int) -> void:
 	var pos: Vector2 = _level_positions[index]
 	var unlocked := GameSession.is_level_unlocked(level)
 	var stars := GameSession.get_level_stars(level.level_id)
-	var perfect := GameSession.is_perfect_clear(level.level_id)
+	var completed := unlocked and stars > 0
 	var pts := _diamond_points(pos, LEVEL_DIAMOND_SIZE)
 	var outline := pts + PackedVector2Array([pts[0]])
 
-	if unlocked and stars > 0:
+	if completed:
 		draw_colored_polygon(pts, _theme_color.lightened(0.08))
-		draw_polyline(outline, Color(1, 1, 1, 0.9), 2.5, true)
+		draw_polyline(outline, Color(1, 1, 1, 0.9), 2.8, true)
+		_draw_star_badge(pos, LEVEL_DIAMOND_SIZE * 0.28)
 	elif unlocked:
-		draw_polyline(outline, _theme_color, 3.5, true)
+		draw_polyline(outline, _theme_color, 3.8, true)
 	else:
-		draw_polyline(outline, LOCKED_GREY, 3.0, true)
+		draw_polyline(outline, LOCKED_GREY, 3.2, true)
 
 	var number := str(index + 1)
-	var font_size := 18 if index < 99 else 15
+	var font_size := 32 if index < 99 else 26
 	var text_size := _map_font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var text_col := Color(1, 1, 1, 0.95) if unlocked and stars > 0 else (
+	var text_col := Color(1, 1, 1, 0.98) if completed else (
 		_theme_color if unlocked else LOCKED_GREY
 	)
 	var text_pos := Vector2(
@@ -290,9 +407,7 @@ func _draw_level_diamond(index: int) -> void:
 	draw_string(_map_font, text_pos, number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, text_col)
 
 	if not unlocked:
-		_draw_lock_icon(pos + Vector2(LEVEL_DIAMOND_SIZE * 0.3, -LEVEL_DIAMOND_SIZE * 0.3), 18.0)
-	elif perfect:
-		_draw_star_badge(pos + Vector2(LEVEL_DIAMOND_SIZE * 0.4, -LEVEL_DIAMOND_SIZE * 0.08), 7.5)
+		_draw_lock_icon(pos + Vector2(LEVEL_DIAMOND_SIZE * 0.28, -LEVEL_DIAMOND_SIZE * 0.28), 22.0)
 
 
 func _diamond_points(center: Vector2, size: float) -> PackedVector2Array:
@@ -329,19 +444,23 @@ func _draw_star_badge(center: Vector2, radius: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _intro_playing:
-		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
-			_zoom_at_screen_point(mb.position, camera.zoom.x + WHEEL_ZOOM_STEP)
+			if _paging_enabled:
+				_go_to_page(_page_index - 1, true)
+			else:
+				_nudge_scroll(-FREE_SCROLL_STEP)
 			_mark_input_handled()
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
-			_zoom_at_screen_point(mb.position, camera.zoom.x - WHEEL_ZOOM_STEP)
+			if _paging_enabled:
+				_go_to_page(_page_index + 1, true)
+			else:
+				_nudge_scroll(FREE_SCROLL_STEP)
 			_mark_input_handled()
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
-				_pan_velocity = Vector2.ZERO
+				_pan_velocity_y = 0.0
 				var hit := _hit_level(_world_mouse())
 				if hit >= 0:
 					_mark_input_handled()
@@ -353,16 +472,14 @@ func _unhandled_input(event: InputEvent) -> void:
 					_begin_pan(-1)
 			else:
 				_end_pan()
-	elif event is InputEventMouseMotion and _panning and not _pinch_active:
+	elif event is InputEventMouseMotion and _panning:
 		var motion := event as InputEventMouseMotion
 		_apply_pan_delta(motion.relative)
 		_mark_input_handled()
 	elif event is InputEventScreenTouch:
-		if _handle_pinch_touch(event as InputEventScreenTouch):
-			_mark_input_handled()
+		_handle_touch(event as InputEventScreenTouch)
 	elif event is InputEventScreenDrag:
-		if _handle_pinch_drag(event as InputEventScreenDrag):
-			_mark_input_handled()
+		_handle_drag(event as InputEventScreenDrag)
 
 
 func _mark_input_handled() -> void:
@@ -371,108 +488,57 @@ func _mark_input_handled() -> void:
 		viewport.set_input_as_handled()
 
 
-func _handle_pinch_touch(event: InputEventScreenTouch) -> bool:
+func _handle_touch(event: InputEventScreenTouch) -> void:
 	if event.pressed:
-		_pinch_touches[event.index] = event.position
-		_pan_velocity = Vector2.ZERO
-		if _pinch_touches.size() >= 2:
-			_end_pan()
-			_begin_pinch()
-			return true
+		_pan_velocity_y = 0.0
 		var world := _screen_to_world(event.position)
 		var hit := _hit_level(world)
 		if hit >= 0:
 			_on_level_clicked(hit)
-			return true
+			_mark_input_handled()
+			return
 		if _hit_hub(world):
 			_on_back_pressed()
-			return true
+			_mark_input_handled()
+			return
 		_begin_pan(event.index)
-		return true
+		_mark_input_handled()
+		return
 
-	_pinch_touches.erase(event.index)
-	if _pinch_touches.size() < 2:
-		_pinch_active = false
 	if _pan_pointer_id == event.index:
 		_end_pan()
-	return false
+		_mark_input_handled()
 
 
-func _handle_pinch_drag(event: InputEventScreenDrag) -> bool:
-	if _pinch_touches.has(event.index):
-		_pinch_touches[event.index] = event.position
-	if _pinch_touches.size() >= 2:
-		if not _pinch_active:
-			_end_pan()
-			_begin_pinch()
-		_update_pinch()
-		return true
-	if _pinch_touches.has(event.index) or _panning:
-		if not _panning:
-			_begin_pan(event.index)
-		_apply_pan_delta(event.relative)
-		return true
-	return false
+func _handle_drag(event: InputEventScreenDrag) -> void:
+	if not _panning and _pan_pointer_id != event.index:
+		return
+	if not _panning:
+		_begin_pan(event.index)
+	_apply_pan_delta(event.relative)
+	_mark_input_handled()
 
 
 func _begin_pan(pointer_id: int) -> void:
+	if _snap_tween:
+		_snap_tween.kill()
+		_snap_tween = null
 	_panning = true
 	_pan_pointer_id = pointer_id
-	_pan_velocity = Vector2.ZERO
-	set_process(false)
+	_pan_velocity_y = 0.0
+	_pan_start_cam_y = camera.position.y
 
 
 func _end_pan() -> void:
+	if not _panning:
+		return
 	_panning = false
 	_pan_pointer_id = -1
-
-
-func _begin_pinch() -> void:
-	var points := _pinch_points()
-	if points.size() < 2:
-		return
-	_pinch_active = true
-	_pan_velocity = Vector2.ZERO
-	set_process(false)
-	_pinch_start_distance = points[0].distance_to(points[1])
-	_pinch_start_zoom = camera.zoom.x
-	_pinch_last_midpoint = (points[0] + points[1]) * 0.5
-
-
-func _update_pinch() -> void:
-	var points := _pinch_points()
-	if points.size() < 2 or _pinch_start_distance <= 0.001:
-		return
-	var midpoint := (points[0] + points[1]) * 0.5
-	var distance := points[0].distance_to(points[1])
-	var target_zoom := _pinch_start_zoom * (distance / _pinch_start_distance) * PINCH_ZOOM_SENSITIVITY
-	_zoom_at_screen_point(midpoint, target_zoom)
-	var mid_delta := midpoint - _pinch_last_midpoint
-	if mid_delta.length_squared() > 0.01:
-		_apply_pan_delta(mid_delta, false)
-	_pinch_last_midpoint = midpoint
-
-
-func _pinch_points() -> Array[Vector2]:
-	var points: Array[Vector2] = []
-	for key in _pinch_touches.keys():
-		points.append(_pinch_touches[key])
-		if points.size() >= 2:
-			break
-	return points
-
-
-func _zoom_at_screen_point(screen_point: Vector2, target_zoom: float) -> void:
-	var old_zoom := camera.zoom.x
-	var new_zoom := clampf(target_zoom, maxf(ZOOM_MIN, _min_zoom_to_cover_strip()), ZOOM_MAX)
-	if is_equal_approx(old_zoom, new_zoom):
-		_clamp_camera_to_strip()
-		return
-	var world_before := _screen_to_world(screen_point)
-	camera.zoom = Vector2(new_zoom, new_zoom)
-	var world_after := _screen_to_world(screen_point)
-	camera.position += world_before - world_after
-	_clamp_camera_to_strip()
+	if _paging_enabled:
+		_go_to_page(_resolve_snap_page(), true)
+	else:
+		_clamp_camera_to_pages()
+	_pan_velocity_y = 0.0
 
 
 func _hit_hub(world_pos: Vector2) -> bool:

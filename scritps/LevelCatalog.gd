@@ -331,7 +331,8 @@ func build_grouped_level_layout(
 	col_spacing: float = 100.0,
 	row_spacing: float = 100.0,
 	hub_gap: float = 160.0,
-	group_gap: float = 56.0
+	group_gap: float = 56.0,
+	header_clearance: float = 48.0
 ) -> Dictionary:
 	var positions: Array[Vector2] = []
 	var headers: Array = []
@@ -340,6 +341,7 @@ func build_grouped_level_layout(
 	var row_y := hub_gap
 	var prev_group := ""
 	var first := true
+	var clearance := maxf(header_clearance, 1.0)
 
 	for level in levels:
 		var group := level.group_title_key.strip_edges() if level != null else ""
@@ -352,7 +354,7 @@ func build_grouped_level_layout(
 			if not group.is_empty():
 				headers.append({
 					"title_key": group,
-					"position": Vector2(0.0, row_y - group_gap * 0.55),
+					"position": Vector2(0.0, row_y - clearance),
 				})
 			prev_group = group
 			first = false

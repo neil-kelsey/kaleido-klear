@@ -110,7 +110,10 @@ msgid "UI_DIMENSION_MAP_HINT"
 msgstr "Scroll to zoom · drag to pan · tap a diamond"
 
 msgid "UI_LEVEL_MAP_HINT"
-msgstr "Tap a level · pinch or scroll to zoom · drag to pan"
+msgstr "Tap a level · swipe up or down for sections"
+
+msgid "UI_LEVEL_MAP_HINT_COMPACT"
+msgstr "Tap a level"
 
 msgid "UI_DIMENSION_EMPTY"
 msgstr "No levels in this dimension yet."
@@ -177,6 +180,12 @@ msgstr "Back to dimensions"
 
 msgid "UI_CLOSE"
 msgstr "Close"
+
+msgid "UI_GOALS_INFO_TITLE"
+msgstr "Goals"
+
+msgid "UI_GOALS"
+msgstr "Goals"
 
 msgid "UI_SHARE_MESSAGE"
 msgstr "I got %d stars on %s in Kaleido Klear!"
@@ -585,3 +594,30 @@ msgstr "Walls"
 
 msgid "UI_GROUP_BIGGER_BOARDS"
 msgstr "Bigger Boards"
+
+msgid "UI_CREATOR_GOAL_MAP"
+msgstr "Board"
+
+msgid "UI_CREATOR_ADD_GOAL_TITLE"
+msgstr "Add %s"
+
+msgid "UI_CREATOR_GOAL_INFINITE"
+msgstr "Infinite"
+
+msgid "UI_CREATOR_GOAL_COUNT"
+msgstr "Count"
+
+msgid "UI_CREATOR_GOAL_TAP_REMOVE"
+msgstr "Tap to remove this goal"
+
+msgid "UI_CREATOR_EDIT_GOAL_TITLE"
+msgstr "Edit %s"
+
+msgid "UI_CREATOR_GOAL_SAVE"
+msgstr "Save goal"
+
+msgid "UI_CREATOR_GOAL_DELETE"
+msgstr "Delete goal"
+
+msgid "UI_CREATOR_GOAL_TAP_EDIT"
+msgstr "Tap to edit this goal"

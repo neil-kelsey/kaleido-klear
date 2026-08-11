@@ -1,10 +1,16 @@
-[gd_scene load_steps=6 format=3 uid="uid://d17j508vck7jl"]
+[gd_scene load_steps=11 format=3 uid="uid://d17j508vck7jl"]
 
 [ext_resource type="PackedScene" uid="uid://qwpopfwnvd7c" path="res://scenes/board.tscn" id="1_board"]
 [ext_resource type="Script" path="res://scritps/Main.gd" id="2_main"]
 [ext_resource type="PackedScene" uid="uid://prism_level_complete_modal" path="res://scenes/ui/level_complete_modal.tscn" id="3_modal"]
 [ext_resource type="PackedScene" uid="uid://prism_game_over_modal" path="res://scenes/ui/game_over_modal.tscn" id="4_game_over_modal"]
 [ext_resource type="PackedScene" path="res://scenes/ui/goal_border.tscn" id="5_goal_border"]
+[ext_resource type="PackedScene" uid="uid://prism_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="6_back"]
+[ext_resource type="PackedScene" uid="uid://prism_circle_icon_button" path="res://scenes/ui/circle_icon_button.tscn" id="7_icon"]
+[ext_resource type="PackedScene" uid="uid://prism_goals_info_modal" path="res://scenes/ui/goals_info_modal.tscn" id="8_goals_modal"]
+[ext_resource type="Texture2D" path="res://assets/icons/undo_icon.svg" id="9_undo"]
+[ext_resource type="Texture2D" path="res://assets/icons/refresh_icon.svg" id="10_restart"]
+[ext_resource type="Texture2D" path="res://assets/icons/goals_icon.svg" id="11_goals"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("2_main")
@@ -16,45 +22,65 @@ position = Vector2(640, 360)
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="BackButton" type="Button" parent="UI"]
-unique_name_in_owner = true
-anchors_preset = 0
-offset_left = 24.0
-offset_top = 24.0
-offset_right = 160.0
-offset_bottom = 88.0
-grow_horizontal = 0
-grow_vertical = 0
-text = "Back"
-
-[node name="RestartButton" type="Button" parent="UI"]
+[node name="BackButton" parent="UI" instance=ExtResource("6_back")]
 unique_name_in_owner = true
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 96.0
-offset_top = -88.0
-offset_right = 160.0
-offset_bottom = -24.0
+offset_left = 52.0
+offset_top = -52.0
+offset_right = 52.0
+offset_bottom = -52.0
 grow_horizontal = 0
 grow_vertical = 0
-focus_mode = 0
-flat = false
 
-[node name="UndoButton" type="Button" parent="UI"]
+[node name="RestartButton" parent="UI" instance=ExtResource("7_icon")]
 unique_name_in_owner = true
-anchors_preset = 2
+anchors_preset = 7
+anchor_left = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = 24.0
-offset_top = -88.0
-offset_right = 88.0
-offset_bottom = -24.0
-grow_horizontal = 0
+offset_left = -20.0
+offset_top = -52.0
+offset_right = 20.0
+offset_bottom = -52.0
+grow_horizontal = 2
 grow_vertical = 0
-focus_mode = 0
-flat = false
-disabled = true
+icon_texture = ExtResource("10_restart")
+tooltip_key = "UI_RESTART_LEVEL"
+
+[node name="GoalsButton" parent="UI" instance=ExtResource("7_icon")]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -52.0
+offset_right = 20.0
+offset_bottom = -52.0
+grow_horizontal = 2
+grow_vertical = 0
+icon_texture = ExtResource("11_goals")
+tooltip_key = "UI_GOALS"
+
+[node name="UndoButton" parent="UI" instance=ExtResource("7_icon")]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -52.0
+offset_right = 20.0
+offset_bottom = -52.0
+grow_horizontal = 2
+grow_vertical = 0
+icon_texture = ExtResource("9_undo")
+tooltip_key = "UI_UNDO_MOVE"
 
 [node name="GoalBorderLeft" parent="UI" instance=ExtResource("5_goal_border")]
 mouse_filter = 2
@@ -114,10 +140,10 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -80.0
-offset_top = -60.0
-offset_right = 80.0
-offset_bottom = -20.0
+offset_left = -100.0
+offset_top = -220.0
+offset_right = 100.0
+offset_bottom = -180.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_font_sizes/font_size = 24
@@ -128,6 +154,10 @@ horizontal_alignment = 1
 
 [node name="GameOverModal" parent="UI" instance=ExtResource("4_game_over_modal")]
 
+[node name="GoalsInfoModal" parent="UI" instance=ExtResource("8_goals_modal")]
+unique_name_in_owner = true
+
 [connection signal="pressed" from="UI/BackButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="UI/RestartButton" to="." method="_on_restart_button_pressed"]
 [connection signal="pressed" from="UI/UndoButton" to="." method="_on_undo_button_pressed"]
+[connection signal="pressed" from="UI/GoalsButton" to="." method="_on_goals_button_pressed"]

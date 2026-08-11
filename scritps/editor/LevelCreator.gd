@@ -4,7 +4,6 @@ const SETTINGS_SCENE := "res://scenes/ui/settings.tscn"
 const GAME_SCENE := "res://scenes/main.tscn"
 
 const EDGE_KEYS := ["left", "top", "right", "bottom"]
-const GOAL_TAB_ORDER := ["top", "right", "bottom", "left"]
 
 @onready var back_button: Button = %BackButton
 @onready var save_button: Button = %SaveButton
@@ -49,6 +48,17 @@ var _color_flow: HFlowContainer
 var _color_buttons: Array[Button] = []
 var _kind_toolbar_buttons: Dictionary = {}
 var _edge_panels: Dictionary = {}
+var _goals_map: LevelCreatorGoalsMap
+var _goal_modal: Control
+var _goal_modal_edge: String = ""
+var _goal_modal_edit_index: int = -1
+var _goal_modal_title: Label
+var _goal_modal_color: OptionButton
+var _goal_modal_count: OptionButton
+var _goal_modal_infinite: CheckBox
+var _goal_modal_count_box: VBoxContainer
+var _goal_modal_confirm: Button
+var _goal_modal_delete: Button
 var _refreshing_shape_list: bool = false
 var _passed_signature: String = ""
 var _baseline_signature: String = ""
@@ -64,6 +74,7 @@ func _ready() -> void:
 	_build_setup_panel()
 	_build_blocks_panel()
 	_build_right_panel()
+	_build_goal_modal()
 	_apply_translations()
 	_style_buttons()
 	_style_segmented_tabs()
@@ -236,6 +247,12 @@ func _apply_translations() -> void:
 		_back_confirm.dialog_text = tr("UI_CREATOR_BACK_CONFIRM")
 		_back_confirm.ok_button_text = tr("UI_BACK")
 		_back_confirm.cancel_button_text = tr("UI_CANCEL")
+	if _goals_map != null:
+		_goals_map.apply_translations()
+	if _goal_modal_infinite != null:
+		_goal_modal_infinite.text = tr("UI_CREATOR_GOAL_INFINITE")
+	if _goal_modal_delete != null:
+		_goal_modal_delete.text = tr("UI_CREATOR_GOAL_DELETE")
 
 
 func _notification(what: int) -> void:
@@ -475,84 +492,229 @@ func _build_blocks_panel() -> void:
 
 
 func _build_right_panel() -> void:
-	for edge_key in GOAL_TAB_ORDER:
-		_edge_panels[edge_key] = _build_edge_panel(edge_key)
+	for edge_key in EDGE_KEYS:
+		_edge_panels[edge_key] = {"goals": []}
+
+	_goals_map = LevelCreatorGoalsMap.new()
+	_goals_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_goals_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_goals_map.custom_minimum_size = Vector2(0, 360)
+	right_panel.add_child(_goals_map)
+	_goals_map.add_goal_requested.connect(_on_add_goal_requested)
+	_goals_map.edit_goal_requested.connect(_on_edit_goal_requested)
+	_goals_map.goals_changed.connect(_on_goals_map_changed)
 
 
-func _build_edge_panel(edge_key: String) -> Dictionary:
-	var panel := VBoxContainer.new()
-	panel.add_theme_constant_override("separation", 6)
-	right_panel.add_child(panel)
+func _build_goal_modal() -> void:
+	_goal_modal = Control.new()
+	_goal_modal.visible = false
+	_goal_modal.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_goal_modal.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_goal_modal)
 
-	_add_section_label(panel, tr("UI_CREATOR_GOAL_%s" % edge_key.to_upper()))
+	var overlay := ColorRect.new()
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.color = Color(0, 0, 0, 0.65)
+	overlay.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed:
+			_hide_goal_modal()
+	)
+	_goal_modal.add_child(overlay)
 
-	var goals_list := VBoxContainer.new()
-	goals_list.add_theme_constant_override("separation", 4)
-	panel.add_child(goals_list)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_goal_modal.add_child(center)
 
-	var add_goal_row := HBoxContainer.new()
-	panel.add_child(add_goal_row)
-	var add_goal_button := Button.new()
-	add_goal_button.text = tr("UI_CREATOR_ADD_GOAL")
-	add_goal_button.pressed.connect(_on_show_add_goal_form.bind(edge_key))
-	add_goal_row.add_child(add_goal_button)
-	_style_compact_secondary_button(add_goal_button)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(460, 0)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.14, 0.14, 0.18, 1)
+	panel_style.set_corner_radius_all(20)
+	panel_style.content_margin_left = 28
+	panel_style.content_margin_top = 28
+	panel_style.content_margin_right = 28
+	panel_style.content_margin_bottom = 28
+	panel.add_theme_stylebox_override("panel", panel_style)
+	center.add_child(panel)
 
-	var add_form := VBoxContainer.new()
-	add_form.visible = false
-	add_form.add_theme_constant_override("separation", 8)
-	panel.add_child(add_form)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	panel.add_child(vbox)
+
+	_goal_modal_title = Label.new()
+	_goal_modal_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_goal_modal_title.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
+	_goal_modal_title.add_theme_font_size_override("font_size", 30)
+	vbox.add_child(_goal_modal_title)
 
 	var color_box := VBoxContainer.new()
 	color_box.add_theme_constant_override("separation", 8)
-	add_form.add_child(color_box)
+	vbox.add_child(color_box)
 	var color_label := Label.new()
 	color_label.text = tr("UI_CREATOR_GOAL_COLOR")
-	color_label.add_theme_color_override("font_color", UiTheme.TEXT)
-	color_label.add_theme_font_size_override("font_size", 18)
+	color_label.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
 	color_box.add_child(color_label)
-	var color_option := OptionButton.new()
-	_populate_color_option(color_option)
-	UiTheme.style_option_field(color_option)
-	color_box.add_child(color_option)
+	_goal_modal_color = OptionButton.new()
+	_populate_color_option(_goal_modal_color)
+	UiTheme.style_option_field(_goal_modal_color)
+	color_box.add_child(_goal_modal_color)
 
-	var limit_box := VBoxContainer.new()
-	limit_box.visible = false
-	limit_box.add_theme_constant_override("separation", 8)
+	_goal_modal_infinite = CheckBox.new()
+	_goal_modal_infinite.text = tr("UI_CREATOR_GOAL_INFINITE")
+	_goal_modal_infinite.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
+	_goal_modal_infinite.toggled.connect(_on_goal_modal_infinite_toggled)
+	vbox.add_child(_goal_modal_infinite)
 
-	var unlimited_check := CheckBox.new()
-	unlimited_check.text = tr("UI_CREATOR_GOAL_LIMIT_UNLIMITED")
-	unlimited_check.button_pressed = true
-	unlimited_check.toggled.connect(func(unlimited_on: bool) -> void:
-		limit_box.visible = not unlimited_on
-	)
-	add_form.add_child(unlimited_check)
+	_goal_modal_count_box = VBoxContainer.new()
+	_goal_modal_count_box.add_theme_constant_override("separation", 8)
+	vbox.add_child(_goal_modal_count_box)
+	var count_label := Label.new()
+	count_label.text = tr("UI_CREATOR_GOAL_COUNT")
+	count_label.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
+	_goal_modal_count_box.add_child(count_label)
+	_goal_modal_count = OptionButton.new()
+	for n in range(1, 21):
+		_goal_modal_count.add_item(str(n), n)
+	_goal_modal_count.select(0)
+	UiTheme.style_option_field(_goal_modal_count)
+	_goal_modal_count_box.add_child(_goal_modal_count)
 
-	add_form.add_child(limit_box)
-	var limit_field := _add_number_field(limit_box, tr("UI_CREATOR_GOAL_LIMIT"), 1, 99, 1)
+	_goal_modal_delete = Button.new()
+	_goal_modal_delete.text = tr("UI_CREATOR_GOAL_DELETE")
+	_goal_modal_delete.visible = false
+	_goal_modal_delete.pressed.connect(_on_delete_goal_modal)
+	vbox.add_child(_goal_modal_delete)
+	UiTheme.style_danger_button(_goal_modal_delete, UiTheme.ButtonScale.COMPACT)
 
-	var confirm_row := HBoxContainer.new()
-	add_form.add_child(confirm_row)
-	var confirm_button := Button.new()
-	confirm_button.text = tr("UI_CREATOR_GOAL_ADD_CONFIRM")
-	confirm_button.pressed.connect(_on_confirm_add_goal.bind(edge_key))
-	confirm_row.add_child(confirm_button)
-	_style_compact_action_button(confirm_button)
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 12)
+	vbox.add_child(buttons)
 
-	panel.add_child(_make_spacer(12))
+	var cancel_button := Button.new()
+	cancel_button.text = tr("UI_CANCEL")
+	cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel_button.pressed.connect(_hide_goal_modal)
+	buttons.add_child(cancel_button)
+	_style_compact_secondary_button(cancel_button)
 
+	_goal_modal_confirm = Button.new()
+	_goal_modal_confirm.text = tr("UI_CREATOR_GOAL_ADD_CONFIRM")
+	_goal_modal_confirm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_goal_modal_confirm.pressed.connect(_on_confirm_goal_modal)
+	buttons.add_child(_goal_modal_confirm)
+	_style_compact_action_button(_goal_modal_confirm)
+
+
+func _on_goal_modal_infinite_toggled(infinite_on: bool) -> void:
+	_goal_modal_count_box.visible = not infinite_on
+
+
+func _on_add_goal_requested(edge_key: String) -> void:
+	_open_goal_modal(edge_key, -1)
+
+
+func _on_edit_goal_requested(edge_key: String, index: int) -> void:
+	_open_goal_modal(edge_key, index)
+
+
+func _open_goal_modal(edge_key: String, edit_index: int) -> void:
+	_goal_modal_edge = edge_key
+	_goal_modal_edit_index = edit_index
+	## Keep panel data aligned with the map before reading.
+	_edge_panels[edge_key]["goals"] = _goals_map.get_edge_goals(edge_key)
+	var edge_label := tr("UI_CREATOR_GOAL_%s" % edge_key.to_upper())
+	var editing := edit_index >= 0
+	if editing:
+		_goal_modal_title.text = tr("UI_CREATOR_EDIT_GOAL_TITLE") % edge_label
+		_goal_modal_confirm.text = tr("UI_CREATOR_GOAL_SAVE")
+		_goal_modal_delete.visible = true
+		_goal_modal_delete.text = tr("UI_CREATOR_GOAL_DELETE")
+		var goals: Array = _edge_panels[edge_key]["goals"]
+		if edit_index >= goals.size():
+			_hide_goal_modal()
+			return
+		var goal: Dictionary = goals[edit_index]
+		_select_option_by_id(_goal_modal_color, int(goal["color"]))
+		var unlimited: bool = bool(goal.get("unlimited", false))
+		_goal_modal_infinite.button_pressed = unlimited
+		_goal_modal_count_box.visible = not unlimited
+		var count := clampi(int(goal.get("count", 1)), 1, 20)
+		_select_option_by_id(_goal_modal_count, count)
+	else:
+		_goal_modal_title.text = tr("UI_CREATOR_ADD_GOAL_TITLE") % edge_label
+		_goal_modal_confirm.text = tr("UI_CREATOR_GOAL_ADD_CONFIRM")
+		_goal_modal_delete.visible = false
+		_goal_modal_color.select(0)
+		_goal_modal_infinite.button_pressed = false
+		_goal_modal_count_box.visible = true
+		_goal_modal_count.select(0)
+	_goal_modal_infinite.text = tr("UI_CREATOR_GOAL_INFINITE")
+	_goal_modal.visible = true
+
+
+func _select_option_by_id(option: OptionButton, id: int) -> void:
+	for i in option.item_count:
+		if option.get_item_id(i) == id:
+			option.select(i)
+			return
+	if option.item_count > 0:
+		option.select(0)
+
+
+func _hide_goal_modal() -> void:
+	if _goal_modal != null:
+		_goal_modal.visible = false
+	_goal_modal_edge = ""
+	_goal_modal_edit_index = -1
+
+
+func _read_goal_from_modal() -> Dictionary:
+	var unlimited: bool = _goal_modal_infinite.button_pressed
 	return {
-		"panel": panel,
-		"goals_list": goals_list,
-		"goals": [],
-		"add_goal_button": add_goal_button,
-		"add_form": add_form,
-		"form_color": color_option,
-		"form_unlimited": unlimited_check,
-		"form_limit_box": limit_box,
-		"form_limit": limit_field,
-		"form_confirm": confirm_button,
+		"color": _goal_modal_color.get_selected_id() as Block.TileColor,
+		"unlimited": unlimited,
+		"count": _goal_modal_count.get_selected_id() if not unlimited else 1,
 	}
+
+
+func _on_confirm_goal_modal() -> void:
+	if _goal_modal_edge.is_empty() or not _edge_panels.has(_goal_modal_edge):
+		_hide_goal_modal()
+		return
+	var goal := _read_goal_from_modal()
+	var goals: Array = _edge_panels[_goal_modal_edge]["goals"]
+	if _goal_modal_edit_index >= 0:
+		if _goal_modal_edit_index >= goals.size():
+			_hide_goal_modal()
+			return
+		goals[_goal_modal_edit_index] = goal
+	else:
+		goals.append(goal)
+	_goals_map.set_edge_goals(_goal_modal_edge, goals)
+	_hide_goal_modal()
+	_refresh_save_button()
+
+
+func _on_delete_goal_modal() -> void:
+	if _goal_modal_edge.is_empty() or _goal_modal_edit_index < 0:
+		_hide_goal_modal()
+		return
+	var goals: Array = _edge_panels[_goal_modal_edge]["goals"]
+	if _goal_modal_edit_index >= goals.size():
+		_hide_goal_modal()
+		return
+	goals.remove_at(_goal_modal_edit_index)
+	_goals_map.set_edge_goals(_goal_modal_edge, goals)
+	_hide_goal_modal()
+	_refresh_save_button()
+
+
+func _on_goals_map_changed() -> void:
+	for edge_key in EDGE_KEYS:
+		_edge_panels[edge_key]["goals"] = _goals_map.get_edge_goals(edge_key)
+	_refresh_save_button()
 
 
 func _new_level() -> void:
@@ -616,16 +778,16 @@ func _apply_draft_to_ui() -> void:
 
 
 func _apply_edge_goals_to_ui(edge_key: String, phases: Array[GoalPhase]) -> void:
-	var panel_data: Dictionary = _edge_panels[edge_key]
-	panel_data["goals"] = []
-	panel_data["add_form"].visible = false
+	var goals: Array = []
 	for phase in phases:
-		panel_data["goals"].append({
+		goals.append({
 			"color": phase.color,
 			"unlimited": phase.unlimited,
 			"count": maxi(1, phase.count),
 		})
-	_rebuild_goals_list(edge_key)
+	_edge_panels[edge_key]["goals"] = goals
+	if _goals_map != null:
+		_goals_map.set_edge_goals(edge_key, goals)
 
 
 func _collect_draft_from_ui() -> void:
@@ -1136,101 +1298,6 @@ func _on_grid_draw_selected() -> void:
 func _on_grid_erase_selected() -> void:
 	_grid_erase_mode = true
 	_sync_grid()
-
-
-func _on_show_add_goal_form(edge_key: String) -> void:
-	var panel_data: Dictionary = _edge_panels[edge_key]
-	panel_data["add_form"].visible = true
-	panel_data["form_unlimited"].button_pressed = true
-	panel_data["form_limit_box"].visible = false
-	panel_data["form_limit"].text = "1"
-
-
-func _on_confirm_add_goal(edge_key: String) -> void:
-	var panel_data: Dictionary = _edge_panels[edge_key]
-	var unlimited: bool = panel_data["form_unlimited"].button_pressed
-	var goal := {
-		"color": panel_data["form_color"].get_selected_id() as Block.TileColor,
-		"unlimited": unlimited,
-		"count": _read_number_field(panel_data["form_limit"], 1, 99, 1),
-	}
-	panel_data["goals"].append(goal)
-	panel_data["add_form"].visible = false
-	_rebuild_goals_list(edge_key)
-	_refresh_save_button()
-
-
-func _rebuild_goals_list(edge_key: String) -> void:
-	var panel_data: Dictionary = _edge_panels[edge_key]
-	for child in panel_data["goals_list"].get_children():
-		child.queue_free()
-	var goals: Array = panel_data["goals"]
-	for i in goals.size():
-		var goal: Dictionary = goals[i]
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 4)
-		panel_data["goals_list"].add_child(row)
-
-		var label := Label.new()
-		label.text = _goal_entry_label(goal, i)
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		row.add_child(label)
-
-		var up_button := Button.new()
-		up_button.text = "↑"
-		up_button.disabled = i == 0
-		up_button.pressed.connect(_on_move_goal.bind(edge_key, i, -1))
-		row.add_child(up_button)
-		_style_selectable_tool_button(up_button)
-
-		var down_button := Button.new()
-		down_button.text = "↓"
-		down_button.disabled = i == goals.size() - 1
-		down_button.pressed.connect(_on_move_goal.bind(edge_key, i, 1))
-		row.add_child(down_button)
-		_style_selectable_tool_button(down_button)
-
-		var delete_button := Button.new()
-		delete_button.text = "X"
-		delete_button.pressed.connect(_on_delete_goal.bind(edge_key, i))
-		row.add_child(delete_button)
-		_style_selectable_tool_button(delete_button)
-
-
-func _goal_entry_label(goal: Dictionary, index: int) -> String:
-	var color_name := _color_label(goal["color"])
-	if goal["unlimited"]:
-		return "%d. %s — %s" % [
-			index + 1,
-			color_name,
-			tr("UI_CREATOR_GOAL_LIMIT_UNLIMITED"),
-		]
-	return "%d. %s — %s" % [
-		index + 1,
-		color_name,
-		tr("UI_CREATOR_GOAL_LIMIT_COUNT") % int(goal["count"]),
-	]
-
-
-func _on_move_goal(edge_key: String, index: int, direction: int) -> void:
-	var panel_data: Dictionary = _edge_panels[edge_key]
-	var goals: Array = panel_data["goals"]
-	var new_index := index + direction
-	if new_index < 0 or new_index >= goals.size():
-		return
-	var temp = goals[index]
-	goals[index] = goals[new_index]
-	goals[new_index] = temp
-	_rebuild_goals_list(edge_key)
-	_refresh_save_button()
-
-
-func _on_delete_goal(edge_key: String, index: int) -> void:
-	var panel_data: Dictionary = _edge_panels[edge_key]
-	panel_data["goals"].remove_at(index)
-	_rebuild_goals_list(edge_key)
-	_refresh_save_button()
 
 
 func _on_save_pressed() -> void:

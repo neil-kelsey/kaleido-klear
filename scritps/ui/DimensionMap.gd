@@ -36,7 +36,7 @@ const PAN_MAX_SPEED := 4200.0
 const FOCUS_DURATION := 0.45
 
 @onready var camera: Camera2D = $Camera2D
-@onready var back_button: Button = %BackButton
+@onready var back_button: CircleBackButton = %BackButton
 @onready var hint_label: Label = %HintLabel
 
 var _positions: Array[Vector2] = []
@@ -56,6 +56,8 @@ var _pinch_start_zoom := 1.0
 var _pinch_last_midpoint := Vector2.ZERO
 var _intro_focus_index: int = 0
 var _navigating := false
+var _progress_nebula: NebulaDiamondFill
+var _chart_sprite: Sprite2D
 
 
 func _ready() -> void:
@@ -67,11 +69,12 @@ func _ready() -> void:
 	if not LevelCatalog.is_dimension_unlocked(GameSession.current_dimension_index):
 		GameSession.set_current_dimension(_focus_dimension_index())
 	_selected_index = _focus_dimension_index()
+	_ensure_chart_sprite()
+	_progress_nebula = NebulaDiamondFill.new()
+	add_child(_progress_nebula)
+	_sync_progress_nebula()
 	camera.make_current()
 	back_button.pressed.connect(_on_back_pressed)
-	UiTheme.style_nav_button(back_button)
-	back_button.icon = load("res://assets/icons/back_icon.svg")
-	back_button.text = "  " + tr("UI_BACK")
 	hint_label.text = tr("UI_DIMENSION_MAP_HINT")
 	UiTheme.style_menu_hint(hint_label)
 	hint_label.add_theme_color_override("font_color", Color(0.25, 0.35, 0.55, 0.85))
@@ -82,11 +85,41 @@ func _ready() -> void:
 	_play_intro()
 
 
+func _ensure_chart_sprite() -> void:
+	## Chart sits behind nebula fills so diamond centres can use the CTA nebula look.
+	if _chart_sprite != null and is_instance_valid(_chart_sprite):
+		return
+	_chart_sprite = Sprite2D.new()
+	_chart_sprite.z_index = -10
+	_chart_sprite.centered = true
+	_chart_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_chart_sprite.position = STRIP_WORLD.get_center()
+	if _star_chart_tex != null:
+		_chart_sprite.texture = _star_chart_tex
+		var tex_size := _star_chart_tex.get_size()
+		if tex_size.x > 0.0 and tex_size.y > 0.0:
+			_chart_sprite.scale = Vector2(
+				STRIP_WORLD.size.x / tex_size.x,
+				STRIP_WORLD.size.y / tex_size.y
+			)
+	add_child(_chart_sprite)
+
+
+func _sync_progress_nebula() -> void:
+	if _progress_nebula == null:
+		return
+	var progress := _furthest_unlocked_dimension()
+	if progress < 0 or progress >= _positions.size():
+		_progress_nebula.visible = false
+		return
+	_progress_nebula.visible = true
+	_progress_nebula.configure(_positions[progress], DIAMOND_SIZE)
+
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
 		if not is_node_ready():
 			return
-		back_button.text = "  " + tr("UI_BACK")
 		hint_label.text = tr("UI_DIMENSION_MAP_HINT")
 		queue_redraw()
 
@@ -216,12 +249,9 @@ func _apply_pan_delta(screen_delta: Vector2, record_velocity: bool = true) -> vo
 
 
 func _draw() -> void:
-	## Chart only — camera clamps keep the view on this strip.
-	if _star_chart_tex != null:
-		draw_texture_rect(_star_chart_tex, STRIP_WORLD, false)
-	else:
+	## Background chart is a Sprite2D behind nebula fills.
+	if _star_chart_tex == null:
 		draw_rect(STRIP_WORLD, CHART_BG, true)
-
 	for i in _positions.size():
 		var parent_i := LevelCatalog.get_dimension_parent(i)
 		if parent_i < 0:
@@ -237,6 +267,7 @@ func _draw() -> void:
 			_draw_dashed_line(from_p, to_p, col.lightened(0.15), LINE_WIDTH)
 
 	var progress := _furthest_unlocked_dimension()
+	_sync_progress_nebula()
 	for i in _positions.size():
 		var pos: Vector2 = _positions[i]
 		var theme := LevelCatalog.get_dimension_color(i)
@@ -290,11 +321,13 @@ func _draw_diamond(
 	var pts := _diamond_points(center, size)
 	var outline := pts + PackedVector2Array([pts[0]])
 	if is_selected:
-		_draw_selection_glow(center, size, LevelCatalog.PRIMARY_BLUE if is_progress else theme)
+		## Outer glow always uses this dimension's theme colour.
+		_draw_selection_glow(center, size, theme)
 	if is_progress:
-		_draw_current_glow(center, size)
-		draw_colored_polygon(pts, LevelCatalog.PRIMARY_BLUE)
+		_draw_current_glow(center, size, theme)
+		## Centre fill is the nebula child — only draw the rim here.
 		draw_polyline(outline, Color(1, 1, 1, 0.95), 3.0, true)
+		draw_polyline(outline, Color(theme.r, theme.g, theme.b, 0.9), 1.6, true)
 	elif unlocked:
 		draw_polyline(outline, theme, 4.0, true)
 	else:
@@ -318,14 +351,13 @@ func _draw_selection_glow(center: Vector2, size: float, accent: Color) -> void:
 	draw_polyline(mid + PackedVector2Array([mid[0]]), Color(accent.r, accent.g, accent.b, 0.55), 4.5, true)
 
 
-func _draw_current_glow(center: Vector2, size: float) -> void:
-	## Static bloom — no per-frame redraw. Soft outer haze + bright rim.
-	var blue := LevelCatalog.PRIMARY_BLUE
+func _draw_current_glow(center: Vector2, size: float, theme: Color) -> void:
+	## Soft outer haze + bright rim in the dimension theme colour.
 	var outer := _diamond_points(center, size * 1.7)
-	draw_colored_polygon(outer, Color(blue.r, blue.g, blue.b, 0.08))
+	draw_colored_polygon(outer, Color(theme.r, theme.g, theme.b, 0.08))
 	var mid := _diamond_points(center, size * 1.35)
-	draw_colored_polygon(mid, Color(blue.r, blue.g, blue.b, 0.16))
-	draw_polyline(mid + PackedVector2Array([mid[0]]), Color(0.45, 0.72, 1.0, 0.35), 5.0, true)
+	draw_colored_polygon(mid, Color(theme.r, theme.g, theme.b, 0.16))
+	draw_polyline(mid + PackedVector2Array([mid[0]]), Color(theme.r, theme.g, theme.b, 0.4), 5.0, true)
 	var rim := _diamond_points(center, size * 1.08)
 	draw_polyline(rim + PackedVector2Array([rim[0]]), Color(1, 1, 1, 0.45), 2.5, true)
 

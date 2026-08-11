@@ -156,6 +156,79 @@ func get_goal_display_state(goal_edge: int) -> Dictionary:
 	}
 
 
+## Full phase list per edge for the goals info modal.
+## Each entry: { color, unlimited, count, status, scored }
+func get_goals_overview() -> Dictionary:
+	var out := {
+		"left": [],
+		"top": [],
+		"right": [],
+		"bottom": [],
+	}
+	if level_config == null:
+		return out
+	if _uses_multi_goals():
+		out["left"] = _overview_for_multi(GoalEdge.LEFT, level_config.goal_left_phases)
+		out["top"] = _overview_for_multi(GoalEdge.TOP, level_config.goal_top_phases)
+		out["right"] = _overview_for_multi(GoalEdge.RIGHT, level_config.goal_right_phases)
+		out["bottom"] = _overview_for_multi(GoalEdge.BOTTOM, level_config.goal_bottom_phases)
+		return out
+
+	_append_legacy_overview(out, "left", GoalEdge.LEFT, level_config.goal_left_enabled, level_config.goal_left_color)
+	_append_legacy_overview(out, "top", GoalEdge.TOP, level_config.goal_top_enabled, level_config.goal_top_color)
+	_append_legacy_overview(out, "right", GoalEdge.RIGHT, level_config.goal_right_enabled, level_config.goal_right_color)
+	_append_legacy_overview(out, "bottom", GoalEdge.BOTTOM, level_config.goal_bottom_enabled, level_config.goal_bottom_color)
+	return out
+
+
+func _overview_for_multi(goal_edge: int, phases: Array[GoalPhase]) -> Array:
+	var entries: Array = []
+	if phases.is_empty():
+		return entries
+	var state: MultiGoalEdgeState = null
+	if goal_edge >= 0 and goal_edge < _multi_goal_states.size():
+		state = _multi_goal_states[goal_edge]
+	var phase_index := state.phase_index if state != null else 0
+	var scored := state.scored_in_phase if state != null else 0
+	for i in phases.size():
+		var phase: GoalPhase = phases[i]
+		if phase == null:
+			continue
+		var status := "upcoming"
+		var scored_val := 0
+		if i < phase_index:
+			status = "completed"
+		elif i == phase_index:
+			status = "current"
+			scored_val = scored
+		entries.append({
+			"color": phase.color,
+			"unlimited": phase.unlimited,
+			"count": phase.count,
+			"status": status,
+			"scored": scored_val,
+		})
+	return entries
+
+
+func _append_legacy_overview(
+	out: Dictionary,
+	edge_key: String,
+	goal_edge: int,
+	enabled: bool,
+	color: Block.TileColor
+) -> void:
+	if not enabled:
+		return
+	out[edge_key] = [{
+		"color": color,
+		"unlimited": true,
+		"count": 0,
+		"status": "current" if _is_goal_edge_enabled(goal_edge) else "completed",
+		"scored": 0,
+	}]
+
+
 func _emit_all_goal_states() -> void:
 	for goal_edge in [GoalEdge.LEFT, GoalEdge.TOP, GoalEdge.RIGHT, GoalEdge.BOTTOM]:
 		goal_state_changed.emit(goal_edge, get_goal_display_state(goal_edge))

@@ -13,9 +13,10 @@ const INTRO_ZOOM_DURATION := 0.9
 
 @onready var board: Board = $Board
 @onready var camera: Camera2D = $Camera2D
-@onready var back_button: Button = %BackButton
-@onready var undo_button: Button = %UndoButton
-@onready var restart_button: Button = %RestartButton
+@onready var back_button: CircleBackButton = %BackButton
+@onready var undo_button: CircleIconButton = %UndoButton
+@onready var restart_button: CircleIconButton = %RestartButton
+@onready var goals_button: CircleIconButton = %GoalsButton
 @onready var lives_label: Label = $UI/LivesLabel
 @onready var goal_border_left: GoalBorder = $UI/GoalBorderLeft
 @onready var goal_border_top: GoalBorder = $UI/GoalBorderTop
@@ -23,6 +24,7 @@ const INTRO_ZOOM_DURATION := 0.9
 @onready var goal_border_bottom: GoalBorder = $UI/GoalBorderBottom
 @onready var level_complete_modal: Control = $UI/LevelCompleteModal
 @onready var game_over_modal: Control = $UI/GameOverModal
+@onready var goals_info_modal: GoalsInfoModal = %GoalsInfoModal
 
 var _current_level: LevelConfig = null
 var _section_backdrop: SectionBackdrop = null
@@ -68,15 +70,13 @@ func _ready() -> void:
 	level_complete_modal.share_pressed.connect(_on_share_pressed)
 	game_over_modal.replay_level_pressed.connect(_on_replay_level_pressed)
 	game_over_modal.level_select_pressed.connect(_on_game_over_level_select_pressed)
-	UiTheme.style_secondary_button(back_button, UiTheme.ButtonScale.HUD, true)
-	back_button.icon = load("res://assets/icons/back_icon.svg")
-	UiTheme.style_secondary_button(undo_button, UiTheme.ButtonScale.HUD, true)
-	undo_button.icon = load("res://assets/icons/undo_icon.svg")
-	UiTheme.style_secondary_button(restart_button, UiTheme.ButtonScale.HUD, true)
-	restart_button.icon = load("res://assets/icons/refresh_icon.svg")
+	if goals_info_modal.has_signal("closed"):
+		goals_info_modal.closed.connect(_update_undo_button)
 	_apply_translations()
 	_update_lives_label(board.get_lives())
 	lives_label.add_theme_color_override("font_color", UiTheme.TEXT)
+	_layout_hud_circle_buttons()
+	get_viewport().size_changed.connect(_layout_hud_circle_buttons)
 	_update_undo_button()
 	_play_level_intro()
 
@@ -90,11 +90,49 @@ func _notification(what: int) -> void:
 
 
 func _apply_translations() -> void:
-	if back_button == null:
-		return
-	back_button.text = "  " + tr("UI_BACK")
-	undo_button.tooltip_text = tr("UI_UNDO_MOVE")
-	restart_button.tooltip_text = tr("UI_RESTART_LEVEL")
+	pass
+
+
+func _layout_hud_circle_buttons() -> void:
+	## Bottom bar: Back (left) · Restart | Goals | Undo (centered cluster).
+	## Sizes come only from UiTheme so Back stays consistent everywhere.
+	var s := float(UiTheme.CIRCLE_BUTTON_SIZE)
+	var g := float(UiTheme.CIRCLE_BUTTON_EMPHASIS_SIZE)
+	var inset := float(UiTheme.CIRCLE_BUTTON_EDGE_INSET)
+	var gap := float(UiTheme.CIRCLE_BUTTON_CLUSTER_GAP)
+
+	restart_button.button_size = UiTheme.CIRCLE_BUTTON_SIZE
+	undo_button.button_size = UiTheme.CIRCLE_BUTTON_SIZE
+	goals_button.button_size = UiTheme.CIRCLE_BUTTON_EMPHASIS_SIZE
+
+	back_button.offset_left = inset
+	back_button.offset_bottom = -inset
+	back_button.refresh()
+
+	## Goals sits on the vertical center line; restart/undo flank it.
+	goals_button.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	goals_button.offset_left = -g * 0.5
+	goals_button.offset_right = g * 0.5
+	goals_button.offset_bottom = -inset
+	goals_button.offset_top = -inset - g
+
+	restart_button.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	restart_button.offset_left = -g * 0.5 - gap - s
+	restart_button.offset_right = -g * 0.5 - gap
+	restart_button.offset_bottom = -inset
+	restart_button.offset_top = -inset - s
+
+	undo_button.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	undo_button.offset_left = g * 0.5 + gap
+	undo_button.offset_right = g * 0.5 + gap + s
+	undo_button.offset_bottom = -inset
+	undo_button.offset_top = -inset - s
+
+	## Keep lives just above the center cluster.
+	var cluster_top := inset + maxf(s, g)
+	lives_label.offset_bottom = -(cluster_top + 12.0)
+	lives_label.offset_top = lives_label.offset_bottom - 40.0
+
 
 
 func _on_viewport_size_changed() -> void:
@@ -221,10 +259,17 @@ func _on_goal_state_changed(goal_edge: int, state: Dictionary) -> void:
 			goal_border_right.apply_state(state)
 		Board.GoalEdge.BOTTOM:
 			goal_border_bottom.apply_state(state)
+	if goals_info_modal != null and goals_info_modal.visible:
+		goals_info_modal.refresh_overview(board.get_goals_overview())
 
 
 func _input(event: InputEvent) -> void:
 	if _intro_playing:
+		return
+	if goals_info_modal != null and goals_info_modal.visible:
+		if event.is_action_pressed("ui_cancel"):
+			goals_info_modal.hide_modal()
+			get_viewport().set_input_as_handled()
 		return
 	if _is_modal_open():
 		return
@@ -420,7 +465,11 @@ func _clamp_camera() -> void:
 
 
 func _is_modal_open() -> bool:
-	return level_complete_modal.visible or game_over_modal.visible
+	return (
+		level_complete_modal.visible
+		or game_over_modal.visible
+		or (goals_info_modal != null and goals_info_modal.visible)
+	)
 
 
 func _go_to_level_select() -> void:
@@ -440,6 +489,9 @@ func _go_back() -> void:
 
 
 func handle_back() -> void:
+	if goals_info_modal != null and goals_info_modal.visible:
+		goals_info_modal.hide_modal()
+		return
 	if level_complete_modal.visible:
 		level_complete_modal.hide()
 		return
@@ -462,6 +514,13 @@ func _on_undo_button_pressed() -> void:
 		_update_undo_button()
 
 
+func _on_goals_button_pressed() -> void:
+	if _intro_playing or _is_modal_open():
+		return
+	goals_info_modal.show_overview(board.get_goals_overview())
+	_update_undo_button()
+
+
 func _on_undo_available_changed(_available: bool) -> void:
 	_update_undo_button()
 
@@ -474,11 +533,17 @@ func _on_undo_applied(remaining_lives: int) -> void:
 
 
 func _update_undo_button() -> void:
-	undo_button.disabled = (
+	var hard_block := (
 		_intro_playing
-		or not board.can_undo_move()
-		or _is_modal_open()
+		or level_complete_modal.visible
+		or game_over_modal.visible
 	)
+	var goals_open := goals_info_modal != null and goals_info_modal.visible
+	undo_button.disabled = hard_block or goals_open or not board.can_undo_move()
+	restart_button.disabled = hard_block or goals_open
+	if goals_button != null:
+		goals_button.disabled = hard_block
+
 
 func _restart_level() -> void:
 	if _current_level == null:

@@ -26,10 +26,10 @@ const CONSTELLATION_COLOR := Color(0.22, 0.32, 0.55, 0.4)
 const STRIP_WORLD := Rect2(-560, -3600, 1120, 4300)
 const OUTPUT_PATH := "res://assets/backgrounds/dimension_star_chart.jpg"
 
-## Crop for level select: hub at (0,0), ~100 levels in 5 columns growing +Y.
+## Crop for level select: hub at (0,0) = chart radial centre, levels grow +Y.
 ## Keep in sync with DimensionLevels.STRIP_WORLD.
-## Capacity: hub gap 160 + 20 rows × 100 spacing + bottom margin.
-const LEVEL_STRIP_WORLD := Rect2(-420, -180, 840, 2520)
+## Capacity: hub gap + compact/paged section rows + bottom margin.
+const LEVEL_STRIP_WORLD := Rect2(-420, -180, 840, 2800)
 const LEVEL_OUTPUT_PATH := "res://assets/backgrounds/level_star_chart.jpg"
 
 static var _active_strip: Rect2 = STRIP_WORLD

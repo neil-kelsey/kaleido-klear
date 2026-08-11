@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Goals: board square with chunky edge strips -->
+  <rect x="18" y="18" width="28" height="28" rx="4" fill="none" stroke="#ffffff" stroke-width="4"/>
+  <rect x="18" y="8" width="28" height="7" rx="2" fill="#ffffff"/>
+  <rect x="18" y="49" width="28" height="7" rx="2" fill="#ffffff"/>
+  <rect x="8" y="18" width="7" height="28" rx="2" fill="#ffffff"/>
+  <rect x="49" y="18" width="7" height="28" rx="2" fill="#ffffff"/>
+</svg>
