@@ -1,21 +1,19 @@
 extends Button
 class_name CircleIconButton
 
-## Shared circular icon control. Size comes from UiTheme.CIRCLE_BUTTON_SIZE
-## unless button_size is set > 0.
+## Circular control that draws a Font Awesome glyph as vectors (not a bitmap).
 
-## 0 = use UiTheme.CIRCLE_BUTTON_SIZE (preferred).
 @export var button_size: int = 0:
 	set(value):
 		button_size = value
 		if is_node_ready():
 			_apply_style()
 
-@export var icon_texture: Texture2D:
+## Font Awesome classic solid name: undo, refresh, bullseye, arrow-left, ...
+@export var fa_icon: String = "undo":
 	set(value):
-		icon_texture = value
-		if is_node_ready():
-			_apply_style()
+		fa_icon = value
+		queue_redraw()
 
 @export var tooltip_key: String = "":
 	set(value):
@@ -41,12 +39,19 @@ func resolved_size() -> int:
 
 
 func _apply_style() -> void:
-	if icon_texture == null:
-		return
 	var s := resolved_size()
-	UiTheme.style_circle_icon_button(self, icon_texture, s)
+	UiTheme.style_circle_icon_button(self, s)
 	custom_minimum_size = Vector2(s, s)
 	size = Vector2(s, s)
+	queue_redraw()
+
+
+func _draw() -> void:
+	if fa_icon.is_empty():
+		return
+	var s := size
+	var pad := minf(s.x, s.y) * 0.42
+	FaVector.draw_named(self, fa_icon, s * 0.5, pad, Color.WHITE)
 
 
 func _apply_tooltip() -> void:

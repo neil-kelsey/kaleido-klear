@@ -12,7 +12,6 @@ func _ready() -> void:
 	_apply_translations()
 	UiTheme.style_menu_title(title_label)
 	UiTheme.style_nav_button(back_button)
-	back_button.icon = load("res://assets/icons/back_icon.svg")
 	_build_sections()
 
 
@@ -58,7 +57,7 @@ func _build_sections() -> void:
 			var level_label := LevelCatalog.get_level_label(level)
 			var unlocked := GameSession.is_level_unlocked(level)
 			if unlocked:
-				button.icon = load("res://assets/icons/play_icon.svg")
+				button.icon = null
 				var stars := GameSession.get_level_stars(level.level_id)
 				var stars_text := _stars_text(stars)
 				button.text = "  %s  %s" % [level_label, stars_text]

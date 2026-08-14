@@ -103,8 +103,8 @@ msgstr "Dimension 9"
 msgid "UI_DIMENSION_10"
 msgstr "Dimension 10"
 
-msgid "UI_DIMENSION_TEST"
-msgstr "Test"
+msgid "UI_DIMENSION_TUTORIAL"
+msgstr "Tutoriel"
 
 msgid "UI_DIMENSION_MAP_HINT"
 msgstr "Molette pour zoomer · glisser pour déplacer · toucher un diamant"

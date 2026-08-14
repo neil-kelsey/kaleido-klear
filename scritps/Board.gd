@@ -44,6 +44,7 @@ var active_pointer_id: int = -1
 var drag_samples: Array[Dictionary] = []
 var _multi_goal_states: Array[MultiGoalEdgeState] = []
 var _undo_snapshot: Dictionary = {}
+var _used_undo: bool = false
 
 const DRAG_THRESHOLD := 20.0
 const MAX_DRAG_PULL_RATIO := 0.5
@@ -79,6 +80,7 @@ func load_level(config: LevelConfig) -> void:
 	lives = starting_lives
 	game_ended = false
 	is_busy = false
+	_used_undo = false
 	_rebuild_board()
 
 
@@ -90,6 +92,10 @@ func can_undo_move() -> bool:
 	return not _undo_snapshot.is_empty() and not is_busy
 
 
+func used_undo() -> bool:
+	return _used_undo
+
+
 func undo_last_move() -> bool:
 	if not can_undo_move():
 		return false
@@ -97,6 +103,7 @@ func undo_last_move() -> bool:
 	var snapshot := _undo_snapshot.duplicate(true)
 	_undo_snapshot.clear()
 	_restore_snapshot(snapshot)
+	_used_undo = true
 	_notify_undo_available()
 	return true
 
@@ -119,6 +126,7 @@ func _rebuild_board() -> void:
 			_disabled_cells[cell] = true
 	placed_blocks.clear()
 	_undo_snapshot.clear()
+	_used_undo = false
 	_clear_merge_previews()
 	_init_goal_states()
 	_layout_grid()

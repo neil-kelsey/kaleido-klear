@@ -1,33 +1,28 @@
 extends Node2D
 
-## Per-dimension level map: hub at chart centre, levels below.
-## Section page-snap only kicks in when a dimension has many levels.
+## Per-dimension level map over a nebula + gold star-chart overlay.
 
 const DIMENSION_MAP_SCENE := "res://scenes/ui/dimension_map.tscn"
 const GAME_SCENE := "res://scenes/main.tscn"
-const STAR_CHART_PATH := "res://assets/backgrounds/level_star_chart.jpg"
-## Must match StarChartBaker.LEVEL_STRIP_WORLD (hub at 0,0 = radial centre).
+const STAR_CHART_PATH := "res://assets/backgrounds/level_star_chart.png"
+## Must match StarChartBaker.LEVEL_STRIP_WORLD.
 const STRIP_WORLD := Rect2(-420, -180, 840, 2800)
 
 const COLUMNS := 5
 const COL_SPACING := 118.0
 const ROW_SPACING := 122.0
-const HUB_GAP := 280.0
-const HUB_DIAMOND_SIZE := 114.0
 const LEVEL_DIAMOND_SIZE := 114.0
 const GROUP_GAP_COMPACT := 128.0
-## Hub sits slightly below world origin so it centres on the baked radial point.
-const HUB_RADIAL_OFFSET_Y := 22.0
 ## Fraction of viewport width reserved as empty space on each side of the diamond grid.
 const SIDE_MARGIN_RATIO := 0.18
-## Screen Y for hub centre — clears the centered title above.
-const FOCUS_TOP_MARGIN_PX := 210.0
-const SECTION_TOP_MARGIN_PX := 148.0
+## Screen Y for first content — clears the title badge.
+const FOCUS_TOP_MARGIN_PX := 280.0
+const SECTION_TOP_MARGIN_PX := 200.0
 const BOTTOM_PAD_PX := 168.0
 const GROUP_HEADER_FONT_SIZE := 44
 ## World gap from section title centre down to level-diamond centres.
 const HEADER_CLEARANCE := 96.0
-const TITLE_FONT_SIZE := 64
+const TITLE_FONT_SIZE := 53
 ## Page-snap only when a dimension has more levels than this.
 const PAGE_LEVEL_THRESHOLD := 24
 
@@ -36,23 +31,20 @@ const SNAP_VELOCITY := 220.0
 const SNAP_DISTANCE_RATIO := 0.22
 const FREE_SCROLL_STEP := 120.0
 
-const CHART_BG := Color(0.97, 0.97, 0.985, 1.0)
-const STAR_COLOR := Color(0.18, 0.28, 0.48, 0.85)
-const LOCKED_GREY := Color(0.62, 0.64, 0.68, 1.0)
+const LOCKED_GREY := Color(0.78, 0.80, 0.84, 1.0)
 const MAP_FONT := preload("res://assets/fonts/Quicksand-Medium.ttf")
-const LOCK_ICON := preload("res://assets/icons/lock_icon.svg")
 
 @onready var camera: Camera2D = $Camera2D
 @onready var back_button: CircleBackButton = %BackButton
-@onready var title_label: Label = %TitleLabel
+@onready var title_badge: DiamondTitleBadge = %TitleBadge
 @onready var hint_label: Label = %HintLabel
 @onready var empty_label: Label = %EmptyLabel
+@onready var nebula_bg: TextureRect = %NebulaBg
 
 var _dimension_index: int = 0
 var _levels: Array[LevelConfig] = []
 var _level_positions: Array[Vector2] = []
 var _group_headers: Array = []
-var _hub_pos := Vector2.ZERO
 var _theme_color: Color = LevelCatalog.PRIMARY_BLUE
 var _star_chart_tex: Texture2D
 var _map_font: Font
@@ -66,35 +58,37 @@ var _page_index := 0
 var _snap_tween: Tween
 var _group_gap := GROUP_GAP_COMPACT
 var _paging_enabled := false
-var _hub_nebula: NebulaDiamondFill
 var _chart_sprite: Sprite2D
+var _white_fade: ColorRect
+var _exit_tween: Tween
+var _nebula_mat: ShaderMaterial
+var _fx_time := 0.0
 
 
 func _ready() -> void:
 	_map_font = MAP_FONT
 	_dimension_index = clampi(GameSession.current_dimension_index, 0, LevelCatalog.get_dimension_count() - 1)
 	_theme_color = LevelCatalog.get_dimension_color(_dimension_index)
+	if back_button != null:
+		back_button.accent_color = _theme_color
 	_levels = LevelCatalog.get_section_levels(_dimension_index)
-	_hub_pos = Vector2(0.0, HUB_RADIAL_OFFSET_Y)
 	_paging_enabled = _levels.size() > PAGE_LEVEL_THRESHOLD
 	_star_chart_tex = load(STAR_CHART_PATH) as Texture2D
 	if _star_chart_tex == null:
 		push_warning("Missing baked level star chart at %s — run bake_level_star_chart.gd" % STAR_CHART_PATH)
 
+	_nebula_mat = NebulaEffect.apply_backdrop(nebula_bg)
+	set_process(true)
 	_ensure_chart_sprite()
-	_hub_nebula = NebulaDiamondFill.new()
-	add_child(_hub_nebula)
-	_hub_nebula.configure(_hub_pos, HUB_DIAMOND_SIZE)
 
 	camera.make_current()
+	_ensure_white_fade()
 	back_button.pressed.connect(_on_back_pressed)
 	_apply_translations()
 	hint_label.visible = false
 	UiTheme.style_menu_hint(empty_label)
 	empty_label.visible = _levels.is_empty()
-	UiTheme.style_menu_section_title(title_label)
-	title_label.add_theme_color_override("font_color", Color(0.12, 0.16, 0.28, 0.92))
-	UiTheme.apply_label_font(title_label, TITLE_FONT_SIZE, 48)
+	empty_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.88))
 
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	## Layout must exist before the first draw — an await here left positions empty and crashed.
@@ -104,6 +98,7 @@ func _ready() -> void:
 	## Re-measure once the viewport size is final (esp. mobile / windowed).
 	_rebuild_map()
 	_go_to_page(0, false)
+	_sync_title_to_chart_pole()
 
 
 func _notification(what: int) -> void:
@@ -114,8 +109,19 @@ func _notification(what: int) -> void:
 		queue_redraw()
 
 
+func _process(delta: float) -> void:
+	_fx_time += delta
+	if _nebula_mat != null:
+		_nebula_mat.set_shader_parameter("time_sec", _fx_time)
+		_nebula_mat.set_shader_parameter("rect_size", nebula_bg.size)
+		var pulse := 0.99 + 0.01 * sin(_fx_time * 0.25)
+		_nebula_mat.set_shader_parameter("brightness", pulse)
+
+
 func _apply_translations() -> void:
-	title_label.text = LevelCatalog.get_dimension_title(_dimension_index)
+	title_badge.title = LevelCatalog.get_dimension_title(_dimension_index)
+	title_badge.fill_color = _theme_color
+	title_badge.font_size = TITLE_FONT_SIZE
 	empty_label.text = tr("UI_DIMENSION_EMPTY")
 
 
@@ -134,7 +140,7 @@ func _rebuild_map() -> void:
 		COLUMNS,
 		COL_SPACING,
 		ROW_SPACING,
-		HUB_GAP + HUB_RADIAL_OFFSET_Y,
+		_hub_gap_for_title(),
 		_group_gap,
 		HEADER_CLEARANCE
 	)
@@ -144,6 +150,7 @@ func _rebuild_map() -> void:
 	_clamp_camera_to_pages()
 	_apply_translations()
 	_sync_chart_sprite()
+	_sync_title_to_chart_pole()
 	queue_redraw()
 
 
@@ -175,8 +182,44 @@ func _camera_y_to_frame_world_y(world_y: float, top_margin_px: float) -> float:
 	return world_y - (top_margin_px - vp.y * 0.5) / z
 
 
+func _camera_y_to_place_world_at_screen_y(world_y: float, screen_y: float) -> float:
+	var vp := get_viewport_rect().size
+	var z := maxf(camera.zoom.x, 0.001)
+	return world_y - (screen_y - vp.y * 0.5) / z
+
+
+func _chart_pole_camera_y() -> float:
+	return _camera_y_to_place_world_at_screen_y(0.0, _title_pole_screen_y())
+
+
+func _title_pole_screen_y() -> float:
+	## Keep the badge off the very top edge while sitting on the chart origin.
+	return 108.0
+
+
+func _hub_gap_for_title() -> float:
+	## World Y of the first diamond row: enough screen space under the title badge.
+	var z := maxf(camera.zoom.x, 0.001)
+	var metrics := DiamondTitleBadge.measure(
+		LevelCatalog.get_dimension_title(_dimension_index),
+		TITLE_FONT_SIZE
+	)
+	var below_badge_px := 176.0
+	return (metrics.size.y * 0.5 + below_badge_px) / z + HEADER_CLEARANCE
+
+
+func _sync_title_to_chart_pole() -> void:
+	if title_badge == null:
+		return
+	var pole_y := _title_pole_screen_y()
+	var metrics := DiamondTitleBadge.measure(title_badge.title, title_badge.font_size)
+	var h: float = maxf(metrics.size.y, 48.0)
+	title_badge.offset_top = pole_y - h * 0.5
+	title_badge.offset_bottom = pole_y + h * 0.5
+
+
 func _content_bottom_y() -> float:
-	var bottom := _hub_pos.y + HUB_DIAMOND_SIZE * 0.5
+	var bottom := 0.0
 	for pos in _level_positions:
 		bottom = maxf(bottom, pos.y + LEVEL_DIAMOND_SIZE * 0.5)
 	for header in _group_headers:
@@ -184,11 +227,18 @@ func _content_bottom_y() -> float:
 	return bottom
 
 
+func _first_content_y() -> float:
+	if not _group_headers.is_empty():
+		return float(_group_headers[0].position.y)
+	if not _level_positions.is_empty():
+		return _level_positions[0].y
+	return 0.0
+
+
 func _max_camera_y() -> float:
 	var vp := get_viewport_rect().size
 	var z := maxf(camera.zoom.x, 0.001)
-	var min_y := _camera_y_to_frame_world_y(_hub_pos.y, FOCUS_TOP_MARGIN_PX)
-	## Keep the last content above the footer hint.
+	var min_y := _chart_pole_camera_y()
 	var bottom_margin_world := BOTTOM_PAD_PX / z
 	var framed_bottom := _content_bottom_y() + bottom_margin_world - vp.y * 0.5 / z
 	return maxf(min_y, framed_bottom)
@@ -196,7 +246,7 @@ func _max_camera_y() -> float:
 
 func _rebuild_page_targets() -> void:
 	_page_ys.clear()
-	_page_ys.append(_camera_y_to_frame_world_y(_hub_pos.y, FOCUS_TOP_MARGIN_PX))
+	_page_ys.append(_chart_pole_camera_y())
 	if _paging_enabled:
 		for i in range(1, _group_headers.size()):
 			var header_y: float = _group_headers[i].position.y
@@ -307,11 +357,10 @@ func _sync_chart_sprite() -> void:
 		_chart_sprite.texture = _star_chart_tex
 		var tex_size := _star_chart_tex.get_size()
 		if tex_size.x > 0.0 and tex_size.y > 0.0:
-			_chart_sprite.scale = Vector2(
-				chart_rect.size.x / tex_size.x,
-				chart_rect.size.y / tex_size.y
-			)
-		_chart_sprite.modulate = Color.WHITE
+			## Uniform scale so chart stars and arcs stay circular.
+			var s := chart_rect.size.x / tex_size.x
+			_chart_sprite.scale = Vector2(s, s)
+		_chart_sprite.modulate = Color(1.0, 0.9, 0.52, 1.0)
 	else:
 		_chart_sprite.texture = null
 
@@ -326,10 +375,6 @@ func _chart_draw_rect() -> Rect2:
 
 
 func _draw() -> void:
-	## Background chart is a Sprite2D behind nebula; draw map chrome here.
-	if _star_chart_tex == null:
-		draw_rect(_chart_draw_rect(), CHART_BG, true)
-	_draw_hub_diamond()
 	_draw_group_headers()
 	var count := mini(_levels.size(), _level_positions.size())
 	for i in count:
@@ -356,24 +401,8 @@ func _draw_group_headers() -> void:
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
 			GROUP_HEADER_FONT_SIZE,
-			Color(0.22, 0.28, 0.42, 0.88)
+			Color(1.0, 0.90, 0.62, 0.88)
 		)
-
-
-func _draw_hub_diamond() -> void:
-	var pts := _diamond_points(_hub_pos, HUB_DIAMOND_SIZE)
-	var outline := pts + PackedVector2Array([pts[0]])
-	## Theme-coloured outer glow; nebula child supplies the centre fill.
-	_draw_selection_glow(_hub_pos, HUB_DIAMOND_SIZE, _theme_color)
-	if _hub_nebula != null:
-		_hub_nebula.configure(_hub_pos, HUB_DIAMOND_SIZE)
-	draw_polyline(outline, Color(1, 1, 1, 0.95), 3.0, true)
-	draw_polyline(outline, Color(_theme_color.r, _theme_color.g, _theme_color.b, 0.85), 1.6, true)
-	if LevelCatalog.is_dimension_complete(_dimension_index):
-		_draw_star_badge(_hub_pos, HUB_DIAMOND_SIZE * 0.22)
-	else:
-		draw_circle(_hub_pos, 5.0, Color(1, 1, 1, 1))
-		draw_circle(_hub_pos, 3.4, STAR_COLOR)
 
 
 func _draw_level_diamond(index: int) -> void:
@@ -388,26 +417,23 @@ func _draw_level_diamond(index: int) -> void:
 	if completed:
 		draw_colored_polygon(pts, _theme_color.lightened(0.08))
 		draw_polyline(outline, Color(1, 1, 1, 0.9), 2.8, true)
-		_draw_star_badge(pos, LEVEL_DIAMOND_SIZE * 0.28)
+		if GameSession.is_perfect_clear(level.level_id):
+			_draw_star_badge(pos, LEVEL_DIAMOND_SIZE * 0.18)
+		else:
+			FaVector.draw_check(self, pos, LEVEL_DIAMOND_SIZE * 0.30)
 	elif unlocked:
 		draw_polyline(outline, _theme_color, 3.8, true)
+		var number := str(index + 1)
+		var font_size := 32 if index < 99 else 26
+		var text_size := _map_font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+		var text_pos := Vector2(
+			pos.x - text_size.x * 0.5,
+			pos.y + (_map_font.get_ascent(font_size) - _map_font.get_descent(font_size)) * 0.5
+		)
+		draw_string(_map_font, text_pos, number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, _theme_color)
 	else:
 		draw_polyline(outline, LOCKED_GREY, 3.2, true)
-
-	var number := str(index + 1)
-	var font_size := 32 if index < 99 else 26
-	var text_size := _map_font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var text_col := Color(1, 1, 1, 0.98) if completed else (
-		_theme_color if unlocked else LOCKED_GREY
-	)
-	var text_pos := Vector2(
-		pos.x - text_size.x * 0.5,
-		pos.y + (_map_font.get_ascent(font_size) - _map_font.get_descent(font_size)) * 0.5
-	)
-	draw_string(_map_font, text_pos, number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, text_col)
-
-	if not unlocked:
-		_draw_lock_icon(pos + Vector2(LEVEL_DIAMOND_SIZE * 0.28, -LEVEL_DIAMOND_SIZE * 0.28), 22.0)
+		FaVector.draw_lock(self, pos, LEVEL_DIAMOND_SIZE * 0.34)
 
 
 func _diamond_points(center: Vector2, size: float) -> PackedVector2Array:
@@ -420,18 +446,6 @@ func _diamond_points(center: Vector2, size: float) -> PackedVector2Array:
 	])
 
 
-func _draw_selection_glow(center: Vector2, size: float, accent: Color) -> void:
-	var outer := _diamond_points(center, size * 1.45)
-	draw_colored_polygon(outer, Color(accent.r, accent.g, accent.b, 0.12))
-	var mid := _diamond_points(center, size * 1.2)
-	draw_polyline(mid + PackedVector2Array([mid[0]]), Color(accent.r, accent.g, accent.b, 0.45), 3.5, true)
-
-
-func _draw_lock_icon(center: Vector2, icon_size: float) -> void:
-	var rect := Rect2(center - Vector2(icon_size, icon_size) * 0.5, Vector2(icon_size, icon_size))
-	draw_texture_rect(LOCK_ICON, rect, false)
-
-
 func _draw_star_badge(center: Vector2, radius: float) -> void:
 	var pts := PackedVector2Array()
 	for i in 5:
@@ -440,7 +454,8 @@ func _draw_star_badge(center: Vector2, radius: float) -> void:
 		var inner_a := outer_a + TAU / 10.0
 		pts.append(center + Vector2(cos(inner_a), sin(inner_a)) * radius * 0.42)
 	draw_colored_polygon(pts, Color(0.95, 0.78, 0.2, 1.0))
-	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(1, 1, 1, 0.75), 1.2, true)
+	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(0.15, 0.12, 0.08, 0.85), 2.0, true)
+	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(1, 1, 1, 0.9), 1.0, true)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -465,9 +480,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				if hit >= 0:
 					_mark_input_handled()
 					_on_level_clicked(hit)
-				elif _hit_hub(_world_mouse()):
-					_mark_input_handled()
-					_on_back_pressed()
 				else:
 					_begin_pan(-1)
 			else:
@@ -495,10 +507,6 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 		var hit := _hit_level(world)
 		if hit >= 0:
 			_on_level_clicked(hit)
-			_mark_input_handled()
-			return
-		if _hit_hub(world):
-			_on_back_pressed()
 			_mark_input_handled()
 			return
 		_begin_pan(event.index)
@@ -541,11 +549,6 @@ func _end_pan() -> void:
 	_pan_velocity_y = 0.0
 
 
-func _hit_hub(world_pos: Vector2) -> bool:
-	var local := world_pos - _hub_pos
-	return absf(local.x) + absf(local.y) <= HUB_DIAMOND_SIZE * 0.55
-
-
 func _hit_level(world_pos: Vector2) -> int:
 	var best := -1
 	var best_d := LEVEL_DIAMOND_SIZE
@@ -573,11 +576,36 @@ func _on_level_clicked(index: int) -> void:
 	GameSession.change_scene(GAME_SCENE)
 
 
+func _ensure_white_fade() -> void:
+	if _white_fade != null and is_instance_valid(_white_fade):
+		return
+	var root := get_node_or_null("UI/Root") as Control
+	if root == null:
+		return
+	_white_fade = ColorRect.new()
+	_white_fade.name = "WhiteFade"
+	_white_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_white_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_white_fade.color = Color(1, 1, 1, 0)
+	root.add_child(_white_fade)
+
+
 func _on_back_pressed() -> void:
 	if _navigating:
 		return
 	_navigating = true
-	GameSession.change_scene(DIMENSION_MAP_SCENE)
+	GameSession.pending_map_zoom_out = true
+	_ensure_white_fade()
+	if _white_fade == null:
+		GameSession.change_scene(DIMENSION_MAP_SCENE)
+		return
+	if _exit_tween:
+		_exit_tween.kill()
+	_exit_tween = create_tween()
+	_exit_tween.tween_property(_white_fade, "color:a", 1.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_exit_tween.tween_callback(func() -> void:
+		GameSession.change_scene(DIMENSION_MAP_SCENE)
+	)
 
 
 func handle_back() -> void:

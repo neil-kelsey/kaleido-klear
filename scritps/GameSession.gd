@@ -16,12 +16,15 @@ signal locale_changed(locale_code: String)
 
 var selected_level: LevelConfig = null
 var level_stars: Dictionary = {}
+var level_perfect: Dictionary = {}
 var develop_mode: bool = false
 var playtest_mode: bool = false
 var playtest_level_draft: LevelConfig = null
 var playtest_passed: bool = false
 ## Last / current dimension on the star map (section index).
 var current_dimension_index: int = 0
+## When true, DimensionMap plays a zoom-out from the current diamond (back from levels).
+var pending_map_zoom_out: bool = false
 var locale: String = "en"
 ## Scene to return to from gameplay (dimensions map, daily list, etc.).
 var return_scene_path: String = "res://scenes/ui/dimension_map.tscn"
@@ -65,6 +68,12 @@ func set_current_dimension(section_index: int) -> void:
 		return
 	current_dimension_index = next
 	_save_progress()
+
+
+func consume_map_zoom_out() -> bool:
+	var pending := pending_map_zoom_out
+	pending_map_zoom_out = false
+	return pending
 
 
 func change_scene(path: String) -> void:
@@ -149,14 +158,18 @@ func consume_level() -> LevelConfig:
 	return level
 
 
-func record_level_stars(level: LevelConfig, stars: int) -> void:
+func record_level_stars(level: LevelConfig, stars: int, perfect: bool = false) -> void:
 	if level == null:
 		return
-	var previous: int = int(level_stars.get(level.level_id, 0))
+	var id := level.level_id
+	var previous: int = int(level_stars.get(id, 0))
 	var next := maxi(previous, clampi(stars, 0, 3))
-	if next == previous and previous > 0:
+	var already_perfect := is_perfect_clear(id)
+	var next_perfect := already_perfect or perfect
+	if next == previous and previous > 0 and next_perfect == already_perfect:
 		return
-	level_stars[level.level_id] = next
+	level_stars[id] = next
+	level_perfect[id] = next_perfect
 	## Write immediately so a phone close after clear still keeps the stars.
 	_save_progress()
 
@@ -168,6 +181,7 @@ func get_level_stars(level_id: String) -> int:
 func reset_progress() -> void:
 	## Clears stars / unlocks. Keeps language and develop-mode prefs.
 	level_stars.clear()
+	level_perfect.clear()
 	current_dimension_index = 0
 	selected_level = null
 	clear_level_playlist()
@@ -196,8 +210,15 @@ func is_level_unlocked(level: LevelConfig) -> bool:
 	return get_level_stars(section_levels[level_index - 1].level_id) > 0
 
 
+func is_level_completed(level_id: String) -> bool:
+	return get_level_stars(level_id) > 0
+
+
 func is_perfect_clear(level_id: String) -> bool:
-	## Perfect = cleared without losing a life (3 remaining lives → 3 stars).
+	## Perfect = cleared without losing a life and without using undo.
+	if level_perfect.has(level_id):
+		return bool(level_perfect[level_id])
+	## Legacy saves: 3 remaining lives was stored as 3 stars.
 	return get_level_stars(level_id) >= 3
 
 
@@ -272,6 +293,7 @@ func _save_settings() -> void:
 
 func _load_progress() -> void:
 	level_stars.clear()
+	level_perfect.clear()
 	current_dimension_index = 0
 	if FileAccess.file_exists(PROGRESS_PATH):
 		var file := FileAccess.open(PROGRESS_PATH, FileAccess.READ)
@@ -298,12 +320,17 @@ func _apply_progress_dict(data: Dictionary) -> void:
 	if typeof(stars_raw) == TYPE_DICTIONARY:
 		for key in (stars_raw as Dictionary).keys():
 			level_stars[str(key)] = clampi(int(stars_raw[key]), 0, 3)
+	var perfect_raw: Variant = data.get("level_perfect", {})
+	if typeof(perfect_raw) == TYPE_DICTIONARY:
+		for key in (perfect_raw as Dictionary).keys():
+			level_perfect[str(key)] = bool(perfect_raw[key])
 	current_dimension_index = maxi(0, int(data.get("current_dimension_index", 0)))
 
 
 func _save_progress() -> void:
 	var payload := {
 		"level_stars": level_stars.duplicate(),
+		"level_perfect": level_perfect.duplicate(),
 		"current_dimension_index": current_dimension_index,
 	}
 	var file := FileAccess.open(PROGRESS_PATH, FileAccess.WRITE)

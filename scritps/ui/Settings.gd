@@ -27,7 +27,7 @@ func _ready() -> void:
 	_apply_translations()
 	UiTheme.style_menu_title(title_label)
 	UiTheme.style_nav_button(back_button)
-	back_button.icon = load("res://assets/icons/back_icon.svg")
+	back_button.pressed.connect(_on_back_button_pressed)
 	UiTheme.style_settings_row_label(language_label)
 	UiTheme.style_settings_option_field(language_option)
 	UiTheme.style_settings_row_label(sound_label)

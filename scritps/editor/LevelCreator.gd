@@ -201,7 +201,6 @@ func _show_creator_tab(tab: String) -> void:
 
 
 func _style_buttons() -> void:
-	back_button.icon = load("res://assets/icons/back_icon.svg")
 	back_button.text = "  " + tr("UI_BACK")
 	save_button.text = tr("UI_CREATOR_SAVE")
 	playtest_button.text = tr("UI_CREATOR_PLAYTEST")

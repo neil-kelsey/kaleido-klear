@@ -103,8 +103,8 @@ msgstr "Sea 9"
 msgid "UI_DIMENSION_10"
 msgstr "Sea 10"
 
-msgid "UI_DIMENSION_TEST"
-msgstr "Test Sea"
+msgid "UI_DIMENSION_TUTORIAL"
+msgstr "Tutorin'"
 
 msgid "UI_DIMENSION_MAP_HINT"
 msgstr "Scroll to spyglass · drag to sail · tap a diamond"

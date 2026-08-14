@@ -105,10 +105,6 @@ func _layout_hud_circle_buttons() -> void:
 	undo_button.button_size = UiTheme.CIRCLE_BUTTON_SIZE
 	goals_button.button_size = UiTheme.CIRCLE_BUTTON_EMPHASIS_SIZE
 
-	back_button.offset_left = inset
-	back_button.offset_bottom = -inset
-	back_button.refresh()
-
 	## Goals sits on the vertical center line; restart/undo flank it.
 	goals_button.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	goals_button.offset_left = -g * 0.5
@@ -558,7 +554,8 @@ func _on_level_cleared(remaining_lives: int) -> void:
 		level_complete_modal.show_playtest_success()
 		return
 	var stars := clampi(remaining_lives, 1, 3)
-	GameSession.record_level_stars(_current_level, stars)
+	var perfect := remaining_lives >= board.starting_lives and not board.used_undo()
+	GameSession.record_level_stars(_current_level, stars, perfect)
 	var section_complete := false
 	var has_next_section := false
 	if not GameSession.active_level_playlist.is_empty():

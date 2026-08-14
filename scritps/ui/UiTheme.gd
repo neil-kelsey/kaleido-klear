@@ -419,52 +419,72 @@ static func style_close_button(button: Button) -> void:
 	var size := 44
 	button.custom_minimum_size = Vector2(size, size)
 	button.text = ""
-	button.icon = load("res://assets/icons/close_icon.svg")
-	button.expand_icon = true
-	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_constant_override("icon_max_width", 20)
+	button.icon = null
 	button.add_theme_stylebox_override("normal", circle_stylebox(PRIMARY_FILL))
 	button.add_theme_stylebox_override("hover", circle_stylebox(PRIMARY_FILL_HOVER))
 	button.add_theme_stylebox_override("pressed", circle_stylebox(PRIMARY_FILL_PRESSED))
 	button.add_theme_stylebox_override("focus", circle_stylebox(PRIMARY_FILL_HOVER))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_attach_fa_glyph(button, "xmark", Color.WHITE, 20.0)
 
 
-static func style_circle_back_button(button: Button, size: int = -1) -> void:
+static func _attach_fa_glyph(button: Button, icon_name: String, color: Color, px: float) -> void:
+	var glyph := button.get_node_or_null("FaGlyph") as FaIconView
+	if glyph == null:
+		glyph = FaIconView.new()
+		glyph.name = "FaGlyph"
+		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(glyph)
+	glyph.icon_name = icon_name
+	glyph.icon_color = color
+	glyph.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	glyph.custom_minimum_size = Vector2(px, px)
+	glyph.size = Vector2(px, px)
+	glyph.offset_left = -px * 0.5
+	glyph.offset_right = px * 0.5
+	glyph.offset_top = -px * 0.5
+	glyph.offset_bottom = px * 0.5
+
+
+static func style_circle_back_button(button: Button, size: int = -1, accent: Color = PRIMARY) -> void:
 	var resolved := size if size > 0 else CIRCLE_BUTTON_SIZE
-	style_circle_icon_button(button, load("res://assets/icons/return_back_icon.svg"), resolved)
+	style_circle_icon_button(button, resolved, accent)
+	if button is CircleIconButton:
+		(button as CircleIconButton).fa_icon = "arrow-left"
+	elif button.has_method("set") and button.get("fa_icon") != null:
+		button.set("fa_icon", "arrow-left")
 
 
-static func style_circle_icon_button(button: Button, icon: Texture2D, size: int = -1) -> void:
-	## Thumb-friendly circular icon control (no label).
+static func style_circle_icon_button(button: Button, size: int = -1, accent: Color = PRIMARY) -> void:
+	## Thumb-friendly circular icon control (glyph drawn as vectors in _draw).
 	var resolved := size if size > 0 else CIRCLE_BUTTON_SIZE
 	button.custom_minimum_size = Vector2(resolved, resolved)
 	button.size = Vector2(resolved, resolved)
 	button.text = ""
-	button.icon = icon
-	button.expand_icon = true
-	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_constant_override("icon_max_width", int(resolved * 0.58))
+	button.icon = null
+	button.expand_icon = false
 	button.add_theme_constant_override("h_separation", 0)
 	var border_w := maxi(5, int(round(float(resolved) * 0.05)))
+	var hover_accent := accent.lightened(0.12)
+	var press_accent := accent.darkened(0.12)
 	var normal := circle_stylebox(SECONDARY_BG)
-	normal.border_color = PRIMARY
+	normal.border_color = accent
 	normal.set_border_width_all(border_w)
 	var hover := circle_stylebox(SECONDARY_BG_HOVER)
-	hover.border_color = PRIMARY_HOVER
+	hover.border_color = hover_accent
 	hover.set_border_width_all(border_w)
 	var pressed := circle_stylebox(SECONDARY_BG_PRESSED)
-	pressed.border_color = PRIMARY_PRESSED
+	pressed.border_color = press_accent
 	pressed.set_border_width_all(border_w)
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
 	button.add_theme_stylebox_override("focus", hover)
 	button.add_theme_stylebox_override("disabled", pressed)
-	button.add_theme_color_override("icon_normal_color", PRIMARY)
-	button.add_theme_color_override("icon_hover_color", PRIMARY_HOVER)
-	button.add_theme_color_override("icon_pressed_color", PRIMARY_PRESSED)
-	button.add_theme_color_override("icon_disabled_color", Color(PRIMARY, 0.45))
+	button.add_theme_color_override("icon_normal_color", accent)
+	button.add_theme_color_override("icon_hover_color", hover_accent)
+	button.add_theme_color_override("icon_pressed_color", press_accent)
+	button.add_theme_color_override("icon_disabled_color", Color(accent, 0.45))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 

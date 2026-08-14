@@ -6,10 +6,7 @@ class_name MenuActionButton
 enum Kind { PRIMARY, SECONDARY }
 enum IconStyle { CHEVRON, GEAR }
 
-const NEBULA_SHADER := preload("res://assets/shaders/button_nebula.gdshader")
-const NEBULA_FILL := preload("res://scritps/ui/NebulaFill.gd")
 const BRAND_RAINBOW := preload("res://scritps/ui/BrandRainbow.gd")
-const CHEVRON_ICON := preload("res://assets/icons/chevron_double.svg")
 
 const PRESS_SCALE := 0.97
 const CTA_FONT_SIZE := 40
@@ -181,11 +178,9 @@ func _build() -> void:
 			gear.set_hole_color(face_color)
 			_icon = gear
 		_:
-			var chevron := TextureRect.new()
-			chevron.texture = CHEVRON_ICON
-			chevron.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			chevron.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			chevron.modulate = text_color
+			var chevron := _FaIconView.new()
+			chevron.icon_name = "angles-right"
+			chevron.icon_color = text_color
 			_icon = chevron
 	_icon.custom_minimum_size = Vector2(icon_px, icon_px)
 	_icon.size = Vector2(icon_px, icon_px)
@@ -199,15 +194,7 @@ func _build() -> void:
 		_nebula = TextureRect.new()
 		_nebula.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		_nebula.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_nebula.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		_nebula.stretch_mode = TextureRect.STRETCH_SCALE
-		_nebula.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		_nebula.texture = NEBULA_FILL.texture()
-		_nebula_mat = ShaderMaterial.new()
-		_nebula_mat.shader = NEBULA_SHADER
-		_nebula_mat.set_shader_parameter("corner_radius_px", float(UiTheme.BUTTON_CORNER_RADIUS))
-		_nebula_mat.set_shader_parameter("brightness", 1.0)
-		_nebula.material = _nebula_mat
+		_nebula_mat = NebulaEffect.apply_to_control(_nebula, float(UiTheme.BUTTON_CORNER_RADIUS))
 		_face.add_child(_nebula)
 		_face.move_child(_nebula, 0)
 		margin.move_to_front()
@@ -265,6 +252,10 @@ func _refresh_face_color() -> void:
 		(_icon as _GearIcon).set_hole_color(
 			UiTheme.PRIMARY_FILL if kind == Kind.PRIMARY else _base_color()
 		)
+	elif _icon is _FaIconView:
+		(_icon as _FaIconView).icon_color = (
+			Color.WHITE if kind == Kind.PRIMARY else UiTheme.PRIMARY
+		)
 
 
 func _on_hover(hovering: bool) -> void:
@@ -312,3 +303,15 @@ class _GearIcon extends Control:
 			pts.append(c + Vector2(cos(base + half_gap), sin(base + half_gap)) * valley)
 		draw_colored_polygon(pts, icon_color)
 		draw_circle(c, hole, hole_color)
+
+
+class _FaIconView extends Control:
+	var icon_name: String = "angles-right"
+	var icon_color: Color = Color.WHITE:
+		set(value):
+			icon_color = value
+			queue_redraw()
+
+	func _draw() -> void:
+		var h := minf(size.x, size.y)
+		FaVector.draw_named(self, icon_name, size * 0.5, h, icon_color)

@@ -12,32 +12,41 @@ const ZOOM_MIN := 0.75
 const ZOOM_MAX := 5.5
 const WHEEL_ZOOM_STEP := 0.15
 const PINCH_ZOOM_SENSITIVITY := 1.0
-const INTRO_ZOOM_START := 1.25
-const INTRO_ZOOM_END := 2.95
+const INTRO_ZOOM_START := 1.15
+const INTRO_ZOOM_END := 2.35
 const INTRO_ZOOM_DURATION := 1.15
 
-const DIAMOND_SIZE := 72.0
-const LINE_WIDTH := 2.5
+const DIAMOND_SIZE := 108.0
+const PATH_DIAMOND_SIZE := 48.0
+const PATH_MARKER_HIT := 36.0
+const TITLE_FONT_FOCUSED := 18
+## Focused diamond sits slightly below centre so its title fits and a neighbour marker shows above and below.
+const FRAME_Y_BIAS := 52.0
+const LINE_WIDTH := 1.8
 const DASH_LEN := 14.0
 const GAP_LEN := 10.0
-## Keep the framed diamond near the bottom; leave room for the CURRENT badge.
-const FOCUS_BOTTOM_MARGIN_PX := 28.0
-const FOCUS_BADGE_CLEARANCE := 36.0
 
 const CHART_BG := Color(0.97, 0.97, 0.985, 1.0)
 const STAR_COLOR := Color(0.18, 0.28, 0.48, 0.85)
 const MAP_FONT := preload("res://assets/fonts/Quicksand-Medium.ttf")
-const LOCK_ICON := preload("res://assets/icons/lock_icon.svg")
 
 ## Pan coast: higher friction = snappier stop; stop speed is world-units/sec.
 const PAN_FRICTION := 7.5
 const PAN_STOP_SPEED := 12.0
 const PAN_MAX_SPEED := 4200.0
 const FOCUS_DURATION := 0.45
+const DIVE_DURATION := 1.05
+const DIVE_ZOOM_MULT := 5.5
+const DIVE_WHITE_HOLD := 0.14
+
+const NEBULA_BRIGHT_SELECTED := 1.0
+const NEBULA_BRIGHT_WASHED := 1.22
+const NEBULA_WASH_OUT := 0.82
+const NEBULA_WASHED_MODULATE := Color(1.0, 1.0, 1.02, 0.68)
+const WASHED_RIM := Color(0.82, 0.84, 0.88, 0.38)
 
 @onready var camera: Camera2D = $Camera2D
 @onready var back_button: CircleBackButton = %BackButton
-@onready var hint_label: Label = %HintLabel
 
 var _positions: Array[Vector2] = []
 var _star_chart_tex: Texture2D
@@ -56,34 +65,106 @@ var _pinch_start_zoom := 1.0
 var _pinch_last_midpoint := Vector2.ZERO
 var _intro_focus_index: int = 0
 var _navigating := false
-var _progress_nebula: NebulaDiamondFill
+var _nebula_effects: Array[NebulaEffect] = []
 var _chart_sprite: Sprite2D
+var _map_order: Array[int] = []
+var _dive_tween: Tween
+var _dive_progress := 0.0
+var _dive_index := -1
+var _white_fade: ColorRect
+var _path_hint: Label
 
 
 func _ready() -> void:
 	_map_font = MAP_FONT
-	_positions = LevelCatalog.build_dimension_positions(300.0)
+	_map_order = LevelCatalog.get_dimension_map_order()
+	_positions = LevelCatalog.build_dimension_positions(168.0)
 	_star_chart_tex = load(STAR_CHART_PATH) as Texture2D
 	if _star_chart_tex == null:
 		push_warning("Missing baked star chart at %s — run bake_star_chart.gd" % STAR_CHART_PATH)
-	if not LevelCatalog.is_dimension_unlocked(GameSession.current_dimension_index):
+	## Title-screen entry always frames furthest main-path progress, not the last
+	## diamond visited (Tutorial is a side branch and must not steal CURRENT).
+	if not GameSession.pending_map_zoom_out:
 		GameSession.set_current_dimension(_focus_dimension_index())
-	_selected_index = _focus_dimension_index()
+	elif not LevelCatalog.is_dimension_unlocked(GameSession.current_dimension_index):
+		GameSession.set_current_dimension(_focus_dimension_index())
+	_selected_index = _focus_dimension_index() if not GameSession.pending_map_zoom_out else clampi(
+		GameSession.current_dimension_index, 0, maxi(_positions.size() - 1, 0)
+	)
 	_ensure_chart_sprite()
-	_progress_nebula = NebulaDiamondFill.new()
-	add_child(_progress_nebula)
-	_sync_progress_nebula()
+	_ensure_nebula_effects()
+	_sync_nebulas()
+	_ensure_path_hint()
+	_ensure_white_fade()
 	camera.make_current()
 	back_button.pressed.connect(_on_back_pressed)
-	hint_label.text = tr("UI_DIMENSION_MAP_HINT")
-	UiTheme.style_menu_hint(hint_label)
-	hint_label.add_theme_color_override("font_color", Color(0.25, 0.35, 0.55, 0.85))
 	get_viewport().size_changed.connect(_clamp_camera_to_strip)
 	queue_redraw()
+	var zoom_out := GameSession.pending_map_zoom_out
+	if zoom_out:
+		## Cover the first frame so the map doesn't flash before the reverse dive.
+		if _white_fade != null:
+			_white_fade.color = Color(1, 1, 1, 1)
+		var idx := clampi(GameSession.current_dimension_index, 0, maxi(_positions.size() - 1, 0))
+		_selected_index = idx
+		var z_close := INTRO_ZOOM_END * DIVE_ZOOM_MULT
+		camera.zoom = Vector2(z_close, z_close)
+		if idx < _positions.size():
+			camera.position = _positions[idx]
 	await get_tree().process_frame
-	_clamp_camera_to_strip()
-	_play_intro()
+	if GameSession.consume_map_zoom_out():
+		_play_exit_zoom_out()
+	else:
+		_clamp_camera_to_strip()
+		_play_intro()
 
+
+func _ensure_path_hint() -> void:
+	if _path_hint != null and is_instance_valid(_path_hint):
+		_sync_path_hint()
+		return
+	var root := get_node_or_null("UI/Root") as Control
+	if root == null:
+		return
+	_path_hint = Label.new()
+	_path_hint.name = "PathHint"
+	_path_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_path_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_path_hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	_path_hint.offset_left = -120.0
+	_path_hint.offset_right = 120.0
+	_path_hint.offset_top = -92.0
+	_path_hint.offset_bottom = -58.0
+	_path_hint.add_theme_font_override("font", MAP_FONT)
+	_path_hint.add_theme_font_size_override("font_size", 18)
+	_path_hint.add_theme_color_override("font_color", Color(0.22, 0.28, 0.42, 0.45))
+	root.add_child(_path_hint)
+	_sync_path_hint()
+
+
+func _sync_path_hint() -> void:
+	if _path_hint == null:
+		return
+	var slot := _map_order.find(_selected_index)
+	var total := _map_order.size()
+	if slot < 0 or total <= 0:
+		_path_hint.text = ""
+		return
+	_path_hint.text = "%d / %d" % [slot + 1, total]
+
+
+func _ensure_white_fade() -> void:
+	if _white_fade != null and is_instance_valid(_white_fade):
+		return
+	var root := get_node_or_null("UI/Root") as Control
+	if root == null:
+		return
+	_white_fade = ColorRect.new()
+	_white_fade.name = "WhiteFade"
+	_white_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_white_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_white_fade.color = Color(1, 1, 1, 0)
+	root.add_child(_white_fade)
 
 func _ensure_chart_sprite() -> void:
 	## Chart sits behind nebula fills so diamond centres can use the CTA nebula look.
@@ -105,23 +186,50 @@ func _ensure_chart_sprite() -> void:
 	add_child(_chart_sprite)
 
 
-func _sync_progress_nebula() -> void:
-	if _progress_nebula == null:
-		return
-	var progress := _furthest_unlocked_dimension()
-	if progress < 0 or progress >= _positions.size():
-		_progress_nebula.visible = false
-		return
-	_progress_nebula.visible = true
-	_progress_nebula.configure(_positions[progress], DIAMOND_SIZE)
+func _ensure_nebula_effects() -> void:
+	while _nebula_effects.size() < _positions.size():
+		_nebula_effects.append(NebulaEffect.attach_diamond(self))
+	while _nebula_effects.size() > _positions.size():
+		var extra: NebulaEffect = _nebula_effects.pop_back()
+		extra.queue_free()
 
 
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_TRANSLATION_CHANGED:
-		if not is_node_ready():
-			return
-		hint_label.text = tr("UI_DIMENSION_MAP_HINT")
-		queue_redraw()
+func _sync_nebulas() -> void:
+	_ensure_nebula_effects()
+	_sync_back_accent()
+	for i in _nebula_effects.size():
+		var fx := _nebula_effects[i]
+		if i >= _positions.size():
+			fx.visible = false
+			continue
+		var selected := i == _selected_index
+		var unlocked := LevelCatalog.is_dimension_unlocked(i)
+		fx.visible = true
+		var dsize := DIAMOND_SIZE if selected else PATH_DIAMOND_SIZE
+		if selected and unlocked:
+			fx.configure_diamond(
+				_positions[i],
+				dsize,
+				NEBULA_BRIGHT_SELECTED,
+				true,
+				Color.WHITE
+			)
+		else:
+			fx.configure_diamond(
+				_positions[i],
+				dsize,
+				NEBULA_BRIGHT_WASHED,
+				false,
+				NEBULA_WASHED_MODULATE,
+				NEBULA_WASH_OUT
+			)
+
+
+func _sync_back_accent() -> void:
+	if back_button == null:
+		return
+	var idx := clampi(_selected_index, 0, LevelCatalog.get_dimension_count() - 1)
+	back_button.accent_color = LevelCatalog.get_dimension_color(idx)
 
 
 func _play_intro() -> void:
@@ -138,44 +246,81 @@ func _play_intro() -> void:
 	_intro_tween.tween_callback(func(): _intro_playing = false)
 
 
+func _play_exit_zoom_out() -> void:
+	## Reverse of the enter dive: start inside the diamond, fade from white, zoom out.
+	_intro_playing = true
+	_navigating = true
+	var index := clampi(GameSession.current_dimension_index, 0, maxi(_positions.size() - 1, 0))
+	_selected_index = index
+	_sync_nebulas()
+	_sync_path_hint()
+	queue_redraw()
+
+	var z_close := INTRO_ZOOM_END * DIVE_ZOOM_MULT
+	var z_open := INTRO_ZOOM_END
+	var target: Vector2 = _positions[index]
+	camera.zoom = Vector2(z_close, z_close)
+	camera.position = target
+	if _white_fade != null:
+		_white_fade.color = Color(1, 1, 1, 1)
+
+	if _intro_tween:
+		_intro_tween.kill()
+	if _dive_tween:
+		_dive_tween.kill()
+	_dive_tween = create_tween()
+	_dive_tween.set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+	_dive_tween.tween_method(
+		func(t: float) -> void: _update_zoom_out(t, z_close, z_open, index, target),
+		0.0,
+		1.0,
+		DIVE_DURATION
+	)
+	_dive_tween.tween_callback(func() -> void:
+		_intro_playing = false
+		_navigating = false
+		_dive_progress = 0.0
+		if _white_fade != null:
+			_white_fade.color = Color(1, 1, 1, 0)
+		camera.zoom = Vector2(z_open, z_open)
+		camera.position = _camera_pos_to_frame_dimension(index)
+		_clamp_camera_to_strip()
+	)
+
+
+func _update_zoom_out(t: float, z_close: float, z_open: float, index: int, target: Vector2) -> void:
+	## Ease-out already from tween; square-root so the first frames peel away from white.
+	var ease_t := sqrt(t)
+	_dive_progress = 1.0 - t
+	var z := lerpf(z_close, z_open, ease_t)
+	camera.zoom = Vector2(z, z)
+	var framed := _camera_pos_to_frame_dimension(index)
+	## Start centred on the diamond; stay centred while zooming out to map scale.
+	camera.position = target.lerp(framed, ease_t)
+	if _white_fade != null:
+		var fade := 1.0 - smoothstep(0.0, 0.45, t)
+		_white_fade.color = Color(1, 1, 1, fade)
+
+
+
 func _focus_dimension_index() -> int:
-	var preferred := clampi(GameSession.current_dimension_index, 0, maxi(_positions.size() - 1, 0))
-	if LevelCatalog.is_dimension_unlocked(preferred):
-		return preferred
-	for i in range(_positions.size() - 1, -1, -1):
-		if LevelCatalog.is_dimension_unlocked(i):
-			return i
-	return 0
+	## CURRENT = furthest unlocked main-path dimension. Side branches never win.
+	return _furthest_unlocked_dimension()
 
 
 func _set_intro_zoom(z: float) -> void:
 	camera.zoom = Vector2(z, z)
-	## Re-frame while zooming so the diamond stays pinned to the bottom.
+	## Re-frame while zooming so the diamond stays centred.
 	camera.position = _camera_pos_to_frame_dimension(_intro_focus_index)
 	_clamp_camera_to_strip()
 
 
-## World Y just below the diamond (and CURRENT badge when shown) to pin at screen bottom.
-func _dimension_bottom_anchor(index: int) -> Vector2:
+func _camera_pos_to_frame_dimension(index: int) -> Vector2:
+	## Centre the diamond, with a slight downward bias so the title above
+	## the neighbour above still fits on screen.
 	if index < 0 or index >= _positions.size():
 		return Vector2.ZERO
-	var pos: Vector2 = _positions[index]
-	var below := DIAMOND_SIZE * 0.5 + 10.0
-	if index == _furthest_unlocked_dimension():
-		below = DIAMOND_SIZE * 0.5 + 12.0 + FOCUS_BADGE_CLEARANCE
-	return Vector2(pos.x, pos.y + below)
-
-
-func _camera_pos_to_frame_dimension(index: int) -> Vector2:
-	## Place the dimension's bottom anchor near the bottom of the viewport (not centered).
-	var anchor := _dimension_bottom_anchor(index)
-	var vp := get_viewport_rect().size
-	var z := maxf(camera.zoom.x, 0.001)
-	var desired_screen_y := vp.y - FOCUS_BOTTOM_MARGIN_PX
-	var cam := Vector2.ZERO
-	cam.x = anchor.x
-	cam.y = anchor.y - (desired_screen_y - vp.y * 0.5) / z
-	return cam
+	return _positions[index] + Vector2(0.0, FRAME_Y_BIAS)
 
 
 func _world_mouse() -> Vector2:
@@ -252,50 +397,69 @@ func _draw() -> void:
 	## Background chart is a Sprite2D behind nebula fills.
 	if _star_chart_tex == null:
 		draw_rect(STRIP_WORLD, CHART_BG, true)
-	for i in _positions.size():
-		var parent_i := LevelCatalog.get_dimension_parent(i)
-		if parent_i < 0:
-			continue
-		var from_c: Vector2 = _positions[parent_i]
-		var to_c: Vector2 = _positions[i]
-		var from_p := _diamond_edge_point(from_c, to_c)
-		var to_p := _diamond_edge_point(to_c, from_c)
-		var col := LevelCatalog.get_dimension_color(i)
-		if LevelCatalog.is_dimension_unlocked(i):
+	## Connect consecutive diamonds on the vertical path (bottom → top).
+	for slot in range(1, _map_order.size()):
+		var from_i: int = _map_order[slot - 1]
+		var to_i: int = _map_order[slot]
+		var from_c: Vector2 = _positions[from_i]
+		var to_c: Vector2 = _positions[to_i]
+		var from_p := _path_edge_point(from_c, to_c, from_i)
+		var to_p := _path_edge_point(to_c, from_c, to_i)
+		var col := LevelCatalog.get_dimension_color(to_i)
+		if LevelCatalog.is_dimension_unlocked(to_i):
 			draw_line(from_p, to_p, col, LINE_WIDTH, true)
 		else:
 			_draw_dashed_line(from_p, to_p, col.lightened(0.15), LINE_WIDTH)
 
 	var progress := _furthest_unlocked_dimension()
-	_sync_progress_nebula()
+	_sync_nebulas()
 	for i in _positions.size():
 		var pos: Vector2 = _positions[i]
 		var theme := LevelCatalog.get_dimension_color(i)
 		var unlocked := LevelCatalog.is_dimension_unlocked(i)
 		var is_progress := i == progress
 		var is_selected := i == _selected_index
-		_draw_diamond(pos, DIAMOND_SIZE, theme, is_progress, is_selected, unlocked)
-		_draw_dimension_label(pos, i, theme, is_progress, is_selected, unlocked)
-		if LevelCatalog.is_dimension_complete(i):
-			_draw_star_badge(pos + Vector2(DIAMOND_SIZE * 0.42, -DIAMOND_SIZE * 0.08), 9.0)
-		if is_progress:
-			_draw_current_badge(pos)
+		if is_selected:
+			_draw_diamond(pos, DIAMOND_SIZE, theme, is_progress, true, unlocked)
+			_draw_dimension_label(pos, i, theme)
+			if LevelCatalog.is_dimension_complete(i):
+				if LevelCatalog.is_dimension_perfect(i):
+					_draw_star_badge(pos, DIAMOND_SIZE * 0.18)
+				else:
+					FaVector.draw_check(self, pos, DIAMOND_SIZE * 0.30)
+			if is_progress:
+				_draw_current_badge(pos, DIAMOND_SIZE)
+		else:
+			_draw_path_diamond(pos, i, theme, unlocked)
 
 
 func _furthest_unlocked_dimension() -> int:
+	## Highest unlocked dimension on the main path (excludes Tutorial / side branches).
 	var best := 0
 	for i in _positions.size():
+		if LevelCatalog.is_dimension_side_branch(i):
+			continue
 		if LevelCatalog.is_dimension_unlocked(i):
 			best = i
 	return best
 
 
-func _diamond_edge_point(center: Vector2, toward: Vector2) -> Vector2:
+func _path_marker_radius(index: int) -> float:
+	if index == _selected_index:
+		return DIAMOND_SIZE * 0.5
+	return PATH_DIAMOND_SIZE * 0.5
+
+
+func _path_edge_point(center: Vector2, toward: Vector2, index: int) -> Vector2:
+	return _diamond_edge_point(center, toward, _path_marker_radius(index) * 2.0)
+
+
+func _diamond_edge_point(center: Vector2, toward: Vector2, size: float) -> Vector2:
 	var dir := toward - center
 	if dir.length_squared() < 0.0001:
 		return center
 	dir = dir.normalized()
-	var half := DIAMOND_SIZE * 0.5 + LINE_WIDTH * 0.5 + 1.0
+	var half := size * 0.5 + LINE_WIDTH * 0.5 + 1.0
 	var t := half / (absf(dir.x) + absf(dir.y))
 	return center + dir * t
 
@@ -314,62 +478,37 @@ func _draw_diamond(
 	center: Vector2,
 	size: float,
 	theme: Color,
-	is_progress: bool,
+	_is_progress: bool,
 	is_selected: bool,
 	unlocked: bool
 ) -> void:
+	if is_selected:
+		NebulaEffect.draw_selection_glow(self, center, size, theme)
+
+	var pts := _diamond_points(center, size)
+	var rim := Color(1, 1, 1, 0.45) if unlocked else WASHED_RIM
+	draw_polyline(pts + PackedVector2Array([pts[0]]), rim, 1.5, true)
+
+	if not unlocked:
+		FaVector.draw_lock(self, center, size * 0.34)
+
+
+func _draw_path_diamond(center: Vector2, index: int, theme: Color, unlocked: bool) -> void:
+	var size := PATH_DIAMOND_SIZE
 	var pts := _diamond_points(center, size)
 	var outline := pts + PackedVector2Array([pts[0]])
-	if is_selected:
-		## Outer glow always uses this dimension's theme colour.
-		_draw_selection_glow(center, size, theme)
-	if is_progress:
-		_draw_current_glow(center, size, theme)
-		## Centre fill is the nebula child — only draw the rim here.
-		draw_polyline(outline, Color(1, 1, 1, 0.95), 3.0, true)
-		draw_polyline(outline, Color(theme.r, theme.g, theme.b, 0.9), 1.6, true)
-	elif unlocked:
-		draw_polyline(outline, theme, 4.0, true)
-	else:
-		draw_polyline(outline, theme.lightened(0.25), 3.0, true)
-	if is_selected and not is_progress:
-		## Clear selection ring so locked/unlocked picks read as focused.
-		draw_polyline(outline, Color(1, 1, 1, 0.95), 5.0, true)
-		draw_polyline(outline, theme if unlocked else theme.lightened(0.15), 2.5, true)
-	var hub_r := 3.5
-	draw_circle(center, hub_r + 1.6, Color(1, 1, 1, 1))
-	draw_circle(center, hub_r, STAR_COLOR)
+	var rim := Color(theme.r, theme.g, theme.b, 0.92 if unlocked else 0.75)
+	draw_polyline(outline, rim, 1.8 if unlocked else 1.6, true)
 	if not unlocked:
-		## Sit on the diamond's top-right corner (not centered over the hub).
-		_draw_lock_icon(center + Vector2(size * 0.28, -size * 0.28))
-
-
-func _draw_selection_glow(center: Vector2, size: float, accent: Color) -> void:
-	var outer := _diamond_points(center, size * 1.55)
-	draw_colored_polygon(outer, Color(accent.r, accent.g, accent.b, 0.12))
-	var mid := _diamond_points(center, size * 1.28)
-	draw_polyline(mid + PackedVector2Array([mid[0]]), Color(accent.r, accent.g, accent.b, 0.55), 4.5, true)
-
-
-func _draw_current_glow(center: Vector2, size: float, theme: Color) -> void:
-	## Soft outer haze + bright rim in the dimension theme colour.
-	var outer := _diamond_points(center, size * 1.7)
-	draw_colored_polygon(outer, Color(theme.r, theme.g, theme.b, 0.08))
-	var mid := _diamond_points(center, size * 1.35)
-	draw_colored_polygon(mid, Color(theme.r, theme.g, theme.b, 0.16))
-	draw_polyline(mid + PackedVector2Array([mid[0]]), Color(theme.r, theme.g, theme.b, 0.4), 5.0, true)
-	var rim := _diamond_points(center, size * 1.08)
-	draw_polyline(rim + PackedVector2Array([rim[0]]), Color(1, 1, 1, 0.45), 2.5, true)
-
-
-func _draw_lock_icon(center: Vector2) -> void:
-	var icon_size := 26.0
-	var rect := Rect2(center - Vector2(icon_size, icon_size) * 0.5, Vector2(icon_size, icon_size))
-	draw_texture_rect(LOCK_ICON, rect, false)
+		FaVector.draw_lock(self, center, size * 0.34)
+	elif LevelCatalog.is_dimension_perfect(index):
+		_draw_star_badge(center, size * 0.18)
+	elif LevelCatalog.is_dimension_complete(index):
+		FaVector.draw_check(self, center, size * 0.30)
 
 
 func _draw_star_badge(center: Vector2, radius: float) -> void:
-	## Awarded when every level in the dimension has been cleared.
+	## Awarded when every level in the dimension has been cleared — centred.
 	var pts := PackedVector2Array()
 	for i in 5:
 		var outer_a := -PI * 0.5 + float(i) * TAU / 5.0
@@ -377,10 +516,11 @@ func _draw_star_badge(center: Vector2, radius: float) -> void:
 		var inner_a := outer_a + TAU / 10.0
 		pts.append(center + Vector2(cos(inner_a), sin(inner_a)) * radius * 0.42)
 	draw_colored_polygon(pts, Color(0.95, 0.78, 0.2, 1.0))
-	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(1, 1, 1, 0.75), 1.2, true)
+	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(0.15, 0.12, 0.08, 0.85), 2.0, true)
+	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(1, 1, 1, 0.9), 1.0, true)
 
 
-func _draw_current_badge(diamond_center: Vector2) -> void:
+func _draw_current_badge(diamond_center: Vector2, diamond_size: float) -> void:
 	var label := tr("UI_CURRENT").to_upper()
 	var font := _map_font
 	## Badge size stays as before (font 10 + padding); type is smaller and centered.
@@ -390,7 +530,7 @@ func _draw_current_badge(diamond_center: Vector2) -> void:
 	var pad_y := 2.5
 	var badge_size := Vector2(text_layout.x + pad_x * 2.0, text_layout.y + pad_y * 2.0)
 	var font_size := 7
-	var badge_pos := diamond_center + Vector2(-badge_size.x * 0.5, DIAMOND_SIZE * 0.5 + 12.0)
+	var badge_pos := diamond_center + Vector2(-badge_size.x * 0.5, diamond_size * 0.5 + 12.0)
 	var radius := badge_size.y * 0.5
 	var col := LevelCatalog.PRIMARY_BLUE
 	## Pill: flat middle + round end caps (full rect would leave square corners).
@@ -406,27 +546,11 @@ func _draw_current_badge(diamond_center: Vector2) -> void:
 	draw_string(font, text_pos, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color.WHITE)
 
 
-func _draw_dimension_label(
-	center: Vector2,
-	index: int,
-	theme: Color,
-	is_progress: bool,
-	is_selected: bool,
-	unlocked: bool
-) -> void:
+func _draw_dimension_label(center: Vector2, index: int, theme: Color) -> void:
 	var title := LevelCatalog.get_dimension_title(index)
-	var font := _map_font
-	var font_size := 20
-	var text_size := font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var origin := center + Vector2(-text_size.x * 0.5, -DIAMOND_SIZE * 0.5 - 16.0)
-	var col: Color
-	if is_selected or is_progress:
-		col = LevelCatalog.PRIMARY_BLUE if is_progress else theme
-	elif unlocked:
-		col = theme
-	else:
-		col = theme.lightened(0.2)
-	draw_string(font, origin, title, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, col)
+	var metrics := DiamondTitleBadge.measure(title, TITLE_FONT_FOCUSED)
+	var badge_c := center + Vector2(0.0, -DIAMOND_SIZE * 0.5 - 10.0 - metrics.h * 0.5)
+	DiamondTitleBadge.draw_on(self, badge_c, title, theme, TITLE_FONT_FOCUSED, false, true)
 
 
 func _draw_dashed_line(from_p: Vector2, to_p: Vector2, color: Color, width: float) -> void:
@@ -448,7 +572,7 @@ func _draw_dashed_line(from_p: Vector2, to_p: Vector2, color: Color, width: floa
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _intro_playing:
+	if _intro_playing or _navigating or _dive_progress > 0.0:
 		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
@@ -596,35 +720,123 @@ func _set_zoom(z: float) -> void:
 
 func _hit_dimension(world_pos: Vector2) -> int:
 	var best := -1
-	var best_d := DIAMOND_SIZE
+	var best_d := INF
 	for i in _positions.size():
 		var local := world_pos - _positions[i]
-		var manhattan := absf(local.x) + absf(local.y)
-		if manhattan <= DIAMOND_SIZE * 0.55 and manhattan < best_d:
-			best_d = manhattan
-			best = i
+		if i == _selected_index:
+			var manhattan := absf(local.x) + absf(local.y)
+			if manhattan <= DIAMOND_SIZE * 0.55 and manhattan < best_d:
+				best_d = manhattan
+				best = i
+		else:
+			var d := local.length()
+			if d <= PATH_MARKER_HIT and d < best_d:
+				best_d = d
+				best = i
 	return best
 
 
 func _on_dimension_clicked(index: int) -> void:
-	## First tap: select + frame at bottom. Second tap on an unlocked dim: open levels.
-	## Dim 1 often starts selected, so the first tap opens levels.
-	if _navigating:
+	## First tap focuses (centres) a dimension. Second tap on the centred one dives in.
+	if _navigating or _dive_progress > 0.0:
 		return
-	if index == _selected_index:
+	if index == _selected_index and _is_dimension_centered(index):
 		if LevelCatalog.is_dimension_unlocked(index):
-			_navigating = true
-			GameSession.set_current_dimension(index)
-			GameSession.change_scene(DIMENSION_LEVELS_SCENE)
-		else:
-			_frame_dimension_at_bottom(index)
+			_play_enter_dive(index)
 		return
 	_selected_index = index
+	_sync_nebulas()
+	_sync_path_hint()
 	queue_redraw()
-	_frame_dimension_at_bottom(index)
+	_center_on_dimension(index)
 
 
-func _frame_dimension_at_bottom(index: int) -> void:
+func _world_to_screen(world_pos: Vector2, cam_pos: Vector2, zoom: float) -> Vector2:
+	var vp := get_viewport_rect().size
+	return (world_pos - cam_pos) * zoom + vp * 0.5
+
+
+func _play_enter_dive(index: int) -> void:
+	_navigating = true
+	_dive_index = index
+	GameSession.set_current_dimension(index)
+	_pan_velocity = Vector2.ZERO
+	set_process(false)
+	if _focus_tween:
+		_focus_tween.kill()
+	if _dive_tween:
+		_dive_tween.kill()
+	_intro_playing = false
+	if _intro_tween:
+		_intro_tween.kill()
+
+	_dive_progress = 0.0
+	if _white_fade != null:
+		_white_fade.color = Color(1, 1, 1, 0)
+
+	var z0 := camera.zoom.x
+	var z1 := z0 * DIVE_ZOOM_MULT
+	var p0 := camera.position
+	var target := _positions[index]
+	## Keep diving into the diamond's current screen position, then pull it to centre.
+	var start_focus := _world_to_screen(target, p0, z0)
+
+	_dive_tween = create_tween()
+	_dive_tween.set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_IN)
+	_dive_tween.tween_method(
+		func(t: float) -> void: _update_dive(t, z0, z1, target, start_focus),
+		0.0,
+		1.0,
+		DIVE_DURATION
+	)
+	## Brief full-white hold so the level map doesn't pop in harshly.
+	_dive_tween.tween_callback(func() -> void:
+		if _white_fade != null:
+			_white_fade.color = Color(1, 1, 1, 1)
+	)
+	_dive_tween.tween_interval(DIVE_WHITE_HOLD)
+	_dive_tween.tween_callback(_finish_enter_dive)
+
+
+func _update_dive(
+	t: float,
+	z0: float,
+	z1: float,
+	target_world: Vector2,
+	start_focus_screen: Vector2
+) -> void:
+	## Ease-in already from tween; square again so late frames feel like a rush.
+	var rush := t * t
+	_dive_progress = t
+	var vp := get_viewport_rect().size
+	var z := lerpf(z0, z1, rush)
+	## Focal screen point: diamond stays under the zoom while sliding toward centre.
+	var focus_screen := start_focus_screen.lerp(vp * 0.5, rush)
+	camera.zoom = Vector2(z, z)
+	## Camera so target_world projects exactly onto focus_screen.
+	camera.position = target_world - (focus_screen - vp * 0.5) / maxf(z, 0.001)
+
+	if _white_fade != null:
+		var fade := smoothstep(0.58, 0.98, t)
+		_white_fade.color = Color(1, 1, 1, fade)
+
+
+func _finish_enter_dive() -> void:
+	_dive_progress = 1.0
+	if _white_fade != null:
+		_white_fade.color = Color(1, 1, 1, 1)
+	GameSession.change_scene(DIMENSION_LEVELS_SCENE)
+
+
+func _is_dimension_centered(index: int) -> bool:
+	if index < 0 or index >= _positions.size():
+		return false
+	if _focus_tween != null and _focus_tween.is_running():
+		return false
+	return camera.position.distance_to(_camera_pos_to_frame_dimension(index)) <= 18.0
+
+
+func _center_on_dimension(index: int) -> void:
 	if index < 0 or index >= _positions.size():
 		return
 	_pan_velocity = Vector2.ZERO

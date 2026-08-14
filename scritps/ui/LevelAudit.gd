@@ -34,7 +34,6 @@ func _ready() -> void:
 	UiTheme.style_menu_hint(summary_label)
 	UiTheme.style_menu_hint(empty_label)
 	UiTheme.style_nav_button(back_button)
-	back_button.icon = load("res://assets/icons/back_icon.svg")
 	_refresh()
 
 

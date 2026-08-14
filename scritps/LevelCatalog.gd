@@ -7,6 +7,7 @@ extends Node
 const PRIMARY_BLUE := Color(0.0, 0.28, 0.66, 1.0)
 
 const SECTIONS: Array[Dictionary] = [
+	## Dimension 1 is the root of the main path; Tutorial is a leading side branch.
 	{
 		"title_key": "UI_DIMENSION_1",
 		"color": Color(0.0, 0.28, 0.66, 1.0),
@@ -63,18 +64,18 @@ const SECTIONS: Array[Dictionary] = [
 	},
 	{
 		"title_key": "UI_DIMENSION_10",
-		"color": Color(0.45, 0.78, 0.35, 1.0),
+		"color": Color(0.72, 0.05, 0.08, 1.0),
 		"background": "",
 		"parent": 8,
 	},
-	## Side branch for level-design experiments — sits next to Dimension 1.
+	## Tutorial sits at the bottom of the map; main dimensions climb upward from there.
 	{
-		"title_key": "UI_DIMENSION_TEST",
-		"color": Color(0.55, 0.52, 0.62, 1.0),
+		"title_key": "UI_DIMENSION_TUTORIAL",
+		"color": Color(0.45, 0.78, 0.35, 1.0),
 		"background": "",
-		"parent": 0,
+		"parent": -1,
 		"starts_unlocked": true,
-		"map_offset": Vector2(210.0, 35.0),
+		"side_branch": true,
 	},
 ]
 
@@ -138,6 +139,13 @@ func get_dimension_title(section_index: int) -> String:
 	return tr(str(SECTIONS[section_index].get("title_key", "")))
 
 
+func is_dimension_side_branch(section_index: int) -> bool:
+	## Side branches (e.g. Tutorial) sit off the main unlock path and never own CURRENT.
+	if section_index < 0 or section_index >= SECTIONS.size():
+		return false
+	return bool(SECTIONS[section_index].get("side_branch", false))
+
+
 func is_dimension_unlocked(section_index: int) -> bool:
 	if section_index < 0 or section_index >= SECTIONS.size():
 		return false
@@ -158,6 +166,15 @@ func is_dimension_complete(section_index: int) -> bool:
 		return false
 	for level in levels:
 		if GameSession.get_level_stars(level.level_id) <= 0:
+			return false
+	return true
+
+
+func is_dimension_perfect(section_index: int) -> bool:
+	if not is_dimension_complete(section_index):
+		return false
+	for level in get_section_levels(section_index):
+		if not GameSession.is_perfect_clear(level.level_id):
 			return false
 	return true
 
@@ -280,25 +297,40 @@ func get_first_level_of_next_section(current: LevelConfig) -> LevelConfig:
 	return section_levels[0] as LevelConfig
 
 
-## Linear path upward with a gentle zig-zag (not a perfectly straight line).
-## Dimension 1 stays at the origin; each next step is above with a slight side sway.
-## Entries with `map_offset` are placed relative to their parent (side branches).
+## Bottom → top map order: Tutorial first, then Dimension 1 → 10.
+func get_dimension_map_order() -> Array[int]:
+	var order: Array[int] = []
+	## Side branches that should lead the path (Tutorial) go first.
+	for i in SECTIONS.size():
+		if is_dimension_side_branch(i) and int(SECTIONS[i].get("parent", -1)) < 0:
+			order.append(i)
+	for i in SECTIONS.size():
+		if not is_dimension_side_branch(i):
+			order.append(i)
+	## Any remaining side branches sit just before their parent.
+	for i in SECTIONS.size():
+		if not is_dimension_side_branch(i):
+			continue
+		if order.has(i):
+			continue
+		var parent_i := get_dimension_parent(i)
+		var insert_at := order.find(parent_i)
+		if insert_at >= 0:
+			order.insert(insert_at, i)
+		else:
+			order.append(i)
+	return order
+
+
+## Straight vertical path: bottom slot is Tutorial / first in map order.
 func build_dimension_positions(step_distance: float = 280.0) -> Array[Vector2]:
 	var count := SECTIONS.size()
 	var positions: Array[Vector2] = []
 	positions.resize(count)
-	positions[0] = Vector2.ZERO
-	## Alternating lean amounts so the path feels organic but readable.
-	var sways: Array[float] = [0.0, 95.0, -70.0, 110.0, -85.0, 75.0, -100.0, 60.0, -90.0, 80.0]
-	for i in range(1, count):
-		var section: Dictionary = SECTIONS[i]
-		if section.has("map_offset"):
-			var parent_i := int(section.get("parent", -1))
-			var base := positions[parent_i] if parent_i >= 0 and parent_i < i else Vector2.ZERO
-			positions[i] = base + (section["map_offset"] as Vector2)
-			continue
-		var sway := sways[i] if i < sways.size() else ((1.0 if i % 2 == 0 else -1.0) * 80.0)
-		positions[i] = Vector2(sway, -step_distance * float(i))
+	var order := get_dimension_map_order()
+	for slot in order.size():
+		var idx: int = order[slot]
+		positions[idx] = Vector2(0.0, -step_distance * float(slot))
 	return positions
 
 

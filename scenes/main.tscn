@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://d17j508vck7jl"]
+[gd_scene load_steps=8 format=3 uid="uid://d17j508vck7jl"]
 
 [ext_resource type="PackedScene" uid="uid://qwpopfwnvd7c" path="res://scenes/board.tscn" id="1_board"]
 [ext_resource type="Script" path="res://scritps/Main.gd" id="2_main"]
@@ -8,9 +8,6 @@
 [ext_resource type="PackedScene" uid="uid://prism_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="6_back"]
 [ext_resource type="PackedScene" uid="uid://prism_circle_icon_button" path="res://scenes/ui/circle_icon_button.tscn" id="7_icon"]
 [ext_resource type="PackedScene" uid="uid://prism_goals_info_modal" path="res://scenes/ui/goals_info_modal.tscn" id="8_goals_modal"]
-[ext_resource type="Texture2D" path="res://assets/icons/undo_icon.svg" id="9_undo"]
-[ext_resource type="Texture2D" path="res://assets/icons/refresh_icon.svg" id="10_restart"]
-[ext_resource type="Texture2D" path="res://assets/icons/goals_icon.svg" id="11_goals"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("2_main")
@@ -24,15 +21,6 @@ position = Vector2(640, 360)
 
 [node name="BackButton" parent="UI" instance=ExtResource("6_back")]
 unique_name_in_owner = true
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 52.0
-offset_top = -52.0
-offset_right = 52.0
-offset_bottom = -52.0
-grow_horizontal = 0
-grow_vertical = 0
 
 [node name="RestartButton" parent="UI" instance=ExtResource("7_icon")]
 unique_name_in_owner = true
@@ -47,7 +35,7 @@ offset_right = 20.0
 offset_bottom = -52.0
 grow_horizontal = 2
 grow_vertical = 0
-icon_texture = ExtResource("10_restart")
+fa_icon = "refresh"
 tooltip_key = "UI_RESTART_LEVEL"
 
 [node name="GoalsButton" parent="UI" instance=ExtResource("7_icon")]
@@ -63,7 +51,7 @@ offset_right = 20.0
 offset_bottom = -52.0
 grow_horizontal = 2
 grow_vertical = 0
-icon_texture = ExtResource("11_goals")
+fa_icon = "bullseye"
 tooltip_key = "UI_GOALS"
 
 [node name="UndoButton" parent="UI" instance=ExtResource("7_icon")]
@@ -79,7 +67,7 @@ offset_right = 20.0
 offset_bottom = -52.0
 grow_horizontal = 2
 grow_vertical = 0
-icon_texture = ExtResource("9_undo")
+fa_icon = "undo"
 tooltip_key = "UI_UNDO_MOVE"
 
 [node name="GoalBorderLeft" parent="UI" instance=ExtResource("5_goal_border")]

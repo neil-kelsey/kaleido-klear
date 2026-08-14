@@ -30,9 +30,22 @@ const OUTPUT_PATH := "res://assets/backgrounds/dimension_star_chart.jpg"
 ## Keep in sync with DimensionLevels.STRIP_WORLD.
 ## Capacity: hub gap + compact/paged section rows + bottom margin.
 const LEVEL_STRIP_WORLD := Rect2(-420, -180, 840, 2800)
-const LEVEL_OUTPUT_PATH := "res://assets/backgrounds/level_star_chart.jpg"
+## Half-res gold-on-transparent overlay (VRAM-friendly; scaled up at runtime).
+const LEVEL_OVERLAY_SCALE := 0.5
+const LEVEL_OUTPUT_PATH := "res://assets/backgrounds/level_star_chart.png"
+
+const GOLD_GUIDE := Color(0.96, 0.78, 0.32, 0.78)
+const GOLD_OUTER := Color(1.0, 0.88, 0.42, 0.95)
+const GOLD_STAR := Color(1.0, 0.9, 0.52, 1.0)
+const GOLD_LINK := Color(0.98, 0.82, 0.38, 0.9)
 
 static var _active_strip: Rect2 = STRIP_WORLD
+static var _bake_scale := 1.0
+static var _overlay_mode := false
+static var _guide_color := GUIDE_COLOR
+static var _guide_outer := GUIDE_OUTER
+static var _star_color := STAR_COLOR
+static var _link_color := CONSTELLATION_COLOR
 
 
 static func bake_and_save(path: String = OUTPUT_PATH) -> Error:
@@ -40,23 +53,51 @@ static func bake_and_save(path: String = OUTPUT_PATH) -> Error:
 
 
 static func bake_level_chart_and_save(path: String = LEVEL_OUTPUT_PATH) -> Error:
-	return _bake_and_save_strip(LEVEL_STRIP_WORLD, path)
+	return _bake_and_save_strip(LEVEL_STRIP_WORLD, path, true, LEVEL_OVERLAY_SCALE)
 
 
-static func _bake_and_save_strip(strip: Rect2, path: String) -> Error:
+static func _bake_and_save_strip(
+	strip: Rect2,
+	path: String,
+	overlay: bool = false,
+	scale: float = 1.0
+) -> Error:
 	_active_strip = strip
+	_overlay_mode = overlay
+	_bake_scale = scale
+	if overlay:
+		_guide_color = GOLD_GUIDE
+		_guide_outer = GOLD_OUTER
+		_star_color = GOLD_STAR
+		_link_color = GOLD_LINK
+	else:
+		_guide_color = GUIDE_COLOR
+		_guide_outer = GUIDE_OUTER
+		_star_color = STAR_COLOR
+		_link_color = CONSTELLATION_COLOR
 	var image := bake_strip_image()
 	_active_strip = STRIP_WORLD
+	_overlay_mode = false
+	_bake_scale = 1.0
+	_guide_color = GUIDE_COLOR
+	_guide_outer = GUIDE_OUTER
+	_star_color = STAR_COLOR
+	_link_color = CONSTELLATION_COLOR
 	var abs_path := ProjectSettings.globalize_path(path)
 	DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
+	if overlay or path.get_extension().to_lower() == "png":
+		return image.save_png(abs_path)
 	return image.save_jpg(abs_path, 0.92)
 
 
 static func bake_strip_image() -> Image:
-	var w := int(_active_strip.size.x)
-	var h := int(_active_strip.size.y)
+	var w := maxi(1, int(_active_strip.size.x * _bake_scale))
+	var h := maxi(1, int(_active_strip.size.y * _bake_scale))
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
-	img.fill(CHART_BG)
+	if _overlay_mode:
+		img.fill(Color(0, 0, 0, 0))
+	else:
+		img.fill(CHART_BG)
 
 	var stars: Array[Vector2] = []
 	var radii: Array[float] = []
@@ -79,7 +120,7 @@ static func level_strip_world_rect() -> Rect2:
 
 
 static func _world_to_pixel(world: Vector2) -> Vector2:
-	return world - _active_strip.position
+	return (world - _active_strip.position) * _bake_scale
 
 
 static func _hash01(i: int, salt: int) -> float:
@@ -225,7 +266,23 @@ static func _blend_pixel(img: Image, x: int, y: int, color: Color) -> void:
 	if x < 0 or y < 0 or x >= img.get_width() or y >= img.get_height():
 		return
 	var dst := img.get_pixel(x, y)
-	var a := color.a
+	var sa := color.a
+	if sa <= 0.0:
+		return
+	if _overlay_mode:
+		var da := dst.a
+		var out_a := sa + da * (1.0 - sa)
+		if out_a <= 0.0001:
+			img.set_pixel(x, y, Color(0, 0, 0, 0))
+			return
+		img.set_pixel(x, y, Color(
+			(color.r * sa + dst.r * da * (1.0 - sa)) / out_a,
+			(color.g * sa + dst.g * da * (1.0 - sa)) / out_a,
+			(color.b * sa + dst.b * da * (1.0 - sa)) / out_a,
+			out_a
+		))
+		return
+	var a := sa
 	img.set_pixel(x, y, Color(
 		dst.r * (1.0 - a) + color.r * a,
 		dst.g * (1.0 - a) + color.g * a,
@@ -255,15 +312,18 @@ static func _draw_line_px(img: Image, from_px: Vector2, to_px: Vector2, color: C
 
 
 static func _draw_guides_on_image(img: Image) -> void:
+	var ring_w := 2.4 if _overlay_mode else 1.25
+	var outer_w := 3.4 if _overlay_mode else 2.0
+	var spoke_w := 2.0 if _overlay_mode else 1.0
 	for ring in range(1, GUIDE_RING_COUNT + 1):
 		var r := CHART_RADIUS * (float(ring) / float(GUIDE_RING_COUNT))
-		_draw_arc_world(img, Vector2.ZERO, r, GUIDE_COLOR, 1.25)
-	_draw_arc_world(img, Vector2.ZERO, CHART_RADIUS, GUIDE_OUTER, 2.0)
+		_draw_arc_world(img, Vector2.ZERO, r, _guide_color, ring_w)
+	_draw_arc_world(img, Vector2.ZERO, CHART_RADIUS, _guide_outer, outer_w)
 	for spoke in GUIDE_SPOKE_COUNT:
 		var ang := TAU * float(spoke) / float(GUIDE_SPOKE_COUNT)
 		var inner := Vector2(cos(ang), sin(ang)) * 70.0
 		var outer := Vector2(cos(ang), sin(ang)) * CHART_RADIUS
-		_draw_line_px(img, _world_to_pixel(inner), _world_to_pixel(outer), GUIDE_COLOR, 1.0)
+		_draw_line_px(img, _world_to_pixel(inner), _world_to_pixel(outer), _guide_color, spoke_w)
 
 
 static func _draw_arc_world(
@@ -288,12 +348,12 @@ static func _draw_links_on_image(img: Image, stars: Array[Vector2], links: Array
 			img,
 			_world_to_pixel(stars[link.x]),
 			_world_to_pixel(stars[link.y]),
-			CONSTELLATION_COLOR,
-			1.15
+			_link_color,
+			2.2 if _overlay_mode else 1.15
 		)
 
 
 static func _draw_stars_on_image(img: Image, stars: Array[Vector2], radii: Array[float]) -> void:
 	for i in stars.size():
 		var p := _world_to_pixel(stars[i])
-		_fill_circle_px(img, p.x, p.y, radii[i], STAR_COLOR)
+		_fill_circle_px(img, p.x, p.y, radii[i] * maxf(_bake_scale, 0.65), _star_color)
