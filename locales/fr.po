@@ -572,16 +572,28 @@ msgid "UI_AUDIT_DELETE_CONFIRM"
 msgstr "Delete \"%s\"? This cannot be undone."
 
 msgid "UI_RESET_PROGRESS"
-msgstr "Reset progress"
+msgstr "Réinitialiser les données"
 
 msgid "UI_RESET_PROGRESS_TITLE"
-msgstr "Reset all progress?"
+msgstr "Réinitialiser les données de jeu ?"
 
 msgid "UI_RESET_PROGRESS_CONFIRM"
-msgstr "This permanently deletes all stars, unlocks, and level progress. Language and other settings are kept. This cannot be undone."
+msgstr "Ceci supprime définitivement toutes les étoiles, les déblocages et la progression des niveaux. Les tutoriels, la langue et les autres paramètres sont conservés. Cette action est irréversible."
 
 msgid "UI_RESET_PROGRESS_YES"
-msgstr "Yes, delete all progress"
+msgstr "Oui, tout effacer"
+
+msgid "UI_RESET_TUTORIALS"
+msgstr "Réinitialiser les tutoriels"
+
+msgid "UI_RESET_TUTORIALS_TITLE"
+msgstr "Réafficher les tutoriels ?"
+
+msgid "UI_RESET_TUTORIALS_CONFIRM"
+msgstr "Les guides du tutoriel s’afficheront à nouveau au premier niveau de chaque groupe. Les étoiles et les déblocages sont conservés."
+
+msgid "UI_RESET_TUTORIALS_YES"
+msgstr "Oui, réafficher les tutoriels"
 
 msgid "UI_GROUP_BASIC_TRAINING"
 msgstr "Entraînement de base"

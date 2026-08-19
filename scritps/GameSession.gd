@@ -230,13 +230,18 @@ func get_level_stars(level_id: String) -> int:
 
 
 func reset_progress() -> void:
-	## Clears stars / unlocks. Keeps language and develop-mode prefs.
+	## Clears stars / unlocks. Keeps tutorials, language, and develop-mode prefs.
 	level_stars.clear()
 	level_perfect.clear()
-	seen_tutorials.clear()
 	current_dimension_index = 0
 	selected_level = null
 	clear_level_playlist()
+	_save_progress()
+
+
+func reset_tutorials() -> void:
+	## Replay coach walkthroughs. Keeps stars and unlocks.
+	seen_tutorials.clear()
 	_save_progress()
 
 

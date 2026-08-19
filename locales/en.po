@@ -572,16 +572,28 @@ msgid "UI_AUDIT_DELETE_CONFIRM"
 msgstr "Delete \"%s\"? This cannot be undone."
 
 msgid "UI_RESET_PROGRESS"
-msgstr "Reset progress"
+msgstr "Reset game data"
 
 msgid "UI_RESET_PROGRESS_TITLE"
-msgstr "Reset all progress?"
+msgstr "Reset game data?"
 
 msgid "UI_RESET_PROGRESS_CONFIRM"
-msgstr "This permanently deletes all stars, unlocks, and level progress. Language and other settings are kept. This cannot be undone."
+msgstr "This permanently deletes all stars, unlocks, and level progress. Tutorials, language, and other settings are kept. This cannot be undone."
 
 msgid "UI_RESET_PROGRESS_YES"
-msgstr "Yes, delete all progress"
+msgstr "Yes, delete game data"
+
+msgid "UI_RESET_TUTORIALS"
+msgstr "Reset tutorials"
+
+msgid "UI_RESET_TUTORIALS_TITLE"
+msgstr "Reset tutorials?"
+
+msgid "UI_RESET_TUTORIALS_CONFIRM"
+msgstr "Coach walkthroughs will show again on the first level of each tutorial group. Stars and unlocks are kept."
+
+msgid "UI_RESET_TUTORIALS_YES"
+msgstr "Yes, reset tutorials"
 
 msgid "UI_GROUP_BASIC_TRAINING"
 msgstr "Basic Training"

@@ -5,6 +5,8 @@ const LEVEL_CREATOR_SCENE := "res://scenes/editor/level_creator.tscn"
 const LEVEL_AUDIT_SCENE := "res://scenes/ui/level_audit.tscn"
 const TITLE_FONT_SIZE := 48
 
+enum ResetKind { NONE, PROGRESS, TUTORIALS }
+
 @onready var title_badge: DiamondTitleBadge = %TitleBadge
 @onready var nebula_bg: TextureRect = %NebulaBg
 @onready var back_button: CircleBackButton = %BackButton
@@ -17,11 +19,13 @@ const TITLE_FONT_SIZE := 48
 @onready var develop_mode_checkbox: CheckBox = %DevelopModeCheckBox
 @onready var level_creator_button: MenuActionButton = %LevelCreatorButton
 @onready var level_audit_button: MenuActionButton = %LevelAuditButton
+@onready var reset_tutorials_button: MenuActionButton = %ResetTutorialsButton
 @onready var reset_progress_button: MenuActionButton = %ResetProgressButton
 @onready var coming_soon_label: Label = %ComingSoonLabel
 @onready var reset_confirm_modal: Control = %ResetConfirmModal
 
 var _updating_language_option := false
+var _pending_reset: ResetKind = ResetKind.NONE
 var _nebula_mat: ShaderMaterial
 var _fx_time := 0.0
 
@@ -96,6 +100,7 @@ func _apply_translations() -> void:
 	develop_mode_label.text = tr("UI_DEVELOP_MODE")
 	level_creator_button.set_label(tr("UI_LEVEL_CREATOR"))
 	level_audit_button.set_label(tr("UI_LEVEL_AUDIT"))
+	reset_tutorials_button.set_label(tr("UI_RESET_TUTORIALS"))
 	reset_progress_button.set_label(tr("UI_RESET_PROGRESS"))
 	coming_soon_label.text = tr("UI_COMING_SOON")
 	_populate_language_option()
@@ -137,7 +142,18 @@ func _on_level_audit_button_pressed() -> void:
 	get_tree().change_scene_to_file(LEVEL_AUDIT_SCENE)
 
 
+func _on_reset_tutorials_button_pressed() -> void:
+	_pending_reset = ResetKind.TUTORIALS
+	reset_confirm_modal.show_modal(
+		"UI_RESET_TUTORIALS_TITLE",
+		"UI_RESET_TUTORIALS_CONFIRM",
+		"UI_RESET_TUTORIALS_YES",
+		"UI_NO"
+	)
+
+
 func _on_reset_progress_button_pressed() -> void:
+	_pending_reset = ResetKind.PROGRESS
 	reset_confirm_modal.show_modal(
 		"UI_RESET_PROGRESS_TITLE",
 		"UI_RESET_PROGRESS_CONFIRM",
@@ -147,7 +163,16 @@ func _on_reset_progress_button_pressed() -> void:
 
 
 func _on_reset_confirm_modal_confirmed() -> void:
-	GameSession.reset_progress()
+	match _pending_reset:
+		ResetKind.TUTORIALS:
+			GameSession.reset_tutorials()
+		ResetKind.PROGRESS:
+			GameSession.reset_progress()
+	_pending_reset = ResetKind.NONE
+
+
+func _on_reset_confirm_modal_cancelled() -> void:
+	_pending_reset = ResetKind.NONE
 
 
 func _on_back_button_pressed() -> void:
@@ -157,5 +182,6 @@ func _on_back_button_pressed() -> void:
 func handle_back() -> void:
 	if reset_confirm_modal != null and reset_confirm_modal.visible:
 		reset_confirm_modal.hide_modal()
+		_pending_reset = ResetKind.NONE
 		return
 	_on_back_button_pressed()

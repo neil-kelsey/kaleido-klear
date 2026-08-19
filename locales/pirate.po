@@ -572,16 +572,28 @@ msgid "UI_AUDIT_DELETE_CONFIRM"
 msgstr "Delete \"%s\"? This cannot be undone."
 
 msgid "UI_RESET_PROGRESS"
-msgstr "Reset progress"
+msgstr "Wipe the log"
 
 msgid "UI_RESET_PROGRESS_TITLE"
-msgstr "Reset all progress?"
+msgstr "Wipe the log?"
 
 msgid "UI_RESET_PROGRESS_CONFIRM"
-msgstr "This permanently deletes all stars, unlocks, and level progress. Language and other settings are kept. This cannot be undone."
+msgstr "This scuttles every star, unlock, and voyage mark. Lessons, tongue, and ship’s orders stay. No turnin’ back."
 
 msgid "UI_RESET_PROGRESS_YES"
-msgstr "Yes, delete all progress"
+msgstr "Aye, wipe the log"
+
+msgid "UI_RESET_TUTORIALS"
+msgstr "Replay the lessons"
+
+msgid "UI_RESET_TUTORIALS_TITLE"
+msgstr "Replay the lessons?"
+
+msgid "UI_RESET_TUTORIALS_CONFIRM"
+msgstr "The coachin’ will show again on the first voyage of each drill. Stars and unlocks stay aboard."
+
+msgid "UI_RESET_TUTORIALS_YES"
+msgstr "Aye, replay the lessons"
 
 msgid "UI_GROUP_BASIC_TRAINING"
 msgstr "Basic Drillin’"
