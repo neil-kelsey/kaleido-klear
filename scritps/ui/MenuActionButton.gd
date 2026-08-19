@@ -1,9 +1,9 @@
 extends Button
 class_name MenuActionButton
 
-## Home hero CTA. Primary fill is ONE baked nebula texture (no tiled procedural UV).
+## Shared CTA. PRIMARY / DESTRUCTIVE use one baked nebula texture; SECONDARY is cream + rainbow.
 
-enum Kind { PRIMARY, SECONDARY }
+enum Kind { PRIMARY, SECONDARY, DESTRUCTIVE }
 enum IconStyle { CHEVRON, GEAR }
 
 const BRAND_RAINBOW := preload("res://scritps/ui/BrandRainbow.gd")
@@ -63,34 +63,38 @@ func _ready() -> void:
 	set_process(true)
 
 
+func _uses_nebula() -> bool:
+	return kind == Kind.PRIMARY or kind == Kind.DESTRUCTIVE
+
+
 func _min_height() -> int:
 	if compact:
-		return 128 if kind == Kind.PRIMARY else 112
-	return PRIMARY_MIN_HEIGHT if kind == Kind.PRIMARY else CTA_MIN_HEIGHT
+		return 128 if _uses_nebula() else 112
+	return PRIMARY_MIN_HEIGHT if _uses_nebula() else CTA_MIN_HEIGHT
 
 
 func _font_size() -> int:
 	if compact:
-		return 40 if kind == Kind.PRIMARY else 36
-	return PRIMARY_FONT_SIZE if kind == Kind.PRIMARY else CTA_FONT_SIZE
+		return 40 if _uses_nebula() else 36
+	return PRIMARY_FONT_SIZE if _uses_nebula() else CTA_FONT_SIZE
 
 
 func _icon_size() -> int:
 	if compact:
 		return 36
-	return PRIMARY_ICON_SIZE if kind == Kind.PRIMARY else CTA_ICON_SIZE
+	return PRIMARY_ICON_SIZE if _uses_nebula() else CTA_ICON_SIZE
 
 
 func _pad_h() -> int:
 	if compact:
 		return 28
-	return PRIMARY_PAD_H if kind == Kind.PRIMARY else CTA_PAD_H
+	return PRIMARY_PAD_H if _uses_nebula() else CTA_PAD_H
 
 
 func _pad_v() -> int:
 	if compact:
 		return 22
-	return PRIMARY_PAD_V if kind == Kind.PRIMARY else CTA_PAD_V
+	return PRIMARY_PAD_V if _uses_nebula() else CTA_PAD_V
 
 
 func _process(delta: float) -> void:
@@ -122,10 +126,18 @@ func _clear_button_chrome() -> void:
 		add_theme_stylebox_override(state, empty)
 
 
+func _theme_role() -> UiTheme.ButtonRole:
+	match kind:
+		Kind.DESTRUCTIVE:
+			return UiTheme.ButtonRole.DANGER
+		Kind.PRIMARY:
+			return UiTheme.ButtonRole.PRIMARY
+		_:
+			return UiTheme.ButtonRole.SECONDARY
+
+
 func _face_style(bg: Color, with_shadow: bool) -> StyleBoxFlat:
-	var role := (
-		UiTheme.ButtonRole.PRIMARY if kind == Kind.PRIMARY else UiTheme.ButtonRole.SECONDARY
-	)
+	var role := _theme_role()
 	var state := &"normal"
 	if button_pressed:
 		state = &"pressed"
@@ -166,18 +178,18 @@ func _build() -> void:
 
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 24 if kind != Kind.PRIMARY else 32)
+	row.add_theme_constant_override("separation", 32 if _uses_nebula() else 24)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
-	var text_color := Color.WHITE if kind == Kind.PRIMARY else UiTheme.PRIMARY
-	var face_color := UiTheme.PRIMARY_FILL if kind == Kind.PRIMARY else UiTheme.SECONDARY_BG
+	var text_color := Color.WHITE if _uses_nebula() else UiTheme.PRIMARY
+	var face_color := _base_color()
 
 	_label = Label.new()
 	_label.add_theme_font_override("font", UiTheme.button_typeface())
 	_label.add_theme_font_size_override("font_size", _font_size())
 	_label.add_theme_color_override("font_color", text_color)
-	if kind == Kind.PRIMARY:
+	if _uses_nebula():
 		_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.35))
 		_label.add_theme_constant_override("shadow_offset_x", 1)
 		_label.add_theme_constant_override("shadow_offset_y", 1)
@@ -206,13 +218,19 @@ func _build() -> void:
 		_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(_icon)
 
-	if kind == Kind.PRIMARY:
-		## No StyleBoxFlat on primary (known mid-seam bug). One baked texture only.
+	if _uses_nebula():
+		## No StyleBoxFlat on nebula fills (known mid-seam bug). One baked texture only.
 		_face.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 		_nebula = TextureRect.new()
 		_nebula.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		_nebula.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_nebula_mat = NebulaEffect.apply_to_control(_nebula, float(UiTheme.BUTTON_CORNER_RADIUS))
+		if kind == Kind.DESTRUCTIVE:
+			_nebula_mat.set_shader_parameter(
+				"tint_rgb",
+				Vector3(UiTheme.DANGER_TINT.r, UiTheme.DANGER_TINT.g, UiTheme.DANGER_TINT.b)
+			)
+			_nebula_mat.set_shader_parameter("tint_amount", 0.88)
 		_face.add_child(_nebula)
 		_face.move_child(_nebula, 0)
 		margin.move_to_front()
@@ -249,6 +267,12 @@ func _sync_fx_rect() -> void:
 
 
 func _base_color() -> Color:
+	if kind == Kind.DESTRUCTIVE:
+		if button_pressed:
+			return UiTheme.DANGER_FILL_PRESSED
+		if _hovering:
+			return UiTheme.DANGER_FILL_HOVER
+		return UiTheme.DANGER_FILL
 	if kind == Kind.PRIMARY:
 		if button_pressed:
 			return UiTheme.PRIMARY_FILL_PRESSED
@@ -261,18 +285,16 @@ func _base_color() -> Color:
 func _refresh_face_color() -> void:
 	if _face == null:
 		return
-	if kind == Kind.PRIMARY:
+	if _uses_nebula():
 		_face.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	else:
 		var shadow := not button_pressed
 		_face.add_theme_stylebox_override("panel", _face_style(_base_color(), shadow))
 	if _icon is _GearIcon:
-		(_icon as _GearIcon).set_hole_color(
-			UiTheme.PRIMARY_FILL if kind == Kind.PRIMARY else _base_color()
-		)
+		(_icon as _GearIcon).set_hole_color(_base_color())
 	elif _icon is _FaIconView:
 		(_icon as _FaIconView).icon_color = (
-			Color.WHITE if kind == Kind.PRIMARY else UiTheme.PRIMARY
+			Color.WHITE if _uses_nebula() else UiTheme.PRIMARY
 		)
 
 

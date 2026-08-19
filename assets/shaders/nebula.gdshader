@@ -10,6 +10,8 @@ uniform float wash_out = 0.0;
 uniform float time_sec = 0.0;
 uniform int mask_mode = 1;
 uniform float opacity = 1.0;
+uniform vec3 tint_rgb = vec3(1.0, 1.0, 1.0);
+uniform float tint_amount = 0.0;
 
 float hash21(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -70,6 +72,9 @@ void fragment() {
 	vec3 col = tex.rgb;
 	col += vec3(0.95, 0.97, 1.0) * starfield(UV, time_sec) * 0.9;
 	col *= brightness;
+	if (tint_amount > 0.001) {
+		col = mix(col, col * tint_rgb, clamp(tint_amount, 0.0, 1.0));
+	}
 	if (wash_out > 0.001) {
 		float luma = dot(col, vec3(0.299, 0.587, 0.114));
 		col = mix(col, vec3(luma), wash_out * 0.55);

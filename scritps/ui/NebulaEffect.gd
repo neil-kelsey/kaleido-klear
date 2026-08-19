@@ -33,6 +33,8 @@ static func make_material(mask_mode: int = MASK_ROUNDED_RECT) -> ShaderMaterial:
 	mat.set_shader_parameter("wash_out", 0.0)
 	mat.set_shader_parameter("time_sec", 0.0)
 	mat.set_shader_parameter("opacity", 1.0)
+	mat.set_shader_parameter("tint_rgb", Vector3(1.0, 1.0, 1.0))
+	mat.set_shader_parameter("tint_amount", 0.0)
 	return mat
 
 

@@ -29,6 +29,11 @@ const PRIMARY_PRESSED := Color(0.0, 0.22, 0.56, 1.0)
 const PRIMARY_FILL := Color(0.08, 0.05, 0.22, 1.0) ## deep nebula navy
 const PRIMARY_FILL_HOVER := Color(0.12, 0.07, 0.30, 1.0)
 const PRIMARY_FILL_PRESSED := Color(0.05, 0.03, 0.16, 1.0)
+## Destructive CTA — same weight as primary, crimson nebula instead of navy.
+const DANGER_FILL := Color(0.24, 0.03, 0.07, 1.0)
+const DANGER_FILL_HOVER := Color(0.32, 0.05, 0.10, 1.0)
+const DANGER_FILL_PRESSED := Color(0.16, 0.02, 0.05, 1.0)
+const DANGER_TINT := Color(1.55, 0.28, 0.34, 1.0)
 const SECONDARY_BG := Color(1.0, 1.0, 1.0, 1.0)
 const SECONDARY_BG_HOVER := Color(0.96, 0.97, 1.0, 1.0)
 const SECONDARY_BG_PRESSED := Color(0.9, 0.92, 0.96, 1.0)
@@ -124,12 +129,15 @@ static func brand_button_stylebox(
 		ButtonRole.DANGER:
 			match state:
 				&"hover", &"focus":
-					style.bg_color = PLAY_HOVER
+					style.bg_color = DANGER_FILL_HOVER
 				&"pressed":
-					style.bg_color = PLAY_PRESSED
+					style.bg_color = DANGER_FILL_PRESSED
 				_:
-					style.bg_color = PLAY
+					style.bg_color = DANGER_FILL
 			style.set_border_width_all(0)
+			style.shadow_color = Color(0.85, 0.12, 0.22, 0.32)
+			style.shadow_size = 8 if scale == ButtonScale.STANDARD else 5
+			style.shadow_offset = Vector2(0, 2)
 		_:
 			match state:
 				&"hover", &"focus":
@@ -260,28 +268,29 @@ static func style_menu_section_title(label: Label) -> void:
 
 
 static func style_settings_row_label(label: Label) -> void:
-	## Settings panel sits on a dark surface — use light text.
-	label.add_theme_color_override("font_color", TEXT_ON_DARK)
-	apply_label_font(label, 56, MIN_MENU_FONT_SIZE)
+	## Settings rows sit on the cream star-chart card.
+	label.add_theme_color_override("font_color", TEXT)
+	label.add_theme_font_override("font", BUTTON_FONT)
+	apply_label_font(label, 44, 36)
 
 
 static func settings_option_field_stylebox(focused: bool = false) -> StyleBoxFlat:
-	var style := text_field_stylebox(focused)
-	style.corner_radius_top_left = 16
-	style.corner_radius_top_right = 16
-	style.corner_radius_bottom_left = 16
-	style.corner_radius_bottom_right = 16
+	var style := brand_button_stylebox(
+		ButtonRole.SECONDARY,
+		&"focus" if focused else &"normal",
+		ButtonScale.HUD
+	)
 	style.content_margin_left = 24
-	style.content_margin_top = 18
+	style.content_margin_top = 14
 	style.content_margin_right = 48
-	style.content_margin_bottom = 18
+	style.content_margin_bottom = 14
 	return style
 
 
 static func style_settings_option_field(option: OptionButton) -> void:
-	## Match settings row type scale so the language picker isn't tiny on phone.
-	var font_size := menu_font_size(48, 44)
-	var min_height := maxi(MIN_MENU_BUTTON_HEIGHT - 12, 96)
+	## Language picker matches secondary CTAs on the cream chart card.
+	var font_size := menu_font_size(36, 32)
+	var min_height := HUD_BUTTON_HEIGHT + 12
 	_apply_option_field_theme(
 		option,
 		settings_option_field_stylebox(false),
@@ -289,7 +298,12 @@ static func style_settings_option_field(option: OptionButton) -> void:
 		min_height,
 		font_size
 	)
-	option.custom_minimum_size = Vector2(maxi(int(option.custom_minimum_size.x), 360), min_height)
+	option.add_theme_color_override("font_color", PRIMARY)
+	option.add_theme_color_override("font_hover_color", PRIMARY)
+	option.add_theme_color_override("font_pressed_color", PRIMARY)
+	option.add_theme_color_override("font_focus_color", PRIMARY)
+	option.add_theme_font_override("font", button_typeface())
+	option.custom_minimum_size = Vector2(maxi(int(option.custom_minimum_size.x), 280), min_height)
 	option.add_theme_constant_override("arrow_margin", 20)
 	option.fit_to_longest_item = true
 	var popup := option.get_popup()
@@ -298,26 +312,29 @@ static func style_settings_option_field(option: OptionButton) -> void:
 	popup.add_theme_constant_override("item_end_padding", 20)
 	popup.add_theme_constant_override("v_separation", 12)
 	var panel := StyleBoxFlat.new()
-	panel.bg_color = Color(0.12, 0.13, 0.17, 1.0)
-	panel.corner_radius_top_left = 16
-	panel.corner_radius_top_right = 16
-	panel.corner_radius_bottom_left = 16
-	panel.corner_radius_bottom_right = 16
+	panel.bg_color = Color(0.97, 0.97, 0.985, 1.0)
+	panel.set_corner_radius_all(20)
 	panel.content_margin_left = 12
 	panel.content_margin_top = 12
 	panel.content_margin_right = 12
 	panel.content_margin_bottom = 12
 	popup.add_theme_stylebox_override("panel", panel)
 	var hover := StyleBoxFlat.new()
-	hover.bg_color = Color(0.22, 0.24, 0.32, 1.0)
-	hover.corner_radius_top_left = 12
-	hover.corner_radius_top_right = 12
-	hover.corner_radius_bottom_left = 12
-	hover.corner_radius_bottom_right = 12
+	hover.bg_color = SECONDARY_BG_HOVER
+	hover.set_corner_radius_all(12)
 	popup.add_theme_stylebox_override("hover", hover)
-	popup.add_theme_color_override("font_color", TEXT_ON_DARK)
-	popup.add_theme_color_override("font_hover_color", TEXT_ON_DARK)
-	popup.add_theme_color_override("font_separator_color", TEXT_ON_DARK)
+	popup.add_theme_color_override("font_color", TEXT)
+	popup.add_theme_color_override("font_hover_color", PRIMARY)
+	popup.add_theme_color_override("font_separator_color", TEXT_MUTED)
+
+
+static func style_settings_checkbox(checkbox: CheckBox) -> void:
+	checkbox.custom_minimum_size = Vector2(64, 64)
+	checkbox.add_theme_color_override("font_color", TEXT)
+	checkbox.add_theme_color_override("font_pressed_color", PRIMARY)
+	checkbox.add_theme_color_override("font_hover_color", PRIMARY)
+	checkbox.add_theme_color_override("font_focus_color", PRIMARY)
+	checkbox.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 
 static func text_field_stylebox(focused: bool = false) -> StyleBoxFlat:
