@@ -57,9 +57,9 @@ static func apply_backdrop(target: TextureRect) -> ShaderMaterial:
 	target.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var mat := ShaderMaterial.new()
 	mat.shader = BACKDROP_SHADER
-	mat.set_shader_parameter("brightness", 1.0)
+	mat.set_shader_parameter("brightness", 1.12)
 	mat.set_shader_parameter("time_sec", 0.0)
-	mat.set_shader_parameter("ink", 0.045)
+	mat.set_shader_parameter("ink", 0.34)
 	var tex := FILL.texture()
 	if tex != null:
 		mat.set_shader_parameter("tex_size", tex.get_size())

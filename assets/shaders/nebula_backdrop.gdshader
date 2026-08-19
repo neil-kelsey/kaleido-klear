@@ -1,9 +1,6 @@
 shader_type canvas_item;
 
-// Level-select backdrop only. Same bake as CTA nebula, but:
-// - cover-sampled (no portrait stretch)
-// - crushed almost to black with a hint of colour
-// - quiet twinkle stars
+// Level-select backdrop: same bake as the Dimensions CTA, mixed into deep navy.
 
 uniform vec2 rect_size = vec2(400.0, 800.0);
 uniform vec2 tex_size = vec2(1024.0, 384.0);
@@ -54,9 +51,9 @@ void fragment() {
 	vec2 uv = cover_uv(UV);
 	uv = clamp(uv, vec2(0.001), vec2(0.999));
 	vec3 neb = texture(TEXTURE, uv).rgb;
-	vec3 night = vec3(0.012, 0.012, 0.018);
+	vec3 night = vec3(0.05, 0.025, 0.11);
 	vec3 col = mix(night, neb, ink);
-	col += vec3(0.92, 0.94, 1.0) * starfield(UV, time_sec) * 0.55;
+	col += vec3(0.92, 0.94, 1.0) * starfield(UV, time_sec) * 0.42;
 	col *= brightness;
 	COLOR = vec4(col, 1.0);
 }

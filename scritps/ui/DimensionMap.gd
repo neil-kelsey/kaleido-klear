@@ -105,6 +105,7 @@ func _ready() -> void:
 		## Cover the first frame so the map doesn't flash before the reverse dive.
 		if _white_fade != null:
 			_white_fade.color = Color(1, 1, 1, 1)
+		GameSession.set_scene_wipe(Color(1, 1, 1, 1))
 		var idx := clampi(GameSession.current_dimension_index, 0, maxi(_positions.size() - 1, 0))
 		_selected_index = idx
 		var z_close := INTRO_ZOOM_END * DIVE_ZOOM_MULT
@@ -263,6 +264,7 @@ func _play_exit_zoom_out() -> void:
 	camera.position = target
 	if _white_fade != null:
 		_white_fade.color = Color(1, 1, 1, 1)
+	GameSession.set_scene_wipe(Color(1, 1, 1, 1))
 
 	if _intro_tween:
 		_intro_tween.kill()
@@ -282,6 +284,7 @@ func _play_exit_zoom_out() -> void:
 		_dive_progress = 0.0
 		if _white_fade != null:
 			_white_fade.color = Color(1, 1, 1, 0)
+		GameSession.set_scene_wipe(Color(1, 1, 1, 0))
 		camera.zoom = Vector2(z_open, z_open)
 		camera.position = _camera_pos_to_frame_dimension(index)
 		_clamp_camera_to_strip()
@@ -300,6 +303,7 @@ func _update_zoom_out(t: float, z_close: float, z_open: float, index: int, targe
 	if _white_fade != null:
 		var fade := 1.0 - smoothstep(0.0, 0.45, t)
 		_white_fade.color = Color(1, 1, 1, fade)
+		GameSession.sync_scene_wipe(Color(1, 1, 1, fade))
 
 
 
@@ -424,11 +428,11 @@ func _draw() -> void:
 			_draw_dimension_label(pos, i, theme)
 			if LevelCatalog.is_dimension_complete(i):
 				if LevelCatalog.is_dimension_perfect(i):
-					_draw_star_badge(pos, DIAMOND_SIZE * 0.18)
+					FaVector.draw_award_star(self, pos, DIAMOND_SIZE * 0.18)
 				else:
 					FaVector.draw_check(self, pos, DIAMOND_SIZE * 0.30)
 			if is_progress:
-				_draw_current_badge(pos, DIAMOND_SIZE)
+				_draw_current_badge(pos, DIAMOND_SIZE, theme)
 		else:
 			_draw_path_diamond(pos, i, theme, unlocked)
 
@@ -502,25 +506,12 @@ func _draw_path_diamond(center: Vector2, index: int, theme: Color, unlocked: boo
 	if not unlocked:
 		FaVector.draw_lock(self, center, size * 0.34)
 	elif LevelCatalog.is_dimension_perfect(index):
-		_draw_star_badge(center, size * 0.18)
+		FaVector.draw_award_star(self, center, size * 0.18)
 	elif LevelCatalog.is_dimension_complete(index):
 		FaVector.draw_check(self, center, size * 0.30)
 
 
-func _draw_star_badge(center: Vector2, radius: float) -> void:
-	## Awarded when every level in the dimension has been cleared — centred.
-	var pts := PackedVector2Array()
-	for i in 5:
-		var outer_a := -PI * 0.5 + float(i) * TAU / 5.0
-		pts.append(center + Vector2(cos(outer_a), sin(outer_a)) * radius)
-		var inner_a := outer_a + TAU / 10.0
-		pts.append(center + Vector2(cos(inner_a), sin(inner_a)) * radius * 0.42)
-	draw_colored_polygon(pts, Color(0.95, 0.78, 0.2, 1.0))
-	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(0.15, 0.12, 0.08, 0.85), 2.0, true)
-	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(1, 1, 1, 0.9), 1.0, true)
-
-
-func _draw_current_badge(diamond_center: Vector2, diamond_size: float) -> void:
+func _draw_current_badge(diamond_center: Vector2, diamond_size: float, theme: Color) -> void:
 	var label := tr("UI_CURRENT").to_upper()
 	var font := _map_font
 	## Badge size stays as before (font 10 + padding); type is smaller and centered.
@@ -532,7 +523,7 @@ func _draw_current_badge(diamond_center: Vector2, diamond_size: float) -> void:
 	var font_size := 7
 	var badge_pos := diamond_center + Vector2(-badge_size.x * 0.5, diamond_size * 0.5 + 12.0)
 	var radius := badge_size.y * 0.5
-	var col := LevelCatalog.PRIMARY_BLUE
+	var col := theme
 	## Pill: flat middle + round end caps (full rect would leave square corners).
 	if badge_size.x > radius * 2.0:
 		draw_rect(Rect2(badge_pos.x + radius, badge_pos.y, badge_size.x - radius * 2.0, badge_size.y), col, true)
@@ -772,7 +763,7 @@ func _play_enter_dive(index: int) -> void:
 
 	_dive_progress = 0.0
 	if _white_fade != null:
-		_white_fade.color = Color(1, 1, 1, 0)
+		_white_fade.color = Color(0, 0, 0, 0)
 
 	var z0 := camera.zoom.x
 	var z1 := z0 * DIVE_ZOOM_MULT
@@ -789,10 +780,10 @@ func _play_enter_dive(index: int) -> void:
 		1.0,
 		DIVE_DURATION
 	)
-	## Brief full-white hold so the level map doesn't pop in harshly.
+	## Brief full-black hold so the dark level map doesn't pop in harshly.
 	_dive_tween.tween_callback(func() -> void:
 		if _white_fade != null:
-			_white_fade.color = Color(1, 1, 1, 1)
+			_white_fade.color = Color(0, 0, 0, 1)
 	)
 	_dive_tween.tween_interval(DIVE_WHITE_HOLD)
 	_dive_tween.tween_callback(_finish_enter_dive)
@@ -818,13 +809,14 @@ func _update_dive(
 
 	if _white_fade != null:
 		var fade := smoothstep(0.58, 0.98, t)
-		_white_fade.color = Color(1, 1, 1, fade)
+		_white_fade.color = Color(0, 0, 0, fade)
 
 
 func _finish_enter_dive() -> void:
 	_dive_progress = 1.0
 	if _white_fade != null:
-		_white_fade.color = Color(1, 1, 1, 1)
+		_white_fade.color = Color(0, 0, 0, 1)
+	GameSession.set_scene_wipe(Color(0, 0, 0, 1))
 	GameSession.change_scene(DIMENSION_LEVELS_SCENE)
 
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://prism_level_audit"]
+[gd_scene load_steps=2 format=3 uid="uid://kaleido_level_audit"]
 
 [ext_resource type="Script" path="res://scritps/ui/LevelAudit.gd" id="1"]
 

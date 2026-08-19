@@ -6,18 +6,16 @@ signal closed
 
 @onready var title_label: Label = %TitleLabel
 @onready var message_label: Label = %MessageLabel
-@onready var replay_button: Button = %ReplayButton
-@onready var level_select_button: Button = %LevelSelectButton
+@onready var replay_button: MenuActionButton = %ReplayButton
+@onready var level_select_button: MenuActionButton = %LevelSelectButton
 @onready var close_button: Button = %CloseButton
 
 
 func _ready() -> void:
 	visible = false
 	_apply_translations()
-	UiTheme.style_primary_button(replay_button)
-	UiTheme.style_secondary_button(level_select_button)
 	UiTheme.style_close_button(close_button)
-	close_button.tooltip_text = tr("UI_CLOSE")
+	UiTheme.style_chart_modal_copy(title_label, message_label)
 
 
 func _notification(what: int) -> void:
@@ -25,14 +23,14 @@ func _notification(what: int) -> void:
 		if not is_node_ready():
 			return
 		_apply_translations()
-		close_button.tooltip_text = tr("UI_CLOSE")
+		HintTooltip.bind(close_button, tr("UI_CLOSE"))
 
 
 func _apply_translations() -> void:
 	title_label.text = tr("UI_LEVEL_FAILED")
 	message_label.text = tr("UI_TRY_AGAIN_PROMPT")
-	replay_button.text = tr("UI_REPLAY_LEVEL")
-	level_select_button.text = tr("UI_BACK_TO_LEVEL_SELECT")
+	replay_button.label_text = tr("UI_REPLAY_LEVEL")
+	level_select_button.label_text = tr("UI_BACK_TO_LEVEL_SELECT")
 
 
 func show_modal() -> void:

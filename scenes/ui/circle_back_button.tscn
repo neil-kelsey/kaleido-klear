@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://prism_circle_back_button"]
+[gd_scene load_steps=2 format=3 uid="uid://kaleido_circle_back_button"]
 
 [ext_resource type="Script" path="res://scritps/ui/CircleBackButton.gd" id="1"]
 

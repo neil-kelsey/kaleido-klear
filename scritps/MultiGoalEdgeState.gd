@@ -98,4 +98,5 @@ func get_display_state() -> Dictionary:
 		"target": phase.count if not phase.unlimited else 0,
 		"has_next_preview": has_preview,
 		"unlimited": phase.unlimited,
+		"show_progress": not phase.unlimited,
 	}

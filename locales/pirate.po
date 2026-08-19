@@ -621,3 +621,30 @@ msgstr "Dump this goal"
 
 msgid "UI_CREATOR_GOAL_TAP_EDIT"
 msgstr "Tap to tweak this goal"
+
+msgid "UI_TUTORIAL_NEXT"
+msgstr "Onward"
+
+msgid "UI_TUTORIAL_GOT_IT"
+msgstr "Aye"
+
+msgid "UI_TUTORIAL_BASIC_SWIPE"
+msgstr "Shove each block into the matching colour mark around the board."
+
+msgid "UI_TUTORIAL_BASIC_GOALS"
+msgstr "Each side of the screen can be a different coloured mark, shown as a coloured bar. Shove a matching block toward a mark to clear that piece. Ye’ve won when the board’s empty."
+
+msgid "UI_TUTORIAL_BASIC_LIVES"
+msgstr "Ye get three lives. A botched move costs a heart."
+
+msgid "UI_TUTORIAL_SHIFTING_CHEVRONS"
+msgstr "When a mark hits its quota, it shifts colour. Watch them chevrons for what’s comin’ next."
+
+msgid "UI_TUTORIAL_SHIFTING_MAP"
+msgstr "Tap the Goals button at the bottom of the screen to spy the whole run of upcoming marks."
+
+msgid "UI_TUTORIAL_WALLS"
+msgstr "Bulkheads don’t budge, and ye can’t slide through ’em. Steer around."
+
+msgid "UI_TUTORIAL_BIGGER_BOARDS"
+msgstr "Decks can get huge, and the puzzles turn proper fierce. Keep yer wits about ye!"

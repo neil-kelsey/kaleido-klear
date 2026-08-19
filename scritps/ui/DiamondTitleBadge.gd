@@ -1,9 +1,15 @@
 extends Control
 class_name DiamondTitleBadge
 
-## Stretched-diamond title chip used on the dimension map and level select.
+## One title chip for map + level select. Padding and point depth scale with type size
+## so a 18px world title and a 53px HUD title keep the same proportions.
 
 const FONT := preload("res://assets/fonts/Quicksand-Medium.ttf")
+## Reference size used on the focused dimension map title.
+const REF_FONT := 18.0
+const REF_PAD_X := 22.0
+const REF_PAD_Y := 12.0
+const REF_TIP := 22.0
 
 @export var title: String = "":
 	set(value):
@@ -27,6 +33,16 @@ const FONT := preload("res://assets/fonts/Quicksand-Medium.ttf")
 		washed = value
 		queue_redraw()
 
+@export var selected: bool = true:
+	set(value):
+		selected = value
+		queue_redraw()
+
+@export var show_rim: bool = true:
+	set(value):
+		show_rim = value
+		queue_redraw()
+
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -36,16 +52,25 @@ func _ready() -> void:
 func _refresh_min_size() -> void:
 	var metrics := measure(title, font_size)
 	custom_minimum_size = metrics.size
+	size = metrics.size
 
 
 func _draw() -> void:
-	draw_on(self, size * 0.5, title, fill_color, font_size, washed)
+	draw_on(self, size * 0.5, title, fill_color, font_size, washed, selected, 1.0, show_rim)
 
 
-static func measure(text: String, size_px: int, pad_x: float = 22.0, pad_y: float = 12.0, tip: float = 22.0) -> Dictionary:
+static func _scale_for(size_px: int) -> float:
+	return float(size_px) / REF_FONT
+
+
+static func measure(text: String, size_px: int) -> Dictionary:
+	var s := _scale_for(size_px)
+	var pad_x := REF_PAD_X * s
+	var pad_y := REF_PAD_Y * s
+	var tip := REF_TIP * s
 	var text_size := FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size_px)
 	var body_w := text_size.x + pad_x * 2.0
-	var h := maxf(text_size.y + pad_y * 2.0, 22.0)
+	var h := maxf(text_size.y + pad_y * 2.0, 22.0 * s)
 	return {
 		"text_size": text_size,
 		"size": Vector2(body_w + tip * 2.0, h),
@@ -62,8 +87,9 @@ static func draw_on(
 	theme: Color,
 	size_px: int,
 	washed_out: bool = false,
-	selected: bool = false,
-	opacity: float = 1.0
+	is_selected: bool = false,
+	opacity: float = 1.0,
+	draw_rim: bool = true
 ) -> Vector2:
 	var metrics := measure(text, size_px)
 	var text_size: Vector2 = metrics.text_size
@@ -86,13 +112,14 @@ static func draw_on(
 		fill.a = 0.75
 	fill.a *= opacity
 	item.draw_colored_polygon(pts, fill)
-	var rim := Color(1, 1, 1, 0.55)
-	if washed_out:
-		rim = Color(1, 1, 1, 0.28)
-	if selected:
-		rim = Color(1, 1, 1, 0.7)
-	rim.a *= opacity
-	item.draw_polyline(pts + PackedVector2Array([pts[0]]), rim, 1.4, true)
+	if draw_rim:
+		var rim := Color(1, 1, 1, 0.55)
+		if washed_out:
+			rim = Color(1, 1, 1, 0.28)
+		if is_selected:
+			rim = Color(1, 1, 1, 0.7)
+		rim.a *= opacity
+		item.draw_polyline(pts + PackedVector2Array([pts[0]]), rim, 1.4, true)
 	var text_col := Color(0.22, 0.26, 0.34, 0.88) if washed_out else Color(1, 1, 1, 0.98)
 	text_col.a *= opacity
 	var text_pos := Vector2(

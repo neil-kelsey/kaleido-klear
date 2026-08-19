@@ -14,6 +14,8 @@ func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	UiTheme.style_close_button(close_button)
+	UiTheme.style_chart_modal_copy(title_label)
+	title_label.add_theme_font_size_override("font_size", 48)
 	close_button.pressed.connect(hide_modal)
 	_map = GoalsOverviewMap.new()
 	_map.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -34,7 +36,7 @@ func _apply_translations() -> void:
 	if title_label == null:
 		return
 	title_label.text = tr("UI_GOALS_INFO_TITLE")
-	close_button.tooltip_text = tr("UI_CLOSE")
+	HintTooltip.bind(close_button, tr("UI_CLOSE"))
 
 
 func show_overview(goals_by_edge: Dictionary) -> void:

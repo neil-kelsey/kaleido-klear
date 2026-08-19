@@ -5,8 +5,8 @@ signal cancelled
 
 @onready var title_label: Label = %TitleLabel
 @onready var message_label: Label = %MessageLabel
-@onready var yes_button: Button = %YesButton
-@onready var no_button: Button = %NoButton
+@onready var yes_button: MenuActionButton = %YesButton
+@onready var no_button: MenuActionButton = %NoButton
 
 var _title_key: String = "UI_EXIT_GAME"
 var _message_key: String = "UI_EXIT_GAME_CONFIRM"
@@ -18,8 +18,7 @@ func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_apply_translations()
-	UiTheme.style_primary_button(yes_button)
-	UiTheme.style_secondary_button(no_button)
+	UiTheme.style_chart_modal_copy(title_label, message_label)
 
 
 func _notification(what: int) -> void:
@@ -34,8 +33,8 @@ func _apply_translations() -> void:
 		return
 	title_label.text = tr(_title_key)
 	message_label.text = tr(_message_key)
-	yes_button.text = tr(_yes_key)
-	no_button.text = tr(_no_key)
+	yes_button.label_text = tr(_yes_key)
+	no_button.label_text = tr(_no_key)
 
 
 func show_modal(

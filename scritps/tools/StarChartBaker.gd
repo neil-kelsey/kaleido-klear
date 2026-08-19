@@ -106,8 +106,9 @@ static func bake_strip_image() -> Image:
 	_build_constellations(stars, links)
 
 	_draw_guides_on_image(img)
-	_draw_links_on_image(img, stars, links)
-	_draw_stars_on_image(img, stars, radii)
+	if not _overlay_mode:
+		_draw_links_on_image(img, stars, links)
+		_draw_stars_on_image(img, stars, radii)
 	return img
 
 
@@ -312,9 +313,9 @@ static func _draw_line_px(img: Image, from_px: Vector2, to_px: Vector2, color: C
 
 
 static func _draw_guides_on_image(img: Image) -> void:
-	var ring_w := 2.4 if _overlay_mode else 1.25
-	var outer_w := 3.4 if _overlay_mode else 2.0
-	var spoke_w := 2.0 if _overlay_mode else 1.0
+	var ring_w := 1.25
+	var outer_w := 2.0
+	var spoke_w := 1.0
 	for ring in range(1, GUIDE_RING_COUNT + 1):
 		var r := CHART_RADIUS * (float(ring) / float(GUIDE_RING_COUNT))
 		_draw_arc_world(img, Vector2.ZERO, r, _guide_color, ring_w)

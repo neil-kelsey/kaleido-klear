@@ -146,6 +146,30 @@ func is_dimension_side_branch(section_index: int) -> bool:
 	return bool(SECTIONS[section_index].get("side_branch", false))
 
 
+func is_tutorial_dimension(section_index: int) -> bool:
+	if section_index < 0 or section_index >= SECTIONS.size():
+		return false
+	return str(SECTIONS[section_index].get("title_key", "")) == "UI_DIMENSION_TUTORIAL"
+
+
+func is_first_level_of_group(level: LevelConfig) -> bool:
+	if level == null:
+		return false
+	var group := level.group_title_key.strip_edges()
+	if group.is_empty():
+		return false
+	var context := find_level_context(level.level_id)
+	if context.is_empty():
+		return false
+	var section_levels := get_section_levels(int(context.section_index))
+	var index := int(context.level_index)
+	for i in index:
+		var earlier: LevelConfig = section_levels[i]
+		if earlier != null and earlier.group_title_key.strip_edges() == group:
+			return false
+	return true
+
+
 func is_dimension_unlocked(section_index: int) -> bool:
 	if section_index < 0 or section_index >= SECTIONS.size():
 		return false

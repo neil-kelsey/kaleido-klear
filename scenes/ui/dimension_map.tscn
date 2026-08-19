@@ -1,7 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://prism_dimension_map"]
+[gd_scene load_steps=3 format=3 uid="uid://kaleido_dimension_map"]
 
 [ext_resource type="Script" path="res://scritps/ui/DimensionMap.gd" id="1"]
-[ext_resource type="PackedScene" uid="uid://prism_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="2_back"]
+[ext_resource type="PackedScene" uid="uid://kaleido_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="2_back"]
 
 [node name="DimensionMap" type="Node2D"]
 script = ExtResource("1")

@@ -414,9 +414,20 @@ static func style_row_option_field(option: OptionButton) -> void:
 	)
 
 
+static func style_chart_modal_copy(title: Label, message: Label = null) -> void:
+	if title != null:
+		title.add_theme_font_override("font", BUTTON_FONT)
+		title.add_theme_color_override("font_color", TEXT)
+		title.add_theme_font_size_override("font_size", 40)
+	if message != null:
+		message.add_theme_font_override("font", BUTTON_FONT)
+		message.add_theme_color_override("font_color", TEXT_MUTED)
+		message.add_theme_font_size_override("font_size", 24)
+
+
 static func style_close_button(button: Button) -> void:
 	## Compact circular primary control for modal dismiss.
-	var size := 44
+	var size := 72
 	button.custom_minimum_size = Vector2(size, size)
 	button.text = ""
 	button.icon = null
@@ -425,7 +436,8 @@ static func style_close_button(button: Button) -> void:
 	button.add_theme_stylebox_override("pressed", circle_stylebox(PRIMARY_FILL_PRESSED))
 	button.add_theme_stylebox_override("focus", circle_stylebox(PRIMARY_FILL_HOVER))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	_attach_fa_glyph(button, "xmark", Color.WHITE, 20.0)
+	_attach_fa_glyph(button, "xmark", Color.WHITE, 32.0)
+	HintTooltip.bind(button, TranslationServer.translate("UI_CLOSE"))
 
 
 static func _attach_fa_glyph(button: Button, icon_name: String, color: Color, px: float) -> void:
@@ -446,9 +458,75 @@ static func _attach_fa_glyph(button: Button, icon_name: String, color: Color, px
 	glyph.offset_bottom = px * 0.5
 
 
-static func style_circle_back_button(button: Button, size: int = -1, accent: Color = PRIMARY) -> void:
+static func viewport_safe_insets(viewport: Viewport) -> Vector4:
+	## Left, top, right, bottom in viewport pixels (notch / home indicator).
+	if viewport == null:
+		return Vector4.ZERO
+	var win := viewport.get_window()
+	if win == null:
+		return Vector4.ZERO
+	var win_size := Vector2(win.size)
+	if win_size.x <= 1.0 or win_size.y <= 1.0:
+		return Vector4.ZERO
+	var vp_size := viewport.get_visible_rect().size
+	var safe := Rect2(DisplayServer.get_display_safe_area())
+	var win_pos := Vector2(win.position)
+	var win_rect := Rect2(win_pos, win_size)
+	var clipped := safe.intersection(win_rect)
+	if clipped.size.x <= 1.0 or clipped.size.y <= 1.0:
+		return Vector4.ZERO
+	var sx := vp_size.x / win_size.x
+	var sy := vp_size.y / win_size.y
+	return Vector4(
+		maxf((clipped.position.x - win_pos.x) * sx, 0.0),
+		maxf((clipped.position.y - win_pos.y) * sy, 0.0),
+		maxf((win_rect.end.x - clipped.end.x) * sx, 0.0),
+		maxf((win_rect.end.y - clipped.end.y) * sy, 0.0)
+	)
+
+
+static func contrast_on(bg: Color) -> Color:
+	## WCAG-ish luminance: light faces get a near-black glyph, dark faces get white.
+	var lum := bg.r * 0.2126 + bg.g * 0.7152 + bg.b * 0.0722
+	if lum > 0.55:
+		return Color(0.08, 0.08, 0.1, 1.0)
+	return Color.WHITE
+
+
+static func style_filled_circle_button(button: Button, size: int = -1, accent: Color = PRIMARY) -> void:
+	## Solid accent face; glyph colour is black or white for contrast.
 	var resolved := size if size > 0 else CIRCLE_BUTTON_SIZE
-	style_circle_icon_button(button, resolved, accent)
+	button.custom_minimum_size = Vector2(resolved, resolved)
+	button.size = Vector2(resolved, resolved)
+	button.text = ""
+	button.icon = null
+	button.expand_icon = false
+	button.add_theme_constant_override("h_separation", 0)
+	var hover_fill := accent.lightened(0.1)
+	var press_fill := accent.darkened(0.12)
+	var glyph := contrast_on(accent)
+	var hover_glyph := contrast_on(hover_fill)
+	var press_glyph := contrast_on(press_fill)
+	var normal := circle_stylebox(accent)
+	normal.set_border_width_all(0)
+	var hover := circle_stylebox(hover_fill)
+	hover.set_border_width_all(0)
+	var pressed := circle_stylebox(press_fill)
+	pressed.set_border_width_all(0)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("focus", hover)
+	button.add_theme_stylebox_override("disabled", pressed)
+	button.add_theme_color_override("icon_normal_color", glyph)
+	button.add_theme_color_override("icon_hover_color", hover_glyph)
+	button.add_theme_color_override("icon_pressed_color", press_glyph)
+	button.add_theme_color_override("icon_disabled_color", Color(glyph, 0.45))
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+
+static func style_circle_back_button(button: Button, size: int = -1, accent: Color = PRIMARY) -> void:
+	style_filled_circle_button(button, size, accent)
 	if button is CircleIconButton:
 		(button as CircleIconButton).fa_icon = "arrow-left"
 	elif button.has_method("set") and button.get("fa_icon") != null:

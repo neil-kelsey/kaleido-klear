@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://prism_daily_puzzles"]
+[gd_scene load_steps=2 format=3 uid="uid://kaleido_daily_puzzles"]
 
 [ext_resource type="Script" path="res://scritps/ui/DailyPuzzles.gd" id="1"]
 

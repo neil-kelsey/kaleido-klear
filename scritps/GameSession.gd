@@ -30,6 +30,10 @@ var locale: String = "en"
 var return_scene_path: String = "res://scenes/ui/dimension_map.tscn"
 ## Optional ordered playlist (daily puzzles). Empty = campaign catalog order.
 var active_level_playlist: Array[LevelConfig] = []
+## Tutorial coach marks already shown (group id -> true).
+var seen_tutorials: Dictionary = {}
+var _scene_wipe: ColorRect
+var _scene_wipe_tween: Tween
 
 
 func _ready() -> void:
@@ -74,6 +78,53 @@ func consume_map_zoom_out() -> bool:
 	var pending := pending_map_zoom_out
 	pending_map_zoom_out = false
 	return pending
+
+
+func _ensure_scene_wipe() -> void:
+	if _scene_wipe != null and is_instance_valid(_scene_wipe):
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "SceneWipeLayer"
+	layer.layer = 128
+	add_child(layer)
+	_scene_wipe = ColorRect.new()
+	_scene_wipe.name = "SceneWipe"
+	_scene_wipe.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_scene_wipe.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_scene_wipe.color = Color(0, 0, 0, 0)
+	layer.add_child(_scene_wipe)
+
+
+func set_scene_wipe(color: Color) -> void:
+	_ensure_scene_wipe()
+	if _scene_wipe_tween != null and is_instance_valid(_scene_wipe_tween):
+		_scene_wipe_tween.kill()
+		_scene_wipe_tween = null
+	_scene_wipe.color = color
+
+
+func sync_scene_wipe(color: Color) -> void:
+	_ensure_scene_wipe()
+	_scene_wipe.color = color
+
+
+func fade_scene_wipe_to(target: Color, duration: float, on_done: Callable = Callable()) -> void:
+	_ensure_scene_wipe()
+	if _scene_wipe_tween != null and is_instance_valid(_scene_wipe_tween):
+		_scene_wipe_tween.kill()
+	_scene_wipe_tween = create_tween()
+	_scene_wipe_tween.tween_property(_scene_wipe, "color", target, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	if on_done.is_valid():
+		_scene_wipe_tween.tween_callback(on_done)
+
+
+func fade_scene_wipe_out(duration: float = 0.28) -> void:
+	_ensure_scene_wipe()
+	if _scene_wipe.color.a < 0.01:
+		return
+	var clear := _scene_wipe.color
+	clear.a = 0.0
+	fade_scene_wipe_to(clear, duration)
 
 
 func change_scene(path: String) -> void:
@@ -182,9 +233,23 @@ func reset_progress() -> void:
 	## Clears stars / unlocks. Keeps language and develop-mode prefs.
 	level_stars.clear()
 	level_perfect.clear()
+	seen_tutorials.clear()
 	current_dimension_index = 0
 	selected_level = null
 	clear_level_playlist()
+	_save_progress()
+
+
+func has_seen_tutorial(tutorial_id: String) -> bool:
+	return bool(seen_tutorials.get(tutorial_id, false))
+
+
+func mark_tutorial_seen(tutorial_id: String) -> void:
+	if tutorial_id.strip_edges().is_empty():
+		return
+	if bool(seen_tutorials.get(tutorial_id, false)):
+		return
+	seen_tutorials[tutorial_id] = true
 	_save_progress()
 
 
@@ -295,6 +360,7 @@ func _load_progress() -> void:
 	level_stars.clear()
 	level_perfect.clear()
 	current_dimension_index = 0
+	seen_tutorials.clear()
 	if FileAccess.file_exists(PROGRESS_PATH):
 		var file := FileAccess.open(PROGRESS_PATH, FileAccess.READ)
 		if file != null:
@@ -325,6 +391,12 @@ func _apply_progress_dict(data: Dictionary) -> void:
 		for key in (perfect_raw as Dictionary).keys():
 			level_perfect[str(key)] = bool(perfect_raw[key])
 	current_dimension_index = maxi(0, int(data.get("current_dimension_index", 0)))
+	var tutorials_raw: Variant = data.get("seen_tutorials", {})
+	seen_tutorials.clear()
+	if typeof(tutorials_raw) == TYPE_DICTIONARY:
+		for key in (tutorials_raw as Dictionary).keys():
+			if bool(tutorials_raw[key]):
+				seen_tutorials[str(key)] = true
 
 
 func _save_progress() -> void:
@@ -332,6 +404,7 @@ func _save_progress() -> void:
 		"level_stars": level_stars.duplicate(),
 		"level_perfect": level_perfect.duplicate(),
 		"current_dimension_index": current_dimension_index,
+		"seen_tutorials": seen_tutorials.duplicate(),
 	}
 	var file := FileAccess.open(PROGRESS_PATH, FileAccess.WRITE)
 	if file == null:

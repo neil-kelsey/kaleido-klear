@@ -9,20 +9,23 @@ const STAR_CHART_PATH := "res://assets/backgrounds/level_star_chart.png"
 const STRIP_WORLD := Rect2(-420, -180, 840, 2800)
 
 const COLUMNS := 5
-const COL_SPACING := 118.0
-const ROW_SPACING := 122.0
+const COL_SPACING := 132.0
+const ROW_SPACING := 128.0
 const LEVEL_DIAMOND_SIZE := 114.0
-const GROUP_GAP_COMPACT := 128.0
+const GROUP_GAP_COMPACT := 168.0
 ## Fraction of viewport width reserved as empty space on each side of the diamond grid.
 const SIDE_MARGIN_RATIO := 0.18
-## Screen Y for first content — clears the title badge.
-const FOCUS_TOP_MARGIN_PX := 280.0
+## Screen Y of the title centre (and the chart vanishing pole). Push this down
+## to add space above the badge; the star chart tracks the same point.
+const TITLE_POLE_SCREEN_Y := 248.0
 const SECTION_TOP_MARGIN_PX := 200.0
 const BOTTOM_PAD_PX := 168.0
 const GROUP_HEADER_FONT_SIZE := 44
 ## World gap from section title centre down to level-diamond centres.
-const HEADER_CLEARANCE := 96.0
+const HEADER_CLEARANCE := 118.0
 const TITLE_FONT_SIZE := 53
+## On-screen stroke match for DimensionMap.INTRO_ZOOM_END (map path markers).
+const MAP_DRAW_ZOOM := 2.35
 ## Page-snap only when a dimension has more levels than this.
 const PAGE_LEVEL_THRESHOLD := 24
 
@@ -63,6 +66,7 @@ var _white_fade: ColorRect
 var _exit_tween: Tween
 var _nebula_mat: ShaderMaterial
 var _fx_time := 0.0
+var _glyph_overlay: Control
 
 
 func _ready() -> void:
@@ -83,6 +87,8 @@ func _ready() -> void:
 
 	camera.make_current()
 	_ensure_white_fade()
+	_ensure_glyph_overlay()
+	GameSession.fade_scene_wipe_out(0.32)
 	back_button.pressed.connect(_on_back_pressed)
 	_apply_translations()
 	hint_label.visible = false
@@ -116,12 +122,15 @@ func _process(delta: float) -> void:
 		_nebula_mat.set_shader_parameter("rect_size", nebula_bg.size)
 		var pulse := 0.99 + 0.01 * sin(_fx_time * 0.25)
 		_nebula_mat.set_shader_parameter("brightness", pulse)
+	if _glyph_overlay != null:
+		_glyph_overlay.queue_redraw()
 
 
 func _apply_translations() -> void:
 	title_badge.title = LevelCatalog.get_dimension_title(_dimension_index)
 	title_badge.fill_color = _theme_color
 	title_badge.font_size = TITLE_FONT_SIZE
+	title_badge.show_rim = false
 	empty_label.text = tr("UI_DIMENSION_EMPTY")
 
 
@@ -193,8 +202,7 @@ func _chart_pole_camera_y() -> float:
 
 
 func _title_pole_screen_y() -> float:
-	## Keep the badge off the very top edge while sitting on the chart origin.
-	return 108.0
+	return TITLE_POLE_SCREEN_Y
 
 
 func _hub_gap_for_title() -> float:
@@ -213,7 +221,11 @@ func _sync_title_to_chart_pole() -> void:
 		return
 	var pole_y := _title_pole_screen_y()
 	var metrics := DiamondTitleBadge.measure(title_badge.title, title_badge.font_size)
-	var h: float = maxf(metrics.size.y, 48.0)
+	var w: float = metrics.size.x
+	var h: float = metrics.size.y
+	title_badge.custom_minimum_size = metrics.size
+	title_badge.offset_left = -w * 0.5
+	title_badge.offset_right = w * 0.5
 	title_badge.offset_top = pole_y - h * 0.5
 	title_badge.offset_bottom = pole_y + h * 0.5
 
@@ -335,6 +347,68 @@ func _nudge_scroll(world_dy: float) -> void:
 	_clamp_camera_to_pages()
 
 
+func _ensure_glyph_overlay() -> void:
+	## Parent to the HUD canvas so the camera never scales these pixels.
+	if _glyph_overlay != null and is_instance_valid(_glyph_overlay):
+		return
+	var hud := get_node_or_null("UI/Root") as Control
+	if hud == null:
+		return
+	_glyph_overlay = _AwardStarOverlay.new()
+	_glyph_overlay.host = self
+	_glyph_overlay.name = "AwardStarOverlay"
+	_glyph_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_glyph_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_glyph_overlay.z_index = 20
+	hud.add_child(_glyph_overlay)
+
+
+func _world_pos_to_screen(world: Vector2) -> Vector2:
+	return get_viewport().get_canvas_transform() * world
+
+
+func _draw_award_stars_on(item: CanvasItem) -> void:
+	## Same draw calls as the dimension map, in screen pixels (no camera resampling).
+	var z := maxf(camera.zoom.x, 0.001)
+	var dsize := LEVEL_DIAMOND_SIZE * z
+	var rim_w := 1.8 * MAP_DRAW_ZOOM
+	var count := mini(_levels.size(), _level_positions.size())
+	for i in count:
+		var level: LevelConfig = _levels[i]
+		var center := _world_pos_to_screen(_level_positions[i])
+		var pts := _diamond_points(center, dsize)
+		var outline := pts + PackedVector2Array([pts[0]])
+		var unlocked := GameSession.is_level_unlocked(level)
+		var stars := GameSession.get_level_stars(level.level_id)
+		var completed := unlocked and stars > 0
+		if completed:
+			item.draw_colored_polygon(pts, _theme_color.lightened(0.08))
+			if GameSession.is_perfect_clear(level.level_id):
+				FaVector.draw_star(
+					item,
+					center,
+					dsize * 0.42,
+					Color(0.95, 0.78, 0.2, 1.0),
+					2.0 * MAP_DRAW_ZOOM,
+					1.0 * MAP_DRAW_ZOOM
+				)
+			else:
+				FaVector.draw_check(item, center, dsize * 0.30)
+		elif unlocked:
+			item.draw_polyline(outline, _theme_color, rim_w * 1.4, true)
+			var number := str(i + 1)
+			var font_size := 32 if i < 99 else 26
+			var text_size := _map_font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+			var text_pos := Vector2(
+				center.x - text_size.x * 0.5,
+				center.y + (_map_font.get_ascent(font_size) - _map_font.get_descent(font_size)) * 0.5
+			)
+			item.draw_string(_map_font, text_pos, number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, _theme_color)
+		else:
+			item.draw_polyline(outline, LOCKED_GREY, rim_w * 1.2, true)
+			FaVector.draw_lock(item, center, dsize * 0.34)
+
+
 func _ensure_chart_sprite() -> void:
 	## Chart sits behind nebula fills (z -10) so diamonds can layer correctly.
 	if _chart_sprite != null and is_instance_valid(_chart_sprite):
@@ -351,34 +425,33 @@ func _ensure_chart_sprite() -> void:
 func _sync_chart_sprite() -> void:
 	if _chart_sprite == null:
 		return
-	var chart_rect := _chart_draw_rect()
-	_chart_sprite.position = chart_rect.get_center()
-	if _star_chart_tex != null:
-		_chart_sprite.texture = _star_chart_tex
-		var tex_size := _star_chart_tex.get_size()
-		if tex_size.x > 0.0 and tex_size.y > 0.0:
-			## Uniform scale so chart stars and arcs stay circular.
-			var s := chart_rect.size.x / tex_size.x
-			_chart_sprite.scale = Vector2(s, s)
-		_chart_sprite.modulate = Color(1.0, 0.9, 0.52, 1.0)
-	else:
+	if _star_chart_tex == null:
 		_chart_sprite.texture = null
-
-
-func _chart_draw_rect() -> Rect2:
-	## Expand past the baked strip so zoomed-out side margins still show chart, not bare white.
-	var vp := get_viewport_rect().size
+		return
+	_chart_sprite.texture = _star_chart_tex
+	var tex_size := _star_chart_tex.get_size()
+	if tex_size.x <= 0.0 or STRIP_WORLD.size.x <= 0.0:
+		return
+	## Uniform scale so the bake covers the screen, including above the title pole.
+	var base := STRIP_WORLD.size.x / tex_size.x
 	var z := maxf(camera.zoom.x, 0.001)
-	var visible_half_w := vp.x / (2.0 * z) + 80.0
-	var half_w := maxf(STRIP_WORLD.size.x * 0.5, visible_half_w)
-	return Rect2(-half_w, STRIP_WORLD.position.y, half_w * 2.0, STRIP_WORLD.size.y)
+	var vp := get_viewport_rect().size
+	var pole_up := maxf(-STRIP_WORLD.position.y, 1.0)
+	var pole_down := maxf(STRIP_WORLD.end.y, 1.0)
+	var pole_side := maxf(STRIP_WORLD.size.x * 0.5, 1.0)
+	var need_up := (_title_pole_screen_y() + 8.0) / z
+	var need_down := (vp.y - _title_pole_screen_y() + 8.0) / z
+	var need_side := (vp.x * 0.5 + 8.0) / z
+	var cover := maxf(need_side / pole_side, maxf(need_up / pole_up, need_down / pole_down))
+	var s := base * cover
+	_chart_sprite.scale = Vector2(s, s)
+	var pole_px := Vector2(-STRIP_WORLD.position.x, -STRIP_WORLD.position.y) * (tex_size.x / STRIP_WORLD.size.x)
+	_chart_sprite.position = -(pole_px - tex_size * 0.5) * s
+	_chart_sprite.modulate = Color(1.0, 0.88, 0.50, 0.32)
 
 
 func _draw() -> void:
 	_draw_group_headers()
-	var count := mini(_levels.size(), _level_positions.size())
-	for i in count:
-		_draw_level_diamond(i)
 
 
 func _draw_group_headers() -> void:
@@ -405,37 +478,6 @@ func _draw_group_headers() -> void:
 		)
 
 
-func _draw_level_diamond(index: int) -> void:
-	var level: LevelConfig = _levels[index]
-	var pos: Vector2 = _level_positions[index]
-	var unlocked := GameSession.is_level_unlocked(level)
-	var stars := GameSession.get_level_stars(level.level_id)
-	var completed := unlocked and stars > 0
-	var pts := _diamond_points(pos, LEVEL_DIAMOND_SIZE)
-	var outline := pts + PackedVector2Array([pts[0]])
-
-	if completed:
-		draw_colored_polygon(pts, _theme_color.lightened(0.08))
-		draw_polyline(outline, Color(1, 1, 1, 0.9), 2.8, true)
-		if GameSession.is_perfect_clear(level.level_id):
-			_draw_star_badge(pos, LEVEL_DIAMOND_SIZE * 0.18)
-		else:
-			FaVector.draw_check(self, pos, LEVEL_DIAMOND_SIZE * 0.30)
-	elif unlocked:
-		draw_polyline(outline, _theme_color, 3.8, true)
-		var number := str(index + 1)
-		var font_size := 32 if index < 99 else 26
-		var text_size := _map_font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-		var text_pos := Vector2(
-			pos.x - text_size.x * 0.5,
-			pos.y + (_map_font.get_ascent(font_size) - _map_font.get_descent(font_size)) * 0.5
-		)
-		draw_string(_map_font, text_pos, number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, _theme_color)
-	else:
-		draw_polyline(outline, LOCKED_GREY, 3.2, true)
-		FaVector.draw_lock(self, pos, LEVEL_DIAMOND_SIZE * 0.34)
-
-
 func _diamond_points(center: Vector2, size: float) -> PackedVector2Array:
 	var half := size * 0.5
 	return PackedVector2Array([
@@ -444,18 +486,6 @@ func _diamond_points(center: Vector2, size: float) -> PackedVector2Array:
 		center + Vector2(0, half),
 		center + Vector2(-half, 0),
 	])
-
-
-func _draw_star_badge(center: Vector2, radius: float) -> void:
-	var pts := PackedVector2Array()
-	for i in 5:
-		var outer_a := -PI * 0.5 + float(i) * TAU / 5.0
-		pts.append(center + Vector2(cos(outer_a), sin(outer_a)) * radius)
-		var inner_a := outer_a + TAU / 10.0
-		pts.append(center + Vector2(cos(inner_a), sin(inner_a)) * radius * 0.42)
-	draw_colored_polygon(pts, Color(0.95, 0.78, 0.2, 1.0))
-	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(0.15, 0.12, 0.08, 0.85), 2.0, true)
-	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(1, 1, 1, 0.9), 1.0, true)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -595,18 +625,21 @@ func _on_back_pressed() -> void:
 		return
 	_navigating = true
 	GameSession.pending_map_zoom_out = true
-	_ensure_white_fade()
-	if _white_fade == null:
-		GameSession.change_scene(DIMENSION_MAP_SCENE)
-		return
-	if _exit_tween:
-		_exit_tween.kill()
-	_exit_tween = create_tween()
-	_exit_tween.tween_property(_white_fade, "color:a", 1.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	_exit_tween.tween_callback(func() -> void:
-		GameSession.change_scene(DIMENSION_MAP_SCENE)
+	GameSession.fade_scene_wipe_to(
+		Color(1, 1, 1, 1),
+		0.22,
+		func() -> void:
+			GameSession.change_scene(DIMENSION_MAP_SCENE)
 	)
 
 
 func handle_back() -> void:
 	_on_back_pressed()
+
+
+class _AwardStarOverlay extends Control:
+	var host: Node
+
+	func _draw() -> void:
+		if host != null and host.has_method("_draw_award_stars_on"):
+			host._draw_award_stars_on(self)

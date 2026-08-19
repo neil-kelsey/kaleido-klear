@@ -4,10 +4,11 @@ class_name GoalsOverviewMap
 ## Read-only goals map (creator-style board + edge strips) with phase status.
 
 const EDGE_KEYS := ["left", "top", "right", "bottom"]
-const MAP_SIZE := 168.0
-const STRIP_THICKNESS := 16.0
-const STRIP_GAP := 6.0
-const BADGE_SIZE := 30.0
+const MAP_SIZE := 280.0
+const STRIP_THICKNESS := 22.0
+const STRIP_GAP := 14.0
+const BADGE_W := 92.0
+const BADGE_H := 44.0
 
 ## goals_by_edge[edge] = Array of {
 ##   color: TileColor, unlimited: bool, count: int,
@@ -26,6 +27,8 @@ var _top_strips: VBoxContainer
 var _bottom_strips: VBoxContainer
 var _left_strips: HBoxContainer
 var _right_strips: HBoxContainer
+var _left_slot: HBoxContainer
+var _right_slot: HBoxContainer
 var _map_label: Label
 
 
@@ -49,6 +52,7 @@ func refresh() -> void:
 	_rebuild_edge_strips("bottom", _bottom_strips)
 	_rebuild_edge_strips("left", _left_strips)
 	_rebuild_edge_strips("right", _right_strips)
+	_sync_side_slots()
 	if _map_label != null:
 		_map_label.text = tr("UI_CREATOR_GOAL_MAP")
 
@@ -79,18 +83,25 @@ func _build_layout() -> void:
 	mid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(mid)
 
+	_left_slot = HBoxContainer.new()
+	_left_slot.alignment = BoxContainer.ALIGNMENT_END
+	_left_slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_left_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mid.add_child(_left_slot)
 	_left_strips = HBoxContainer.new()
 	_left_strips.add_theme_constant_override("separation", int(STRIP_GAP))
 	_left_strips.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_left_strips.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	mid.add_child(_left_strips)
+	_left_slot.add_child(_left_strips)
 
 	_map_panel = Panel.new()
 	_map_panel.custom_minimum_size = Vector2(MAP_SIZE, MAP_SIZE)
+	_map_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_map_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_map_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var map_style := StyleBoxFlat.new()
-	map_style.bg_color = Color(0.12, 0.13, 0.16, 1)
-	map_style.border_color = Color(0.35, 0.38, 0.45, 1)
+	map_style.bg_color = Color(0.92, 0.93, 0.96, 0.92)
+	map_style.border_color = Color(0.55, 0.58, 0.65, 1)
 	map_style.set_border_width_all(2)
 	map_style.set_corner_radius_all(12)
 	_map_panel.add_theme_stylebox_override("panel", map_style)
@@ -102,15 +113,21 @@ func _build_layout() -> void:
 	_map_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_map_label.text = tr("UI_CREATOR_GOAL_MAP")
 	_map_label.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
-	_map_label.add_theme_font_size_override("font_size", 18)
+	_map_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	_map_label.add_theme_font_size_override("font_size", 28)
 	_map_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_map_panel.add_child(_map_label)
 
+	_right_slot = HBoxContainer.new()
+	_right_slot.alignment = BoxContainer.ALIGNMENT_BEGIN
+	_right_slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_right_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mid.add_child(_right_slot)
 	_right_strips = HBoxContainer.new()
 	_right_strips.add_theme_constant_override("separation", int(STRIP_GAP))
 	_right_strips.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_right_strips.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	mid.add_child(_right_strips)
+	_right_slot.add_child(_right_strips)
 
 	var bottom_strips_wrap := CenterContainer.new()
 	bottom_strips_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -121,8 +138,21 @@ func _build_layout() -> void:
 	bottom_strips_wrap.add_child(_bottom_strips)
 
 
+func _sync_side_slots() -> void:
+	if _left_slot == null or _right_slot == null:
+		return
+	## Keep the board centred even when one side has more phases than the other.
+	var col_w := maxf(
+		_left_strips.get_combined_minimum_size().x,
+		_right_strips.get_combined_minimum_size().x
+	)
+	_left_slot.custom_minimum_size.x = col_w
+	_right_slot.custom_minimum_size.x = col_w
+
+
 func _rebuild_edge_strips(edge_key: String, host: Container) -> void:
 	for child in host.get_children():
+		host.remove_child(child)
 		child.queue_free()
 	var goals: Array = _goals[edge_key]
 	if goals.is_empty():
@@ -152,65 +182,75 @@ func _make_strip(goal: Dictionary, horizontal_strip: bool) -> Control:
 	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	strip.clip_contents = false
 	if horizontal_strip:
-		strip.custom_minimum_size = Vector2(MAP_SIZE, maxf(STRIP_THICKNESS, BADGE_SIZE))
+		strip.custom_minimum_size = Vector2(MAP_SIZE, maxf(STRIP_THICKNESS, BADGE_H))
 	else:
-		strip.custom_minimum_size = Vector2(maxf(STRIP_THICKNESS, BADGE_SIZE), MAP_SIZE)
+		strip.custom_minimum_size = Vector2(maxf(STRIP_THICKNESS, BADGE_W), MAP_SIZE)
 
 	var bar := ColorRect.new()
 	bar.color = fill
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if horizontal_strip:
-		bar.anchor_left = 0.0
-		bar.anchor_right = 1.0
-		bar.anchor_top = 0.5
-		bar.anchor_bottom = 0.5
-		bar.offset_top = -STRIP_THICKNESS * 0.5
-		bar.offset_bottom = STRIP_THICKNESS * 0.5
-	else:
-		bar.anchor_top = 0.0
-		bar.anchor_bottom = 1.0
-		bar.anchor_left = 0.5
-		bar.anchor_right = 0.5
-		bar.offset_left = -STRIP_THICKNESS * 0.5
-		bar.offset_right = STRIP_THICKNESS * 0.5
+	_layout_strip_bar(bar, horizontal_strip)
 	strip.add_child(bar)
 
 	if status == "current":
 		var glow := ColorRect.new()
-		glow.color = Color(1, 1, 1, 0.22)
+		glow.color = Color(1, 1, 1, 0.18)
 		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_layout_strip_bar(glow, horizontal_strip)
 		strip.add_child(glow)
 
-	var badge := Panel.new()
+	var badge := Label.new()
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.custom_minimum_size = Vector2(BADGE_SIZE, BADGE_SIZE)
-	var badge_style := StyleBoxFlat.new()
-	badge_style.bg_color = fill.darkened(0.18) if status != "completed" else Color(0.35, 0.38, 0.42, 0.9)
-	badge_style.border_color = Color(1, 1, 1, 0.95) if status == "current" else Color(1, 1, 1, 0.7)
-	badge_style.set_border_width_all(2 if status == "current" else 1)
-	badge_style.set_corner_radius_all(int(BADGE_SIZE * 0.5))
-	badge.add_theme_stylebox_override("panel", badge_style)
+	badge.clip_text = false
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	badge.add_theme_font_size_override("font_size", UiTheme.HUD_BUTTON_FONT_SIZE)
+	badge.text = _badge_text(goal, status)
+	var pill_fill := fill
+	pill_fill.a = 1.0
+	if status == "completed":
+		pill_fill = Color(0.32, 0.34, 0.38, 1.0)
+	var style := StyleBoxFlat.new()
+	style.bg_color = pill_fill
+	style.set_corner_radius_all(20)
+	style.content_margin_left = 16.0
+	style.content_margin_right = 16.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
+	style.shadow_color = Color(0, 0, 0, 0.4)
+	style.shadow_size = 6
+	style.shadow_offset = Vector2(0, 2)
+	badge.add_theme_stylebox_override("normal", style)
+	badge.add_theme_color_override("font_color", UiTheme.contrast_on(pill_fill))
 	badge.set_anchors_preset(Control.PRESET_CENTER)
 	badge.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	badge.grow_vertical = Control.GROW_DIRECTION_BOTH
-	badge.offset_left = -BADGE_SIZE * 0.5
-	badge.offset_top = -BADGE_SIZE * 0.5
-	badge.offset_right = BADGE_SIZE * 0.5
-	badge.offset_bottom = BADGE_SIZE * 0.5
+	badge.offset_left = -BADGE_W * 0.5
+	badge.offset_right = BADGE_W * 0.5
+	badge.offset_top = -BADGE_H * 0.5
+	badge.offset_bottom = BADGE_H * 0.5
 	strip.add_child(badge)
 
-	var badge_label := Label.new()
-	badge_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	badge_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	badge_label.add_theme_font_size_override("font_size", 12)
-	badge_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.96))
-	badge_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge_label.text = _badge_text(goal, status)
-	badge.add_child(badge_label)
-
 	return strip
+
+
+func _layout_strip_bar(bar: Control, horizontal_strip: bool) -> void:
+	bar.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if horizontal_strip:
+		bar.set_anchor(SIDE_TOP, 0.5, true)
+		bar.set_anchor(SIDE_BOTTOM, 0.5, true)
+		bar.offset_left = 0.0
+		bar.offset_right = 0.0
+		bar.offset_top = -STRIP_THICKNESS * 0.5
+		bar.offset_bottom = STRIP_THICKNESS * 0.5
+	else:
+		bar.set_anchor(SIDE_LEFT, 0.5, true)
+		bar.set_anchor(SIDE_RIGHT, 0.5, true)
+		bar.offset_top = 0.0
+		bar.offset_bottom = 0.0
+		bar.offset_left = -STRIP_THICKNESS * 0.5
+		bar.offset_right = STRIP_THICKNESS * 0.5
 
 
 func _badge_text(goal: Dictionary, status: String) -> String:

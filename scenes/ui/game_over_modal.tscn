@@ -1,17 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://prism_game_over_modal"]
+[gd_scene load_steps=4 format=3 uid="uid://kaleido_game_over_modal"]
 
 [ext_resource type="Script" path="res://scritps/ui/GameOverModal.gd" id="1"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.14, 0.14, 0.18, 1)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
-content_margin_left = 28
-content_margin_top = 28
-content_margin_right = 28
-content_margin_bottom = 28
+[ext_resource type="Script" path="res://scritps/ui/ChartModalPanel.gd" id="2_chart"]
+[ext_resource type="Script" path="res://scritps/ui/MenuActionButton.gd" id="3_cta"]
 
 [node name="GameOverModal" type="Control"]
 visible = false
@@ -44,13 +35,13 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="Panel" type="PanelContainer" parent="Center"]
-custom_minimum_size = Vector2(520, 0)
+custom_minimum_size = Vector2(640, 0)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+script = ExtResource("2_chart")
 
 [node name="VBox" type="VBoxContainer" parent="Center/Panel"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 44
 
 [node name="HeaderRow" type="HBoxContainer" parent="Center/Panel/VBox"]
 layout_mode = 2
@@ -68,7 +59,7 @@ size_flags_horizontal = 8
 [node name="TitleLabel" type="Label" parent="Center/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.95, 0.97, 1)
+theme_override_colors/font_color = Color(0.12, 0.13, 0.16, 1)
 theme_override_font_sizes/font_size = 36
 text = "Level failed"
 horizontal_alignment = 1
@@ -76,7 +67,7 @@ horizontal_alignment = 1
 [node name="MessageLabel" type="Label" parent="Center/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.67, 0.72, 1)
+theme_override_colors/font_color = Color(0.42, 0.44, 0.48, 1)
 theme_override_font_sizes/font_size = 22
 text = "Would you like to try again?"
 horizontal_alignment = 1
@@ -84,15 +75,23 @@ autowrap_mode = 2
 
 [node name="ReplayButton" type="Button" parent="Center/Panel/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 58)
+custom_minimum_size = Vector2(0, 128)
 layout_mode = 2
-text = "Replay level"
+script = ExtResource("3_cta")
+kind = 0
+compact = true
+show_trailing_icon = false
+label_text = "Replay level"
 
 [node name="LevelSelectButton" type="Button" parent="Center/Panel/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 58)
+custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
-text = "Back to dimensions"
+script = ExtResource("3_cta")
+kind = 1
+compact = true
+show_trailing_icon = false
+label_text = "Back to dimensions"
 
 [connection signal="pressed" from="Center/Panel/VBox/HeaderRow/CloseButton" to="." method="_on_close_button_pressed"]
 [connection signal="pressed" from="Center/Panel/VBox/ReplayButton" to="." method="_on_replay_button_pressed"]

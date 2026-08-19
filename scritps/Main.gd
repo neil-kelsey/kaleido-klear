@@ -8,16 +8,18 @@ const ZOOM_MIN := 0.55
 const ZOOM_MAX := 2.75
 const WHEEL_ZOOM_STEP := 0.12
 const PINCH_ZOOM_SENSITIVITY := 1.0
-const INTRO_ZOOM_START := 0.78
+const PLAY_ZOOM := 0.86
+const INTRO_ZOOM_START := 0.70
 const INTRO_ZOOM_DURATION := 0.9
 
 @onready var board: Board = $Board
 @onready var camera: Camera2D = $Camera2D
 @onready var back_button: CircleBackButton = %BackButton
+@onready var next_level_hud_button: CircleBackButton = %NextLevelHudButton
 @onready var undo_button: CircleIconButton = %UndoButton
 @onready var restart_button: CircleIconButton = %RestartButton
 @onready var goals_button: CircleIconButton = %GoalsButton
-@onready var lives_label: Label = $UI/LivesLabel
+@onready var lives_hud: LivesHearts = %LivesHearts
 @onready var goal_border_left: GoalBorder = $UI/GoalBorderLeft
 @onready var goal_border_top: GoalBorder = $UI/GoalBorderTop
 @onready var goal_border_right: GoalBorder = $UI/GoalBorderRight
@@ -28,6 +30,7 @@ const INTRO_ZOOM_DURATION := 0.9
 
 var _current_level: LevelConfig = null
 var _section_backdrop: SectionBackdrop = null
+var _tutorial: TutorialWalkthrough = null
 var _zoom: float = 1.0
 var _pinch_active := false
 var _pinch_touches: Dictionary = {} # index -> screen position
@@ -40,6 +43,7 @@ var _pan_last_screen := Vector2.ZERO
 ## Pointers claimed for tile swipes — never pan while these are held.
 var _tile_pointer_ids: Dictionary = {}
 var _intro_playing := false
+var _won_level := false
 var _intro_tween: Tween = null
 
 
@@ -47,7 +51,7 @@ func _ready() -> void:
 	var viewport_size := get_viewport_rect().size
 	camera.position = viewport_size * 0.5
 	camera.make_current()
-	_apply_zoom(1.0, camera.position)
+	_apply_zoom(PLAY_ZOOM, camera.position)
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 
 	_ensure_section_backdrop()
@@ -59,6 +63,9 @@ func _ready() -> void:
 	_current_level = board.level_config
 	_apply_section_theme()
 	_apply_goal_borders(_current_level)
+	_sync_safe_hud()
+	board.relayout_for_viewport()
+	_sync_level_backdrop()
 	board.goal_state_changed.connect(_on_goal_state_changed)
 	board.level_cleared.connect(_on_level_cleared)
 	board.life_lost.connect(_on_life_lost)
@@ -68,13 +75,14 @@ func _ready() -> void:
 	level_complete_modal.next_level_pressed.connect(_on_next_level_pressed)
 	level_complete_modal.remove_ads_pressed.connect(_on_remove_ads_pressed)
 	level_complete_modal.share_pressed.connect(_on_share_pressed)
+	if level_complete_modal.has_signal("closed"):
+		level_complete_modal.closed.connect(_on_level_complete_closed)
 	game_over_modal.replay_level_pressed.connect(_on_replay_level_pressed)
 	game_over_modal.level_select_pressed.connect(_on_game_over_level_select_pressed)
 	if goals_info_modal.has_signal("closed"):
 		goals_info_modal.closed.connect(_update_undo_button)
 	_apply_translations()
-	_update_lives_label(board.get_lives())
-	lives_label.add_theme_color_override("font_color", UiTheme.TEXT)
+	_update_lives_hud(board.get_lives())
 	_layout_hud_circle_buttons()
 	get_viewport().size_changed.connect(_layout_hud_circle_buttons)
 	_update_undo_button()
@@ -86,7 +94,7 @@ func _notification(what: int) -> void:
 		if not is_node_ready():
 			return
 		_apply_translations()
-		_update_lives_label(board.get_lives() if board else 0)
+		_update_lives_hud(board.get_lives() if board else 0)
 
 
 func _apply_translations() -> void:
@@ -98,7 +106,14 @@ func _layout_hud_circle_buttons() -> void:
 	## Sizes come only from UiTheme so Back stays consistent everywhere.
 	var s := float(UiTheme.CIRCLE_BUTTON_SIZE)
 	var g := float(UiTheme.CIRCLE_BUTTON_EMPHASIS_SIZE)
-	var inset := float(UiTheme.CIRCLE_BUTTON_EDGE_INSET)
+	var insets := UiTheme.viewport_safe_insets(get_viewport())
+	## Sit above the bottom goal bar + centred quota chip.
+	var inset := (
+		insets.w
+		+ float(GoalBorder.BAR_WIDTH)
+		+ GoalBorder.BADGE_H
+		+ 12.0
+	)
 	var gap := float(UiTheme.CIRCLE_BUTTON_CLUSTER_GAP)
 
 	restart_button.button_size = UiTheme.CIRCLE_BUTTON_SIZE
@@ -124,28 +139,26 @@ func _layout_hud_circle_buttons() -> void:
 	undo_button.offset_bottom = -inset
 	undo_button.offset_top = -inset - s
 
-	## Keep lives just above the center cluster.
-	var cluster_top := inset + maxf(s, g)
-	lives_label.offset_bottom = -(cluster_top + 12.0)
-	lives_label.offset_top = lives_label.offset_bottom - 40.0
-
 
 
 func _on_viewport_size_changed() -> void:
 	_kill_intro_tween()
-	board.relayout_for_viewport()
 	var viewport_size := get_viewport_rect().size
 	camera.position = viewport_size * 0.5
-	_apply_zoom(1.0, camera.position)
+	_apply_zoom(PLAY_ZOOM, camera.position)
 	_pan_active = false
 	_pinch_active = false
 	_pinch_touches.clear()
 	_tile_pointer_ids.clear()
 	_apply_goal_borders(_current_level)
-	if _section_backdrop != null:
-		_section_backdrop.relayout()
+	_sync_safe_hud()
+	board.relayout_for_viewport()
+	_sync_level_backdrop()
+	_layout_hud_circle_buttons()
 	if _intro_playing:
 		_finish_level_intro()
+	elif _is_tutorial_open():
+		_tutorial.relayout()
 
 
 func _ensure_section_backdrop() -> void:
@@ -157,10 +170,60 @@ func _ensure_section_backdrop() -> void:
 	move_child(_section_backdrop, 0)
 
 
+func _sync_safe_hud() -> void:
+	var insets := UiTheme.viewport_safe_insets(get_viewport())
+	if goal_border_top != null:
+		goal_border_top.offset_top = insets.y
+		goal_border_top.offset_bottom = insets.y + float(GoalBorder.BAR_WIDTH)
+	if goal_border_bottom != null:
+		goal_border_bottom.offset_top = -float(GoalBorder.BAR_WIDTH) - insets.w
+		goal_border_bottom.offset_bottom = -insets.w
+	if goal_border_left != null:
+		goal_border_left.offset_left = insets.x
+		goal_border_left.offset_right = insets.x + float(GoalBorder.BAR_WIDTH)
+		goal_border_left.offset_top = insets.y
+		goal_border_left.offset_bottom = -insets.w
+	if goal_border_right != null:
+		goal_border_right.offset_left = -float(GoalBorder.BAR_WIDTH) - insets.z
+		goal_border_right.offset_right = -insets.z
+		goal_border_right.offset_top = insets.y
+		goal_border_right.offset_bottom = -insets.w
+
+	if lives_hud != null:
+		lives_hud.set_top_chrome(insets.y)
+
+	if board != null:
+		board.extra_left_margin = insets.x
+		board.extra_right_margin = insets.z
+		board.extra_bottom_margin = insets.w + GoalBorder.BADGE_H + 48.0
+		board.extra_top_margin = insets.y + GoalBorder.BADGE_H + 28.0
+
+
+func _sync_level_backdrop() -> void:
+	if _section_backdrop == null or not is_instance_valid(_section_backdrop):
+		return
+	if board != null:
+		_section_backdrop.focus_on(board.get_playfield_center())
+	else:
+		_section_backdrop.relayout()
+
+
 func _apply_section_theme() -> void:
 	_ensure_section_backdrop()
 	var section_index := _resolve_section_index(_current_level)
 	_section_backdrop.apply_section(section_index)
+	_sync_level_backdrop()
+	var theme := LevelCatalog.get_dimension_color(section_index)
+	if back_button != null:
+		back_button.accent_color = theme
+	if undo_button != null:
+		undo_button.accent_color = theme
+	if restart_button != null:
+		restart_button.accent_color = theme
+	if goals_button != null:
+		goals_button.accent_color = theme
+	if next_level_hud_button != null:
+		next_level_hud_button.accent_color = theme
 
 
 func _resolve_section_index(level: LevelConfig) -> int:
@@ -187,7 +250,7 @@ func _play_level_intro() -> void:
 
 	_intro_tween = create_tween()
 	_intro_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_intro_tween.tween_method(_set_intro_zoom, INTRO_ZOOM_START, 1.0, INTRO_ZOOM_DURATION)
+	_intro_tween.tween_method(_set_intro_zoom, INTRO_ZOOM_START, PLAY_ZOOM, INTRO_ZOOM_DURATION)
 	_intro_tween.tween_callback(_finish_level_intro)
 
 
@@ -198,9 +261,12 @@ func _set_intro_zoom(zoom_value: float) -> void:
 func _finish_level_intro() -> void:
 	_kill_intro_tween()
 	_intro_playing = false
-	_apply_zoom(1.0, get_viewport_rect().size * 0.5)
-	_set_play_controls_enabled(true)
-	_update_undo_button()
+	_apply_zoom(PLAY_ZOOM, get_viewport_rect().size * 0.5)
+	if _try_start_tutorial():
+		_set_play_controls_enabled(false)
+	else:
+		_set_play_controls_enabled(true)
+		_update_undo_button()
 
 
 func _kill_intro_tween() -> void:
@@ -212,6 +278,10 @@ func _kill_intro_tween() -> void:
 func _set_play_controls_enabled(enabled: bool) -> void:
 	back_button.disabled = not enabled
 	restart_button.disabled = not enabled
+	if next_level_hud_button != null:
+		next_level_hud_button.disabled = not enabled
+	if goals_button != null:
+		goals_button.disabled = not enabled
 	if enabled:
 		_update_undo_button()
 	else:
@@ -239,6 +309,7 @@ func _apply_goal_borders(config: LevelConfig) -> void:
 		var bottom_state := board.get_goal_display_state(Board.GoalEdge.BOTTOM)
 		bottom_state["base_color"] = Block.get_color(config.goal_bottom_color)
 		goal_border_bottom.apply_state(bottom_state)
+	_sync_safe_hud()
 
 
 func _refresh_goal_border(goal_edge: int, border: GoalBorder) -> void:
@@ -257,10 +328,17 @@ func _on_goal_state_changed(goal_edge: int, state: Dictionary) -> void:
 			goal_border_bottom.apply_state(state)
 	if goals_info_modal != null and goals_info_modal.visible:
 		goals_info_modal.refresh_overview(board.get_goals_overview())
+	if goal_edge == Board.GoalEdge.TOP:
+		_sync_safe_hud()
 
 
 func _input(event: InputEvent) -> void:
 	if _intro_playing:
+		return
+	if _is_tutorial_open():
+		if event.is_action_pressed("ui_cancel"):
+			_tutorial.dismiss()
+			get_viewport().set_input_as_handled()
 		return
 	if goals_info_modal != null and goals_info_modal.visible:
 		if event.is_action_pressed("ui_cancel"):
@@ -357,6 +435,7 @@ func _update_pan(screen_pos: Vector2) -> void:
 		return
 	camera.position -= delta / _zoom
 	_clamp_camera()
+	_sync_level_backdrop()
 
 
 func _end_pan() -> void:
@@ -450,6 +529,7 @@ func _apply_zoom(zoom_value: float, keep_position: Vector2) -> void:
 	_zoom = clampf(zoom_value, ZOOM_MIN, ZOOM_MAX)
 	camera.zoom = Vector2(_zoom, _zoom)
 	camera.position = keep_position
+	_sync_level_backdrop()
 
 
 func _clamp_camera() -> void:
@@ -465,7 +545,61 @@ func _is_modal_open() -> bool:
 		level_complete_modal.visible
 		or game_over_modal.visible
 		or (goals_info_modal != null and goals_info_modal.visible)
+		or _is_tutorial_open()
 	)
+
+
+func _is_tutorial_open() -> bool:
+	return _tutorial != null and is_instance_valid(_tutorial) and _tutorial.visible
+
+
+func _try_start_tutorial() -> bool:
+	var script := TutorialWalkthrough.script_for(_current_level)
+	if script.is_empty():
+		return false
+	if _tutorial == null or not is_instance_valid(_tutorial):
+		_tutorial = TutorialWalkthrough.new()
+		_tutorial.name = "TutorialWalkthrough"
+		$UI.add_child(_tutorial)
+	if not _tutorial.finished.is_connected(_on_tutorial_finished):
+		_tutorial.finished.connect(_on_tutorial_finished)
+	_tutorial.begin(script, self)
+	return true
+
+
+func _on_tutorial_finished() -> void:
+	_set_play_controls_enabled(true)
+	_update_undo_button()
+
+
+func get_tutorial_spotlight_rect(spotlight_id: String) -> Rect2:
+	match spotlight_id:
+		"board":
+			return board.get_playfield_screen_rect()
+		"lives":
+			return lives_hud.get_global_rect() if lives_hud != null else Rect2()
+		"goals_button":
+			return goals_button.get_global_rect() if goals_button != null else Rect2()
+		"goal_edges":
+			return _goal_spotlight_rect()
+		_:
+			return Rect2()
+
+
+func _goal_spotlight_rect() -> Rect2:
+	var borders: Array[GoalBorder] = [
+		goal_border_top, goal_border_left, goal_border_right, goal_border_bottom
+	]
+	var fallback := Rect2()
+	for border in borders:
+		if border == null or not border.visible:
+			continue
+		var rect := border.get_global_rect()
+		if fallback.size == Vector2.ZERO:
+			fallback = rect
+		if bool(border.get_meta("has_next_preview", false)):
+			return rect
+	return fallback
 
 
 func _go_to_level_select() -> void:
@@ -485,11 +619,17 @@ func _go_back() -> void:
 
 
 func handle_back() -> void:
+	if _is_tutorial_open():
+		_tutorial.dismiss()
+		return
 	if goals_info_modal != null and goals_info_modal.visible:
 		goals_info_modal.hide_modal()
 		return
 	if level_complete_modal.visible:
-		level_complete_modal.hide()
+		if level_complete_modal.has_method("hide_modal"):
+			level_complete_modal.hide_modal()
+		else:
+			level_complete_modal.hide()
 		return
 	if game_over_modal.visible:
 		game_over_modal.hide()
@@ -522,7 +662,7 @@ func _on_undo_available_changed(_available: bool) -> void:
 
 
 func _on_undo_applied(remaining_lives: int) -> void:
-	_update_lives_label(remaining_lives)
+	_update_lives_hud(remaining_lives)
 	if game_over_modal.visible:
 		game_over_modal.hide()
 	_update_undo_button()
@@ -531,6 +671,7 @@ func _on_undo_applied(remaining_lives: int) -> void:
 func _update_undo_button() -> void:
 	var hard_block := (
 		_intro_playing
+		or _is_tutorial_open()
 		or level_complete_modal.visible
 		or game_over_modal.visible
 	)
@@ -539,6 +680,8 @@ func _update_undo_button() -> void:
 	restart_button.disabled = hard_block or goals_open
 	if goals_button != null:
 		goals_button.disabled = hard_block
+	if next_level_hud_button != null and next_level_hud_button.visible:
+		next_level_hud_button.disabled = hard_block or goals_open
 
 
 func _restart_level() -> void:
@@ -552,7 +695,10 @@ func _on_level_cleared(remaining_lives: int) -> void:
 	if GameSession.playtest_mode:
 		GameSession.mark_playtest_passed()
 		level_complete_modal.show_playtest_success()
+		_set_next_level_hud_visible(false)
 		return
+	_won_level = true
+	_set_next_level_hud_visible(false)
 	var stars := clampi(remaining_lives, 1, 3)
 	var perfect := remaining_lives >= board.starting_lives and not board.used_undo()
 	GameSession.record_level_stars(_current_level, stars, perfect)
@@ -567,7 +713,7 @@ func _on_level_cleared(remaining_lives: int) -> void:
 
 
 func _on_life_lost(remaining_lives: int) -> void:
-	_update_lives_label(remaining_lives)
+	_update_lives_hud(remaining_lives)
 
 
 func _on_game_over() -> void:
@@ -581,6 +727,21 @@ func _on_replay_level_pressed() -> void:
 
 func _on_game_over_level_select_pressed() -> void:
 	_go_back()
+
+
+func _on_level_complete_closed() -> void:
+	_set_next_level_hud_visible(_won_level and not GameSession.playtest_mode)
+
+
+func _set_next_level_hud_visible(show: bool) -> void:
+	if next_level_hud_button == null:
+		return
+	next_level_hud_button.visible = show
+	next_level_hud_button.disabled = not show or _intro_playing
+
+
+func _on_next_level_hud_pressed() -> void:
+	_on_next_level_pressed()
 
 
 func _on_next_level_pressed() -> void:
@@ -612,5 +773,6 @@ func _on_share_pressed() -> void:
 	print(share_text)
 
 
-func _update_lives_label(remaining_lives: int) -> void:
-	lives_label.text = tr("UI_LIVES") % remaining_lives
+func _update_lives_hud(remaining_lives: int) -> void:
+	var max_lives := board.starting_lives if board else 3
+	lives_hud.set_lives(remaining_lives, max_lives)

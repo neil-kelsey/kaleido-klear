@@ -621,3 +621,30 @@ msgstr "Supprimer l’objectif"
 
 msgid "UI_CREATOR_GOAL_TAP_EDIT"
 msgstr "Toucher pour modifier cet objectif"
+
+msgid "UI_TUTORIAL_NEXT"
+msgstr "Suivant"
+
+msgid "UI_TUTORIAL_GOT_IT"
+msgstr "Compris"
+
+msgid "UI_TUTORIAL_BASIC_SWIPE"
+msgstr "Glissez chaque bloc vers le but de la même couleur autour de la grille."
+
+msgid "UI_TUTORIAL_BASIC_GOALS"
+msgstr "Chaque côté de l’écran peut être un but d’une couleur différente, indiqué par une barre colorée. Glissez un bloc de la même couleur vers un but pour le retirer. La partie est gagnée lorsque la grille est vide."
+
+msgid "UI_TUTORIAL_BASIC_LIVES"
+msgstr "Vous avez trois vies. Un mauvais coup coûte un cœur."
+
+msgid "UI_TUTORIAL_SHIFTING_CHEVRONS"
+msgstr "Quand un but atteint son quota, il change de couleur. Les chevrons indiquent la couleur suivante."
+
+msgid "UI_TUTORIAL_SHIFTING_MAP"
+msgstr "Appuyez sur le bouton Objectifs en bas de l’écran pour voir la suite des buts."
+
+msgid "UI_TUTORIAL_WALLS"
+msgstr "Les murs ne bougent pas et vous ne pouvez pas les traverser. Contournez-les."
+
+msgid "UI_TUTORIAL_BIGGER_BOARDS"
+msgstr "Les grilles peuvent devenir très grandes, et les parties bien plus complexes. Restez concentré !"

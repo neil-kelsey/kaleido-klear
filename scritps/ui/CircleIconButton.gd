@@ -21,6 +21,12 @@ class_name CircleIconButton
 		if is_node_ready():
 			_apply_tooltip()
 
+@export var accent_color: Color = UiTheme.PRIMARY:
+	set(value):
+		accent_color = value
+		if is_node_ready():
+			_apply_style()
+
 
 func _ready() -> void:
 	focus_mode = Control.FOCUS_ALL
@@ -40,7 +46,7 @@ func resolved_size() -> int:
 
 func _apply_style() -> void:
 	var s := resolved_size()
-	UiTheme.style_circle_icon_button(self, s)
+	UiTheme.style_filled_circle_button(self, s, accent_color)
 	custom_minimum_size = Vector2(s, s)
 	size = Vector2(s, s)
 	queue_redraw()
@@ -50,13 +56,17 @@ func _draw() -> void:
 	if fa_icon.is_empty():
 		return
 	var s := size
-	var pad := minf(s.x, s.y) * 0.42
-	FaVector.draw_named(self, fa_icon, s * 0.5, pad, Color.WHITE)
+	var pad := minf(s.x, s.y) * 0.46
+	var col := UiTheme.contrast_on(accent_color)
+	if disabled:
+		col.a *= 0.45
+	FaVector.draw_named(self, fa_icon, s * 0.5, pad, col)
 
 
 func _apply_tooltip() -> void:
 	text = ""
+	tooltip_text = ""
 	if tooltip_key.is_empty():
-		tooltip_text = ""
+		HintTooltip.unbind(self)
 	else:
-		tooltip_text = tr(tooltip_key)
+		HintTooltip.bind(self, tr(tooltip_key))

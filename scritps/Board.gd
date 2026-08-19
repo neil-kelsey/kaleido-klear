@@ -16,6 +16,11 @@ const GOAL_GRID_GAP := 14
 const PLAYFIELD_MARGIN := 56
 const PLAYFIELD_MARGIN_BOTTOM := 96
 
+var extra_top_margin := 0.0
+var extra_bottom_margin := 0.0
+var extra_left_margin := 0.0
+var extra_right_margin := 0.0
+
 enum GoalEdge { LEFT, TOP, RIGHT, BOTTOM }
 
 @export var level_config: LevelConfig
@@ -159,8 +164,10 @@ func get_goal_display_state(goal_edge: int) -> Dictionary:
 		"base_color": Block.get_color(_goal_color_for_edge(goal_edge)),
 		"next_color": Color.TRANSPARENT,
 		"progress": 0,
-		"target": 1,
+		"target": 0,
 		"has_next_preview": false,
+		"unlimited": true,
+		"show_progress": false,
 	}
 
 
@@ -362,10 +369,10 @@ func _record_goal_score(goal_edge: int) -> void:
 
 func _layout_grid() -> void:
 	var viewport_size := get_viewport_rect().size
-	var play_left := GoalBorder.BAR_WIDTH + GOAL_GRID_GAP + PLAYFIELD_MARGIN
-	var play_top := GoalBorder.BAR_WIDTH + GOAL_GRID_GAP + PLAYFIELD_MARGIN
-	var play_right := viewport_size.x - GoalBorder.BAR_WIDTH - GOAL_GRID_GAP - PLAYFIELD_MARGIN
-	var play_bottom := viewport_size.y - GOAL_GRID_GAP - PLAYFIELD_MARGIN_BOTTOM
+	var play_left := GoalBorder.BAR_WIDTH + GOAL_GRID_GAP + PLAYFIELD_MARGIN + extra_left_margin
+	var play_top := GoalBorder.BAR_WIDTH + GOAL_GRID_GAP + PLAYFIELD_MARGIN + extra_top_margin
+	var play_right := viewport_size.x - GoalBorder.BAR_WIDTH - GOAL_GRID_GAP - PLAYFIELD_MARGIN - extra_right_margin
+	var play_bottom := viewport_size.y - GOAL_GRID_GAP - PLAYFIELD_MARGIN_BOTTOM - extra_bottom_margin
 	if _is_goal_edge_enabled(GoalEdge.BOTTOM):
 		play_bottom -= GoalBorder.BAR_WIDTH
 
@@ -386,37 +393,40 @@ func _layout_grid() -> void:
 		play_top + (available.y - grid_pixel_size.y) / 2.0
 	)
 
-	playfield_background.position = grid_origin
-	playfield_background.size = grid_pixel_size
-	playfield_background.color = UiTheme.PANEL
+	playfield_background.visible = false
 	playfield_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
+func get_playfield_center() -> Vector2:
+	return grid_origin + Vector2(grid_columns * cell_size, grid_rows * cell_size) * 0.5
+
+
+func get_playfield_screen_rect() -> Rect2:
+	var pixel := Vector2(grid_columns * cell_size, grid_rows * cell_size)
+	var xform := get_global_transform_with_canvas()
+	var p0 := xform * grid_origin
+	var p1 := xform * (grid_origin + Vector2(pixel.x, 0.0))
+	var p2 := xform * (grid_origin + pixel)
+	var p3 := xform * (grid_origin + Vector2(0.0, pixel.y))
+	var min_p := p0.min(p1).min(p2).min(p3)
+	var max_p := p0.max(p1).max(p2).max(p3)
+	return Rect2(min_p, max_p - min_p)
+
+
 func _rebuild_playfield_tiles() -> void:
+	## In-game the cell grid is hidden — tiles and goal bars are enough.
+	## Holes still need a mark so missing cells stay obvious.
 	for y in grid_rows:
 		for x in grid_columns:
 			var cell := Vector2i(x, y)
-			var origin := grid_origin + Vector2(cell) * cell_size
-			if _is_cell_disabled(cell):
-				var hole := ColorRect.new()
-				hole.color = UiTheme.HOLE_TINT
-				hole.position = origin
-				hole.size = Vector2(cell_size, cell_size)
-				hole.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				playfield_tiles.add_child(hole)
+			if not _is_cell_disabled(cell):
 				continue
-			var border := ColorRect.new()
-			border.color = UiTheme.PLAYFIELD_TILE_BORDER
-			border.position = origin
-			border.size = Vector2(cell_size, cell_size)
-			border.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			playfield_tiles.add_child(border)
-			var fill := ColorRect.new()
-			fill.color = UiTheme.PLAYFIELD_TILE
-			fill.position = origin + Vector2.ONE
-			fill.size = Vector2(cell_size - 2, cell_size - 2)
-			fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			playfield_tiles.add_child(fill)
+			var hole := ColorRect.new()
+			hole.color = UiTheme.HOLE_TINT
+			hole.position = grid_origin + Vector2(cell) * cell_size
+			hole.size = Vector2(cell_size, cell_size)
+			hole.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			playfield_tiles.add_child(hole)
 
 
 func _spawn_blocks() -> void:
@@ -706,7 +716,11 @@ func _build_swipe_hint_corridors(block: Block) -> Array[Dictionary]:
 func _swipe_hint_corridor_for_direction(block: Block, direction: Vector2i) -> Dictionary:
 	var slide := _compute_slide(block, block.grid_pos, direction)
 	var steps := absi(slide.target.x - block.grid_pos.x) + absi(slide.target.y - block.grid_pos.y)
-	if steps <= 0:
+	var off_board := 0.0
+	if _slide_exits_active_goal(block, slide):
+		## Keep pointing into the goal even when the piece is already on the rim.
+		off_board = float(cell_size) * 1.35
+	if steps <= 0 and off_board <= 0.0:
 		return {}
 
 	var extents := _shape_offset_extents(block)
@@ -715,7 +729,7 @@ func _swipe_hint_corridor_for_direction(block: Block, direction: Vector2i) -> Di
 	var half := cell_size / 2.0
 	var dir := Vector2(direction)
 	var origin := Vector2.ZERO
-	var length := float(steps) * float(cell_size)
+	var length := float(steps) * float(cell_size) + off_board
 	var cross_cells := 1
 
 	# Corridor starts at the leading face of the pressed block and runs through
@@ -753,6 +767,16 @@ func _swipe_hint_corridor_for_direction(block: Block, direction: Vector2i) -> Di
 		"length": length,
 		"cross_cells": cross_cells,
 	}
+
+
+func _slide_exits_active_goal(block: Block, slide: Dictionary) -> bool:
+	var goal_edge: int = int(slide.get("goal_edge", -1))
+	if goal_edge < 0 or not _goal_edge_active(goal_edge):
+		return false
+	if slide.get("next_result", PlacementResult.OK) != PlacementResult.OUT_OF_BOUNDS:
+		return false
+	var next_anchor: Vector2i = slide.get("next_anchor", Vector2i.ZERO)
+	return _would_exit_goal_edge(block, next_anchor, goal_edge)
 
 
 func _show_merge_previews(source: Block) -> void:

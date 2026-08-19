@@ -1,7 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://prism_settings"]
+[gd_scene load_steps=4 format=3 uid="uid://kaleido_settings"]
 
 [ext_resource type="Script" path="res://scritps/ui/Settings.gd" id="1"]
-[ext_resource type="PackedScene" uid="uid://prism_exit_confirm_modal" path="res://scenes/ui/exit_confirm_modal.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://kaleido_exit_confirm_modal" path="res://scenes/ui/exit_confirm_modal.tscn" id="2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.14, 0.14, 0.18, 1)

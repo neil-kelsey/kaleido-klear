@@ -1,0 +1,2 @@
+Font Awesome 4.7.0 (FontAwesome.otf) is licensed under the SIL Open Font License 1.1.
+https://github.com/FortAwesome/Font-Awesome/tree/v4.7.0

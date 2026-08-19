@@ -13,12 +13,20 @@ class_name CircleBackButton
 ## -1 = use UiTheme.CIRCLE_BUTTON_EDGE_INSET.
 @export var edge_inset: float = -1.0
 
-## Icon + ring colour (white fill stays). Defaults to primary blue.
+## Face fill (icon is black or white for contrast). Defaults to primary blue.
 @export var accent_color: Color = UiTheme.PRIMARY:
 	set(value):
 		accent_color = value
 		if is_node_ready():
 			_apply_style()
+
+## Bottom-right twin of Back (arrow-right, next level).
+@export var pin_right: bool = false:
+	set(value):
+		pin_right = value
+		if is_node_ready():
+			_apply_style()
+			_apply_tooltip()
 
 
 func _ready() -> void:
@@ -52,13 +60,18 @@ func _on_viewport_resized() -> void:
 func _apply_style() -> void:
 	var s := resolved_size()
 	UiTheme.style_circle_back_button(self, s, accent_color)
-	_pin_bottom_left(s)
+	if pin_right:
+		_pin_bottom_right(s)
+	else:
+		_pin_bottom_left(s)
 	queue_redraw()
 
 
 func _pin_bottom_left(s: int) -> void:
 	var sf := float(s)
-	var inset := edge_inset if edge_inset >= 0.0 else float(UiTheme.CIRCLE_BUTTON_EDGE_INSET)
+	var base := edge_inset if edge_inset >= 0.0 else float(UiTheme.CIRCLE_BUTTON_EDGE_INSET)
+	var insets := UiTheme.viewport_safe_insets(get_viewport())
+	var inset := maxf(base, maxf(insets.x, insets.w) + 12.0)
 	layout_mode = 1  # Anchors (matches .tscn layout_mode = 1)
 	set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	grow_horizontal = Control.GROW_DIRECTION_END
@@ -71,11 +84,30 @@ func _pin_bottom_left(s: int) -> void:
 	offset_top = -inset - sf
 
 
+func _pin_bottom_right(s: int) -> void:
+	var sf := float(s)
+	var base := edge_inset if edge_inset >= 0.0 else float(UiTheme.CIRCLE_BUTTON_EDGE_INSET)
+	var insets := UiTheme.viewport_safe_insets(get_viewport())
+	var inset := maxf(base, maxf(insets.z, insets.w) + 12.0)
+	layout_mode = 1
+	set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	grow_vertical = Control.GROW_DIRECTION_BEGIN
+	custom_minimum_size = Vector2(sf, sf)
+	size = Vector2(sf, sf)
+	offset_right = -inset
+	offset_left = -inset - sf
+	offset_bottom = -inset
+	offset_top = -inset - sf
+
+
 func _apply_tooltip() -> void:
 	text = ""
-	tooltip_text = tr("UI_BACK")
+	tooltip_text = ""
+	HintTooltip.bind(self, tr("UI_NEXT_LEVEL" if pin_right else "UI_BACK"))
 
 
 func _draw() -> void:
 	var s := size
-	FaVector.draw_named(self, "arrow-left", s * 0.5, minf(s.x, s.y) * 0.42, accent_color)
+	var glyph := "arrow-right" if pin_right else "arrow-left"
+	FaVector.draw_named(self, glyph, s * 0.5, minf(s.x, s.y) * 0.46, UiTheme.contrast_on(accent_color))

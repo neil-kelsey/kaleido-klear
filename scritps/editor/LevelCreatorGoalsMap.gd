@@ -182,7 +182,7 @@ func _make_strip(edge_key: String, index: int, goal: Dictionary, horizontal_stri
 	var fill: Color = Block.get_color(goal["color"] as Block.TileColor)
 	var strip := Button.new()
 	strip.focus_mode = Control.FOCUS_NONE
-	strip.tooltip_text = tr("UI_CREATOR_GOAL_TAP_EDIT")
+	HintTooltip.bind(strip, tr("UI_CREATOR_GOAL_TAP_EDIT"))
 	strip.clip_contents = false
 	if horizontal_strip:
 		strip.custom_minimum_size = Vector2(MAP_SIZE, maxf(STRIP_THICKNESS, BADGE_SIZE))

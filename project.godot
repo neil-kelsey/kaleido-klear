@@ -53,4 +53,4 @@ locale/locale="en"
 
 rendering_device/driver.windows="d3d12"
 textures/vram_compression/import_etc2_astc=true
-environment/defaults/default_clear_color=Color(1, 1, 1, 1)
+environment/defaults/default_clear_color=Color(0.01, 0.01, 0.016, 1)

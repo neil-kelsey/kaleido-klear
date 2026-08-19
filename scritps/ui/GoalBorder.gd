@@ -4,8 +4,8 @@ class_name GoalBorder
 enum EdgeKind { LEFT, TOP, RIGHT, BOTTOM }
 
 const BAR_WIDTH := 16
-const ZONE_STRIPE_WIDTH := 4.5
-const PREVIEW_SCROLL_SPEED := 36.0
+const ZONE_STRIPE_WIDTH := 13.5
+const PREVIEW_SCROLL_SPEED := 48.0
 const PREVIEW_MIN_ZONE_SIZE := 36.0
 const PREVIEW_ZONE_RATIOS := {
 	1: 0.72,
@@ -25,13 +25,22 @@ const FADE_DEPTH_RATIO := 0.72
 @onready var progress_label: Label = %ProgressLabel
 
 var _preview_active: bool = false
+const BADGE_PAD_H := 16.0
+const BADGE_PAD_V := 8.0
+const BADGE_OVERLAP := 8.0
+const BADGE_H := 44.0
+const BADGE_W := 92.0
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	clip_contents = false
 	progress_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	progress_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.92))
-	progress_label.add_theme_font_size_override("font_size", 13)
+	progress_label.clip_text = false
+	progress_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	progress_label.add_theme_font_size_override("font_size", UiTheme.HUD_BUTTON_FONT_SIZE)
+	progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_layout_label()
 	resized.connect(func() -> void: queue_redraw())
 	set_process(false)
@@ -56,42 +65,67 @@ func apply_state(state: Dictionary) -> void:
 
 	var progress: int = int(state.get("progress", 0))
 	var target: int = int(state.get("target", 0))
-	var unlimited: bool = bool(state.get("unlimited", false))
-	if not unlimited and target >= 1:
+	var show_progress: bool = bool(state.get("show_progress", false))
+	if show_progress and target >= 1:
 		progress_label.text = "%d/%d" % [progress, target]
 		progress_label.visible = true
+		_style_badge(state.get("base_color", Color.WHITE) as Color)
+		_layout_label()
 	else:
 		progress_label.visible = false
 
 	queue_redraw()
 
 
+func _style_badge(goal_color: Color) -> void:
+	var fill := goal_color
+	fill.a = 1.0
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.set_corner_radius_all(20)
+	style.content_margin_left = BADGE_PAD_H
+	style.content_margin_right = BADGE_PAD_H
+	style.content_margin_top = BADGE_PAD_V
+	style.content_margin_bottom = BADGE_PAD_V
+	style.shadow_color = Color(0, 0, 0, 0.4)
+	style.shadow_size = 6
+	style.shadow_offset = Vector2(0, 2)
+	progress_label.add_theme_stylebox_override("normal", style)
+	progress_label.add_theme_color_override("font_color", UiTheme.contrast_on(fill))
+
+
 func _layout_label() -> void:
 	match edge_kind:
 		EdgeKind.LEFT:
-			progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-			progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			progress_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT)
-			progress_label.offset_left = 12.0
-			progress_label.offset_right = 60.0
+			progress_label.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
+			progress_label.grow_horizontal = Control.GROW_DIRECTION_END
+			progress_label.offset_left = -BADGE_OVERLAP
+			progress_label.offset_right = -BADGE_OVERLAP + BADGE_W
+			progress_label.offset_top = -BADGE_H * 0.5
+			progress_label.offset_bottom = BADGE_H * 0.5
 		EdgeKind.RIGHT:
-			progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-			progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			progress_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT)
-			progress_label.offset_left = -60.0
-			progress_label.offset_right = -12.0
+			progress_label.set_anchors_preset(Control.PRESET_CENTER_LEFT)
+			progress_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+			progress_label.offset_left = BADGE_OVERLAP - BADGE_W
+			progress_label.offset_right = BADGE_OVERLAP
+			progress_label.offset_top = -BADGE_H * 0.5
+			progress_label.offset_bottom = BADGE_H * 0.5
 		EdgeKind.TOP:
-			progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			progress_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-			progress_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-			progress_label.offset_top = 10.0
-			progress_label.offset_bottom = 32.0
+			progress_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+			progress_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+			progress_label.grow_vertical = Control.GROW_DIRECTION_END
+			progress_label.offset_left = -BADGE_W * 0.5
+			progress_label.offset_right = BADGE_W * 0.5
+			progress_label.offset_top = -BADGE_OVERLAP
+			progress_label.offset_bottom = -BADGE_OVERLAP + BADGE_H
 		EdgeKind.BOTTOM:
-			progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			progress_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-			progress_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-			progress_label.offset_top = -28.0
-			progress_label.offset_bottom = -6.0
+			progress_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+			progress_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+			progress_label.grow_vertical = Control.GROW_DIRECTION_BEGIN
+			progress_label.offset_left = -BADGE_W * 0.5
+			progress_label.offset_right = BADGE_W * 0.5
+			progress_label.offset_top = BADGE_OVERLAP - BADGE_H
+			progress_label.offset_bottom = BADGE_OVERLAP
 
 
 func _process(_delta: float) -> void:

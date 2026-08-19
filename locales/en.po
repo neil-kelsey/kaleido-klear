@@ -621,3 +621,30 @@ msgstr "Delete goal"
 
 msgid "UI_CREATOR_GOAL_TAP_EDIT"
 msgstr "Tap to edit this goal"
+
+msgid "UI_TUTORIAL_NEXT"
+msgstr "Next"
+
+msgid "UI_TUTORIAL_GOT_IT"
+msgstr "Got it"
+
+msgid "UI_TUTORIAL_BASIC_SWIPE"
+msgstr "Swipe each block into the matching colour goal around the board."
+
+msgid "UI_TUTORIAL_BASIC_GOALS"
+msgstr "Each side of the screen can be a different coloured goal, shown as a coloured bar. Swipe a matching block towards a goal to clear that piece. The game is complete when the board is empty."
+
+msgid "UI_TUTORIAL_BASIC_LIVES"
+msgstr "You have three lives. A wrong move costs a heart."
+
+msgid "UI_TUTORIAL_SHIFTING_CHEVRONS"
+msgstr "When a goal hits its quota, it shifts to a new colour. Watch the chevrons to see what colour is coming next."
+
+msgid "UI_TUTORIAL_SHIFTING_MAP"
+msgstr "Tap the Goals button at the bottom of the screen to see the full sequence of upcoming goals."
+
+msgid "UI_TUTORIAL_WALLS"
+msgstr "Walls do not move, and you cannot slide through them. Find another path around the block."
+
+msgid "UI_TUTORIAL_BIGGER_BOARDS"
+msgstr "Boards can get really large, and puzzles get much more complex. Keep your wits about you!"

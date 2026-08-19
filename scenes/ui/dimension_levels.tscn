@@ -1,8 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://prism_dimension_levels"]
+[gd_scene load_steps=4 format=3 uid="uid://kaleido_dimension_levels"]
 
 [ext_resource type="Script" path="res://scritps/ui/DimensionLevels.gd" id="1"]
-[ext_resource type="PackedScene" uid="uid://prism_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="2_back"]
-[ext_resource type="Script" path="res://scritps/ui/DiamondTitleBadge.gd" id="3_title"]
+[ext_resource type="PackedScene" uid="uid://kaleido_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="2_back"]
+[ext_resource type="PackedScene" uid="uid://kaleido_diamond_title_badge" path="res://scenes/ui/diamond_title_badge.tscn" id="3_title"]
 
 [node name="DimensionLevels" type="Node2D"]
 script = ExtResource("1")
@@ -45,18 +45,8 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="TitleBadge" type="Control" parent="UI/Root"]
+[node name="TitleBadge" parent="UI/Root" instance=ExtResource("3_title")]
 unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 36.0
-offset_top = 52.0
-offset_right = -36.0
-offset_bottom = 148.0
-grow_horizontal = 2
-mouse_filter = 2
-script = ExtResource("3_title")
 
 [node name="BackButton" parent="UI/Root" instance=ExtResource("2_back")]
 unique_name_in_owner = true

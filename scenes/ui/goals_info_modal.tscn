@@ -1,17 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://prism_goals_info_modal"]
+[gd_scene load_steps=3 format=3 uid="uid://kaleido_goals_info_modal"]
 
 [ext_resource type="Script" path="res://scritps/ui/GoalsInfoModal.gd" id="1"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.14, 0.14, 0.18, 1)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
-content_margin_left = 28
-content_margin_top = 24
-content_margin_right = 28
-content_margin_bottom = 28
+[ext_resource type="Script" path="res://scritps/ui/ChartModalPanel.gd" id="2_chart"]
 
 [node name="GoalsInfoModal" type="Control"]
 visible = false
@@ -44,13 +34,13 @@ grow_vertical = 2
 mouse_filter = 0
 
 [node name="Panel" type="PanelContainer" parent="Center"]
-custom_minimum_size = Vector2(560, 0)
+custom_minimum_size = Vector2(780, 0)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+script = ExtResource("2_chart")
 
 [node name="VBox" type="VBoxContainer" parent="Center/Panel"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 28
 
 [node name="Header" type="HBoxContainer" parent="Center/Panel/VBox"]
 layout_mode = 2
@@ -60,21 +50,21 @@ theme_override_constants/separation = 12
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.95, 0.95, 0.97, 1)
-theme_override_font_sizes/font_size = 36
+theme_override_colors/font_color = Color(0.12, 0.13, 0.16, 1)
+theme_override_font_sizes/font_size = 48
 text = "Goals"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="CloseButton" type="Button" parent="Center/Panel/VBox/Header"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(44, 44)
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 text = ""
 
 [node name="MapHost" type="Control" parent="Center/Panel/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(480, 360)
+custom_minimum_size = Vector2(700, 620)
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2

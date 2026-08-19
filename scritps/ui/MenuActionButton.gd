@@ -21,8 +21,15 @@ const PRIMARY_PAD_H := 44
 const PRIMARY_PAD_V := 52
 
 @export var kind: Kind = Kind.PRIMARY
-@export var label_text: String = "START GAME"
+@export var label_text: String = "START GAME":
+	set(value):
+		label_text = value
+		if is_node_ready():
+			_apply_label()
 @export var icon_style: IconStyle = IconStyle.CHEVRON
+@export var show_trailing_icon: bool = true
+## Modal CTAs: landing look at a size that fits a card.
+@export var compact: bool = false
 
 var _face: Panel
 var _label: Label
@@ -57,22 +64,32 @@ func _ready() -> void:
 
 
 func _min_height() -> int:
+	if compact:
+		return 128 if kind == Kind.PRIMARY else 112
 	return PRIMARY_MIN_HEIGHT if kind == Kind.PRIMARY else CTA_MIN_HEIGHT
 
 
 func _font_size() -> int:
+	if compact:
+		return 40 if kind == Kind.PRIMARY else 36
 	return PRIMARY_FONT_SIZE if kind == Kind.PRIMARY else CTA_FONT_SIZE
 
 
 func _icon_size() -> int:
+	if compact:
+		return 36
 	return PRIMARY_ICON_SIZE if kind == Kind.PRIMARY else CTA_ICON_SIZE
 
 
 func _pad_h() -> int:
+	if compact:
+		return 28
 	return PRIMARY_PAD_H if kind == Kind.PRIMARY else CTA_PAD_H
 
 
 func _pad_v() -> int:
+	if compact:
+		return 22
 	return PRIMARY_PAD_V if kind == Kind.PRIMARY else CTA_PAD_V
 
 
@@ -170,23 +187,24 @@ func _build() -> void:
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_label)
 
-	var icon_px := float(_icon_size())
-	match icon_style:
-		IconStyle.GEAR:
-			var gear := _GearIcon.new()
-			gear.set_icon_color(text_color)
-			gear.set_hole_color(face_color)
-			_icon = gear
-		_:
-			var chevron := _FaIconView.new()
-			chevron.icon_name = "angles-right"
-			chevron.icon_color = text_color
-			_icon = chevron
-	_icon.custom_minimum_size = Vector2(icon_px, icon_px)
-	_icon.size = Vector2(icon_px, icon_px)
-	_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(_icon)
+	if show_trailing_icon:
+		var icon_px := float(_icon_size())
+		match icon_style:
+			IconStyle.GEAR:
+				var gear := _GearIcon.new()
+				gear.set_icon_color(text_color)
+				gear.set_hole_color(face_color)
+				_icon = gear
+			_:
+				var chevron := _FaIconView.new()
+				chevron.icon_name = "angles-right"
+				chevron.icon_color = text_color
+				_icon = chevron
+		_icon.custom_minimum_size = Vector2(icon_px, icon_px)
+		_icon.size = Vector2(icon_px, icon_px)
+		_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(_icon)
 
 	if kind == Kind.PRIMARY:
 		## No StyleBoxFlat on primary (known mid-seam bug). One baked texture only.

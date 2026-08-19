@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://prism_goal_border"]
+[gd_scene load_steps=2 format=3 uid="uid://kaleido_goal_border"]
 
 [ext_resource type="Script" path="res://scritps/ui/GoalBorder.gd" id="1"]
 

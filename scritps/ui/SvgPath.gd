@@ -143,7 +143,8 @@ static func draw_icon(
 		if pieces.is_empty():
 			pieces = Geometry2D.clip_polygons(scaled[0], scaled[1])
 	if pieces.is_empty():
-		pieces = [scaled[scaled.size() - 1]]
+		# Disjoint shapes (FA4 refresh = two arrows), not a hole.
+		pieces = scaled
 	var black := Color(0.15, 0.12, 0.08, 0.9)
 	var white := Color(1, 1, 1, 0.95)
 	for poly_v in pieces:
@@ -151,14 +152,12 @@ static func draw_icon(
 		if poly.size() < 3:
 			continue
 		item.draw_colored_polygon(poly, fill)
-		var closed := poly
-		if closed[0] != closed[closed.size() - 1]:
-			closed = closed + PackedVector2Array([closed[0]])
 		if double_rim:
+			var closed := poly
+			if closed[0] != closed[closed.size() - 1]:
+				closed = closed + PackedVector2Array([closed[0]])
 			item.draw_polyline(closed, black, 2.0, true)
 			item.draw_polyline(closed, white, 1.0, true)
-		else:
-			item.draw_polyline(closed, fill, 1.0, true)
 
 
 static func _is_command(ch: String) -> bool:
