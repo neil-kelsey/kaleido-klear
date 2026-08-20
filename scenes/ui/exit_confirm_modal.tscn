@@ -47,7 +47,7 @@ theme_override_constants/separation = 44
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.12, 0.13, 0.16, 1)
-theme_override_font_sizes/font_size = 36
+theme_override_font_sizes/font_size = 52
 text = "Exit game"
 horizontal_alignment = 1
 
@@ -55,7 +55,7 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.42, 0.44, 0.48, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 32
 text = "Are you sure?"
 horizontal_alignment = 1
 autowrap_mode = 2

@@ -59,6 +59,7 @@ theme_override_constants/margin_bottom = 176
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("5_chart")
+shrink_wrap = false
 
 [node name="Scroll" type="ScrollContainer" parent="Margin/Panel"]
 layout_mode = 2

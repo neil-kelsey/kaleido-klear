@@ -19,6 +19,8 @@ const PRIMARY_ICON_SIZE := 72
 const PRIMARY_MIN_HEIGHT := 260
 const PRIMARY_PAD_H := 44
 const PRIMARY_PAD_V := 52
+## Extra air above compact CTAs when they follow copy (not another CTA).
+const COMPACT_TOP_GAP := 28
 
 @export var kind: Kind = Kind.PRIMARY
 @export var label_text: String = "START GAME":
@@ -40,6 +42,7 @@ var _rainbow_border: ColorRect
 var _press_tween: Tween
 var _fx_time: float = 0.0
 var _hovering := false
+var _top_gap: Control
 
 
 func _ready() -> void:
@@ -59,8 +62,40 @@ func _ready() -> void:
 	button_down.connect(_set_pressed_visual.bind(true))
 	button_up.connect(_set_pressed_visual.bind(false))
 	await get_tree().process_frame
+	_ensure_top_gap()
 	_layout()
 	set_process(true)
+
+
+func _exit_tree() -> void:
+	if _top_gap != null and is_instance_valid(_top_gap):
+		_top_gap.queue_free()
+		_top_gap = null
+
+
+func _ensure_top_gap() -> void:
+	## Keep modal body copy from sitting on the first CTA; skip between stacked CTAs.
+	if not compact:
+		return
+	var parent := get_parent()
+	if parent == null:
+		return
+	var idx := get_index()
+	if idx > 0:
+		var prev := parent.get_child(idx - 1)
+		if prev is MenuActionButton or prev == _top_gap:
+			return
+	if _top_gap != null and is_instance_valid(_top_gap):
+		return
+	_top_gap = Control.new()
+	_top_gap.name = "MenuActionTopGap"
+	_top_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_top_gap.custom_minimum_size = Vector2(0, COMPACT_TOP_GAP)
+	## Never absorb leftover VBox space — that stretches chart modals tall.
+	_top_gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_top_gap.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	parent.add_child(_top_gap)
+	parent.move_child(_top_gap, get_index())
 
 
 func _uses_nebula() -> bool:
@@ -183,7 +218,6 @@ func _build() -> void:
 	margin.add_child(row)
 
 	var text_color := Color.WHITE if _uses_nebula() else UiTheme.PRIMARY
-	var face_color := _base_color()
 
 	_label = Label.new()
 	_label.add_theme_font_override("font", UiTheme.button_typeface())
@@ -196,22 +230,18 @@ func _build() -> void:
 		_label.add_theme_constant_override("shadow_outline_size", 2)
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_label)
 
 	if show_trailing_icon:
 		var icon_px := float(_icon_size())
-		match icon_style:
-			IconStyle.GEAR:
-				var gear := _GearIcon.new()
-				gear.set_icon_color(text_color)
-				gear.set_hole_color(face_color)
-				_icon = gear
-			_:
-				var chevron := _FaIconView.new()
-				chevron.icon_name = "angles-right"
-				chevron.icon_color = text_color
-				_icon = chevron
+		var fa := FaIconView.new()
+		fa.icon_name = "gear" if icon_style == IconStyle.GEAR else "angles-right"
+		fa.icon_color = text_color
+		_icon = fa
 		_icon.custom_minimum_size = Vector2(icon_px, icon_px)
 		_icon.size = Vector2(icon_px, icon_px)
 		_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -247,6 +277,8 @@ func _build() -> void:
 func _apply_label() -> void:
 	if _label:
 		_label.text = label_text.to_upper()
+	if is_node_ready():
+		_fit_wrapped_height()
 
 
 func _layout() -> void:
@@ -254,6 +286,43 @@ func _layout() -> void:
 	if _face:
 		_face.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_sync_fx_rect()
+	_fit_wrapped_height()
+
+
+func _fit_wrapped_height() -> void:
+	## Grow the button when wrapped copy needs a second line, never clip text.
+	if _label == null or size.x < 200.0:
+		## Wait until the button has a real laid-out width — wrapping at ~48px
+		## inflates height and can lock chart modals to a huge stale size.
+		return
+	var text_w := size.x - float(_pad_h() * 2)
+	if show_trailing_icon and _icon != null:
+		var gap := 32.0 if _uses_nebula() else 24.0
+		text_w -= float(_icon_size()) + gap
+	text_w = maxf(text_w, 120.0)
+	_label.custom_minimum_size.x = text_w
+	var text_h := _label.get_minimum_size().y
+	var needed := float(_pad_v() * 2) + text_h
+	## CTAs should wrap to at most a couple of lines, not a tall column.
+	var max_needed := float(_min_height()) + float(_font_size()) * 2.2
+	needed = minf(needed, max_needed)
+	var next_h := maxf(float(_min_height()), needed)
+	if absf(custom_minimum_size.y - next_h) < 0.5:
+		return
+	custom_minimum_size.y = next_h
+	_shrink_ancestor_chart_panel()
+
+
+func _shrink_ancestor_chart_panel() -> void:
+	## Only shrink-wrap centered modal cards — never collapse fill layouts (Settings).
+	var node: Node = get_parent()
+	while node != null:
+		if node is ChartModalPanel:
+			var panel := node as ChartModalPanel
+			if panel.shrink_wrap:
+				panel.shrink_to_content()
+			return
+		node = node.get_parent()
 
 
 func _sync_fx_rect() -> void:
@@ -290,12 +359,8 @@ func _refresh_face_color() -> void:
 	else:
 		var shadow := not button_pressed
 		_face.add_theme_stylebox_override("panel", _face_style(_base_color(), shadow))
-	if _icon is _GearIcon:
-		(_icon as _GearIcon).set_hole_color(_base_color())
-	elif _icon is _FaIconView:
-		(_icon as _FaIconView).icon_color = (
-			Color.WHITE if _uses_nebula() else UiTheme.PRIMARY
-		)
+	if _icon is FaIconView:
+		(_icon as FaIconView).icon_color = Color.WHITE if _uses_nebula() else UiTheme.PRIMARY
 
 
 func _on_hover(hovering: bool) -> void:
@@ -312,46 +377,3 @@ func _set_pressed_visual(down: bool) -> void:
 	_press_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	var target := Vector2(PRESS_SCALE, PRESS_SCALE) if down else Vector2.ONE
 	_press_tween.tween_property(self, "scale", target, 0.08 if down else 0.12)
-
-
-class _GearIcon extends Control:
-	var icon_color: Color = Color.WHITE
-	var hole_color: Color = Color.WHITE
-
-	func set_icon_color(color: Color) -> void:
-		icon_color = color
-		queue_redraw()
-
-	func set_hole_color(color: Color) -> void:
-		hole_color = color
-		queue_redraw()
-
-	func _draw() -> void:
-		var c := size * 0.5
-		var outer := minf(size.x, size.y) * 0.46
-		var valley := outer * 0.68
-		var hole := outer * 0.30
-		var teeth := 8
-		var pts := PackedVector2Array()
-		for i in teeth:
-			var base := (-PI * 0.5) + (TAU * float(i) / float(teeth))
-			var half_tooth := PI / float(teeth) * 0.35
-			var half_gap := PI / float(teeth) * 0.65
-			pts.append(c + Vector2(cos(base - half_gap), sin(base - half_gap)) * valley)
-			pts.append(c + Vector2(cos(base - half_tooth), sin(base - half_tooth)) * outer)
-			pts.append(c + Vector2(cos(base + half_tooth), sin(base + half_tooth)) * outer)
-			pts.append(c + Vector2(cos(base + half_gap), sin(base + half_gap)) * valley)
-		draw_colored_polygon(pts, icon_color)
-		draw_circle(c, hole, hole_color)
-
-
-class _FaIconView extends Control:
-	var icon_name: String = "angles-right"
-	var icon_color: Color = Color.WHITE:
-		set(value):
-			icon_color = value
-			queue_redraw()
-
-	func _draw() -> void:
-		var h := minf(size.x, size.y)
-		FaVector.draw_named(self, icon_name, size * 0.5, h, icon_color)

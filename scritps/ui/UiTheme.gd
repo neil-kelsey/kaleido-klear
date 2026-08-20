@@ -201,6 +201,8 @@ static func style_button(
 	button.add_theme_font_size_override("font_size", font_size)
 	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, float(min_height))
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT if left_align else HORIZONTAL_ALIGNMENT_CENTER
+	## Do not enable Button.autowrap here — with SIZE_SHRINK_* it collapses to a
+	## one-glyph-wide tower. MenuActionButton handles wrap for brand CTAs.
 	button.expand_icon = true
 	button.add_theme_constant_override("icon_max_width", icon_size)
 	button.add_theme_constant_override("h_separation", 16)
@@ -435,11 +437,11 @@ static func style_chart_modal_copy(title: Label, message: Label = null) -> void:
 	if title != null:
 		title.add_theme_font_override("font", BUTTON_FONT)
 		title.add_theme_color_override("font_color", TEXT)
-		title.add_theme_font_size_override("font_size", 40)
+		title.add_theme_font_size_override("font_size", 52)
 	if message != null:
 		message.add_theme_font_override("font", BUTTON_FONT)
 		message.add_theme_color_override("font_color", TEXT_MUTED)
-		message.add_theme_font_size_override("font_size", 24)
+		message.add_theme_font_size_override("font_size", 32)
 
 
 static func style_close_button(button: Button) -> void:

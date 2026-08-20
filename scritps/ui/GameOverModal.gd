@@ -36,10 +36,19 @@ func _apply_translations() -> void:
 func show_modal() -> void:
 	_apply_translations()
 	visible = true
+	_shrink_panel()
 
 
 func hide_modal() -> void:
 	visible = false
+
+
+func _shrink_panel() -> void:
+	var panel := $Center/Panel as ChartModalPanel
+	if panel == null:
+		return
+	await get_tree().process_frame
+	panel.shrink_to_content()
 
 
 func _on_close_button_pressed() -> void:

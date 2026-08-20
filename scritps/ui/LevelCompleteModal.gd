@@ -18,6 +18,7 @@ const STAR_EMPTY_COLOR := Color(0.72, 0.74, 0.78, 1.0)
 @onready var remove_ads_button: MenuActionButton = %RemoveAdsButton
 @onready var share_button: MenuActionButton = %ShareButton
 @onready var close_button: Button = %CloseButton
+@onready var panel: ChartModalPanel = $Center/Panel
 
 var _playtest_mode: bool = false
 
@@ -62,6 +63,7 @@ func show_result(stars: int, section_complete: bool = false, has_next_section: b
 	_set_star(star_2, stars >= 2)
 	_set_star(star_3, stars >= 3)
 	visible = true
+	_shrink_panel()
 
 
 func show_playtest_success() -> void:
@@ -71,11 +73,19 @@ func show_playtest_success() -> void:
 	message_label.text = tr("UI_PLAYTEST_SUCCESS_MESSAGE")
 	next_level_button.label_text = tr("UI_BACK_TO_LEVEL_CREATOR")
 	visible = true
+	_shrink_panel()
 
 
 func hide_modal() -> void:
 	_playtest_mode = false
 	visible = false
+
+
+func _shrink_panel() -> void:
+	if panel == null:
+		return
+	await get_tree().process_frame
+	panel.shrink_to_content()
 
 
 func _set_standard_layout_visible(standard: bool) -> void:

@@ -58,7 +58,7 @@ var _ring: Panel
 var _card: PanelContainer
 var _title: Label
 var _body: Label
-var _next_button: Button
+var _next_button: MenuActionButton
 
 
 static func script_for(level: LevelConfig) -> Dictionary:
@@ -160,24 +160,27 @@ func _build() -> void:
 	add_child(_card)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 16)
+	vbox.add_theme_constant_override("separation", 20)
 	_card.add_child(vbox)
 
 	_title = Label.new()
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	UiTheme.style_chart_modal_copy(_title)
-	_title.add_theme_font_size_override("font_size", 36)
 	vbox.add_child(_title)
 
 	_body = Label.new()
 	_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	UiTheme.style_chart_modal_copy(null, _body)
-	_body.add_theme_font_size_override("font_size", 26)
 	vbox.add_child(_body)
 
-	_next_button = Button.new()
-	_next_button.size_flags_horizontal = Control.SIZE_SHRINK_END
-	UiTheme.style_primary_button(_next_button, UiTheme.ButtonScale.HUD)
+	_next_button = MenuActionButton.new()
+	_next_button.kind = MenuActionButton.Kind.PRIMARY
+	_next_button.compact = true
+	_next_button.show_trailing_icon = false
+	_next_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_next_button.custom_minimum_size = Vector2(0, 112)
 	_next_button.pressed.connect(_on_next_pressed)
 	vbox.add_child(_next_button)
 
@@ -215,7 +218,7 @@ func _apply_step_copy() -> void:
 	_title.text = tr(str(_script.get("title_key", "")))
 	_body.text = tr(str(step.get("text_key", "")))
 	var last := _step_index >= steps.size() - 1
-	_next_button.text = tr("UI_TUTORIAL_GOT_IT" if last else "UI_TUTORIAL_NEXT")
+	_next_button.set_label(tr("UI_TUTORIAL_GOT_IT" if last else "UI_TUTORIAL_NEXT"))
 
 
 func _layout_step() -> void:
