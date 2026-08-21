@@ -26,7 +26,7 @@ func has_level(level_id: String) -> bool:
 func has_project_level(level_id: String) -> bool:
 	if level_id.strip_edges().is_empty():
 		return false
-	return ResourceLoader.exists(_project_level_path(level_id))
+	return not _project_paths_for_level_id(level_id).is_empty()
 
 
 func save_level(level: LevelConfig) -> Error:
@@ -41,9 +41,14 @@ func save_level(level: LevelConfig) -> Error:
 
 
 func load_level(level_id: String) -> LevelConfig:
-	var project_path := _project_level_path(level_id)
-	if ResourceLoader.exists(project_path):
-		return ResourceLoader.load(project_path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
+	## Prefer the registry path that owns this id (filename may not match level_id).
+	for path in _project_paths_for_level_id(level_id):
+		var project_level := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
+		if project_level != null:
+			return project_level
+	var fallback := _project_level_path(level_id)
+	if ResourceLoader.exists(fallback):
+		return ResourceLoader.load(fallback, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
 	var user_path := _user_level_path(level_id)
 	if ResourceLoader.exists(user_path):
 		return ResourceLoader.load(user_path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
@@ -136,15 +141,24 @@ func rewrite_project_manifest() -> Error:
 
 func delete_level(level_id: String) -> Error:
 	if saves_to_project():
-		var project_path := _project_level_path(level_id)
-		var abs_path := ProjectSettings.globalize_path(project_path)
-		if FileAccess.file_exists(abs_path):
-			var err := DirAccess.remove_absolute(abs_path)
-			if err == OK:
-				rewrite_project_manifest()
-				if LevelCatalog != null:
-					LevelCatalog.reload_levels()
-			return err
+		var paths := _project_paths_for_level_id(level_id)
+		if paths.is_empty():
+			var fallback := _project_level_path(level_id)
+			if ResourceLoader.exists(fallback):
+				paths.append(fallback)
+		if paths.is_empty():
+			return ERR_FILE_NOT_FOUND
+		var last_err := OK
+		for path in paths:
+			var abs_path := ProjectSettings.globalize_path(path)
+			if FileAccess.file_exists(abs_path):
+				last_err = DirAccess.remove_absolute(abs_path)
+				if last_err != OK:
+					return last_err
+		rewrite_project_manifest()
+		if LevelCatalog != null:
+			LevelCatalog.reload_levels()
+		return last_err
 	var user_path := _user_level_path(level_id)
 	if not FileAccess.file_exists(user_path):
 		return ERR_FILE_NOT_FOUND
@@ -155,16 +169,32 @@ func delete_level(level_id: String) -> Error:
 
 
 func _save_project_level(level: LevelConfig) -> Error:
-	var path := _project_level_path(level.level_id)
-	var abs_path := ProjectSettings.globalize_path(path)
-	DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
-	var error := ResourceSaver.save(level, path)
-	if error != OK:
-		return error
+	## Write every on-disk copy of this id so renamed/legacy files stay in sync.
+	var paths := _project_paths_for_level_id(level.level_id)
+	if paths.is_empty():
+		paths = PackedStringArray([_project_level_path(level.level_id)])
+	for path in paths:
+		var abs_path := ProjectSettings.globalize_path(path)
+		DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
+		var error := ResourceSaver.save(level, path)
+		if error != OK:
+			return error
 	rewrite_project_manifest()
 	if LevelCatalog != null:
 		LevelCatalog.reload_levels()
 	return OK
+
+
+func _project_paths_for_level_id(level_id: String) -> PackedStringArray:
+	var id := level_id.strip_edges()
+	var paths := PackedStringArray()
+	if id.is_empty():
+		return paths
+	for path in list_project_level_paths():
+		var level := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
+		if level != null and level.level_id.strip_edges() == id:
+			paths.append(path)
+	return paths
 
 
 func _scan_project_level_paths() -> PackedStringArray:

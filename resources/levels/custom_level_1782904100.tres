@@ -7,8 +7,7 @@
 script = ExtResource("2_26xym")
 level_id = "custom_level_1782904100"
 display_name = "Level creator 1"
-section_index = 0
-sort_index = 1782904100
+sort_index = 30
 columns = 4
 rows = 4
 block_positions = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])

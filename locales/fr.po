@@ -554,10 +554,22 @@ msgid "UI_AUDIT_DAILY_MORE"
 msgstr " (+%d more)"
 
 msgid "UI_AUDIT_EDIT"
-msgstr "Edit"
+msgstr "Modifier"
 
 msgid "UI_AUDIT_DELETE"
-msgstr "Delete"
+msgstr "Supprimer"
+
+msgid "UI_AUDIT_COL_LEVEL"
+msgstr "Niveau"
+
+msgid "UI_AUDIT_COL_NAME"
+msgstr "Nom"
+
+msgid "UI_AUDIT_COL_ACTIONS"
+msgstr "Actions"
+
+msgid "UI_AUDIT_UNGROUPED"
+msgstr "Sans groupe"
 
 msgid "UI_AUDIT_SAVE"
 msgstr "Save"
@@ -641,16 +653,16 @@ msgid "UI_TUTORIAL_GOT_IT"
 msgstr "Compris"
 
 msgid "UI_TUTORIAL_BASIC_SWIPE"
-msgstr "Glissez chaque bloc vers le but de la même couleur autour de la grille."
+msgstr "Glissez chaque bloc vers le but de la même couleur autour de la grille.\n\nLa partie est gagnée lorsque la grille est dégagée."
 
 msgid "UI_TUTORIAL_BASIC_GOALS"
-msgstr "Chaque côté de l’écran peut être un but d’une couleur différente, indiqué par une barre colorée. Glissez un bloc de la même couleur vers un but pour le retirer. La partie est gagnée lorsque la grille est vide."
+msgstr "Chaque côté de l’écran peut être un but d’une couleur différente, indiqué par une barre colorée. Glissez un bloc de la même couleur vers un but pour le retirer."
 
 msgid "UI_TUTORIAL_BASIC_LIVES"
 msgstr "Vous avez trois vies. Un mauvais coup coûte un cœur."
 
 msgid "UI_TUTORIAL_SHIFTING_CHEVRONS"
-msgstr "Quand un but atteint son quota, il change de couleur. Les chevrons indiquent la couleur suivante."
+msgstr "Quand un but atteint son quota, il est effacé.\n\nUn autre but peut le remplacer — ou ce côté peut rester vide.\n\nLes chevrons sur les bords du but indiquent la couleur du but suivant."
 
 msgid "UI_TUTORIAL_SHIFTING_MAP"
 msgstr "Appuyez sur le bouton Objectifs en bas de l’écran pour voir la suite des buts."

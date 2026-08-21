@@ -1,18 +1,24 @@
 extends Control
 
-## Develop-mode audit: list every level, reassign placement, delete with confirm.
+## Develop-mode audit: dimension tables with icon actions and drag-drop reorder.
 
 const SETTINGS_SCENE := "res://scenes/ui/settings.tscn"
+const TITLE_FONT_SIZE := 48
+const COL_LEVEL_W := 88.0
+const COL_ACTIONS_W := 148.0
 
-@onready var title_label: Label = %TitleLabel
-@onready var summary_label: Label = %SummaryLabel
-@onready var rows_container: VBoxContainer = %RowsContainer
+@onready var title_badge: DiamondTitleBadge = %TitleBadge
+@onready var nebula_bg: TextureRect = %NebulaBg
+@onready var scroll: ScrollContainer = %Scroll
+@onready var sections_container: VBoxContainer = %SectionsContainer
 @onready var empty_label: Label = %EmptyLabel
-@onready var back_button: Button = %BackButton
+@onready var back_button: CircleBackButton = %BackButton
 
 var _levels: Array[LevelConfig] = []
 var _pending_delete_id: String = ""
 var _editing_level: LevelConfig = null
+var _nebula_mat: ShaderMaterial
+var _fx_time := 0.0
 
 var _delete_confirm: ConfirmationDialog
 var _edit_dialog: ConfirmationDialog
@@ -28,13 +34,24 @@ func _ready() -> void:
 	if not OS.is_debug_build() or not GameSession.develop_mode:
 		get_tree().change_scene_to_file(SETTINGS_SCENE)
 		return
+	_nebula_mat = NebulaEffect.apply_backdrop(nebula_bg)
+	set_process(true)
 	_setup_dialogs()
+	back_button.pressed.connect(_on_back_button_pressed)
 	_apply_translations()
-	UiTheme.style_menu_title(title_label)
-	UiTheme.style_menu_hint(summary_label)
 	UiTheme.style_menu_hint(empty_label)
-	UiTheme.style_nav_button(back_button)
+	get_viewport().size_changed.connect(_sync_title_badge)
+	_sync_title_badge()
 	_refresh()
+
+
+func _process(delta: float) -> void:
+	_fx_time += delta
+	if _nebula_mat != null and nebula_bg != null:
+		_nebula_mat.set_shader_parameter("time_sec", _fx_time)
+		_nebula_mat.set_shader_parameter("rect_size", nebula_bg.size)
+		var pulse := 0.99 + 0.01 * sin(_fx_time * 0.25)
+		_nebula_mat.set_shader_parameter("brightness", pulse)
 
 
 func _notification(what: int) -> void:
@@ -46,8 +63,11 @@ func _notification(what: int) -> void:
 
 
 func _apply_translations() -> void:
-	title_label.text = tr("UI_AUDIT_TITLE")
-	back_button.text = "  " + tr("UI_BACK")
+	if title_badge != null:
+		title_badge.title = tr("UI_AUDIT_TITLE")
+		title_badge.font_size = TITLE_FONT_SIZE
+		title_badge.fill_color = UiTheme.PRIMARY
+		title_badge.show_rim = false
 	empty_label.text = tr("UI_AUDIT_EMPTY")
 	if _delete_confirm:
 		_delete_confirm.title = tr("UI_AUDIT_DELETE_TITLE")
@@ -58,6 +78,21 @@ func _apply_translations() -> void:
 		_edit_dialog.ok_button_text = tr("UI_AUDIT_SAVE")
 		_edit_dialog.cancel_button_text = tr("UI_CANCEL")
 		_rebuild_edit_section_items()
+	_sync_title_badge()
+
+
+func _sync_title_badge() -> void:
+	if title_badge == null:
+		return
+	var metrics := DiamondTitleBadge.measure(title_badge.title, title_badge.font_size)
+	var w: float = metrics.size.x
+	var h: float = metrics.size.y
+	var pole_y := 108.0
+	title_badge.custom_minimum_size = metrics.size
+	title_badge.offset_left = -w * 0.5
+	title_badge.offset_right = w * 0.5
+	title_badge.offset_top = pole_y - h * 0.5
+	title_badge.offset_bottom = pole_y + h * 0.5
 
 
 func _setup_dialogs() -> void:
@@ -153,161 +188,262 @@ func _rebuild_edit_section_items() -> void:
 
 func _refresh() -> void:
 	_levels = CustomLevelStore.list_all_levels()
-	_rebuild_summary()
-	_rebuild_rows()
+	_rebuild_sections()
 
 
-func _rebuild_summary() -> void:
-	var lines: PackedStringArray = []
-	var dim_counts: Array[int] = []
-	dim_counts.resize(LevelCatalog.SECTIONS.size())
-	dim_counts.fill(0)
-	var daily_by_date: Dictionary = {}
-	var daily_total := 0
-
+func _dimension_levels(section_id: int) -> Array[LevelConfig]:
+	var out: Array[LevelConfig] = []
 	for level in _levels:
-		if DailyCatalog.is_daily_level(level) or level.section_index == DailyCatalog.SECTION_DAILY:
-			daily_total += 1
-			var key := level.daily_date.strip_edges()
-			if key.is_empty():
-				key = "?"
-			daily_by_date[key] = int(daily_by_date.get(key, 0)) + 1
-		else:
-			var idx := clampi(level.section_index, 0, LevelCatalog.SECTIONS.size() - 1)
-			dim_counts[idx] += 1
-
-	lines.append(tr("UI_AUDIT_TOTAL") % _levels.size())
-	for i in dim_counts.size():
-		lines.append("%s: %d" % [LevelCatalog.get_dimension_title(i), dim_counts[i]])
-
-	lines.append(tr("UI_AUDIT_DAILY_TOTAL") % [daily_total, daily_by_date.size()])
-	var missing := _missing_daily_dates(daily_by_date)
-	if daily_by_date.is_empty():
-		lines.append(tr("UI_AUDIT_DAILY_NONE"))
-	elif missing.is_empty():
-		lines.append(tr("UI_AUDIT_DAILY_COMPLETE"))
-	else:
-		var shown: PackedStringArray = []
-		for i in mini(missing.size(), 8):
-			shown.append(DailyCatalog.format_date_key(missing[i]))
-		var extra := missing.size() - shown.size()
-		var missing_text := ", ".join(shown)
-		if extra > 0:
-			missing_text += tr("UI_AUDIT_DAILY_MORE") % extra
-		lines.append(tr("UI_AUDIT_DAILY_GAPS") % missing_text)
-
-	summary_label.text = "\n".join(lines)
+		var is_daily := DailyCatalog.is_daily_level(level) or level.section_index == DailyCatalog.SECTION_DAILY
+		if is_daily:
+			continue
+		if level.section_index == section_id:
+			out.append(level)
+	_sort_by_order(out)
+	return out
 
 
-func _missing_daily_dates(daily_by_date: Dictionary) -> PackedStringArray:
-	var keys: Array = daily_by_date.keys()
-	keys = keys.filter(func(k: Variant) -> bool: return str(k) != "?" and str(k).length() == 10)
-	keys.sort()
-	if keys.size() < 2:
-		return PackedStringArray()
-	var missing: PackedStringArray = []
-	var cursor := str(keys[0])
-	var end_key := str(keys[keys.size() - 1])
-	while cursor < end_key:
-		cursor = _next_day_key(cursor)
-		if cursor >= end_key:
-			break
-		if not daily_by_date.has(cursor):
-			missing.append(cursor)
-	return missing
+func _group_buckets(levels: Array[LevelConfig]) -> Array[Dictionary]:
+	## Preserve first-seen group order from sort_index walk (matches level select / map).
+	var buckets: Array[Dictionary] = []
+	var index_by_key: Dictionary = {}
+	for level in levels:
+		var key := level.group_title_key.strip_edges()
+		if not index_by_key.has(key):
+			index_by_key[key] = buckets.size()
+			buckets.append({"key": key, "levels": [] as Array[LevelConfig]})
+		var bucket: Dictionary = buckets[index_by_key[key]]
+		var typed: Array[LevelConfig] = bucket["levels"]
+		typed.append(level)
+		bucket["levels"] = typed
+	return buckets
 
 
-func _next_day_key(date_key: String) -> String:
-	var parts := date_key.split("-")
-	if parts.size() != 3:
-		return date_key
-	var unix := Time.get_unix_time_from_datetime_dict({
-		"year": int(parts[0]),
-		"month": int(parts[1]),
-		"day": int(parts[2]),
-		"hour": 12,
-		"minute": 0,
-		"second": 0,
-	})
-	var next := Time.get_datetime_dict_from_unix_time(unix + 86400)
-	return "%04d-%02d-%02d" % [int(next.year), int(next.month), int(next.day)]
+func _daily_levels_by_date() -> Dictionary:
+	## date_key -> Array[LevelConfig]
+	var by_date: Dictionary = {}
+	for level in _levels:
+		var is_daily := DailyCatalog.is_daily_level(level) or level.section_index == DailyCatalog.SECTION_DAILY
+		if not is_daily:
+			continue
+		var key := level.daily_date.strip_edges()
+		if key.is_empty():
+			key = "?"
+		var bucket: Array[LevelConfig] = by_date.get(key, [] as Array[LevelConfig])
+		bucket.append(level)
+		by_date[key] = bucket
+	for key in by_date.keys():
+		var typed: Array[LevelConfig] = by_date[key]
+		_sort_by_order(typed)
+		by_date[key] = typed
+	return by_date
 
 
-func _rebuild_rows() -> void:
-	for child in rows_container.get_children():
+func _sort_by_order(levels: Array[LevelConfig]) -> void:
+	levels.sort_custom(func(a: LevelConfig, b: LevelConfig) -> bool:
+		if a.sort_index == b.sort_index:
+			return a.level_id < b.level_id
+		return a.sort_index < b.sort_index
+	)
+
+
+func _group_key_dimension(section_id: int, group_title_key: String = "") -> String:
+	return "dim:%d|%s" % [section_id, group_title_key]
+
+
+func _group_key_daily(date_key: String) -> String:
+	return "daily:%s" % date_key
+
+
+func _levels_for_group(group_key: String) -> Array[LevelConfig]:
+	if group_key.begins_with("dim:"):
+		var rest := group_key.substr("dim:".length())
+		var pipe := rest.find("|")
+		if pipe < 0:
+			return _dimension_levels(int(rest))
+		var section_id := int(rest.substr(0, pipe))
+		var title_key := rest.substr(pipe + 1)
+		var out: Array[LevelConfig] = []
+		for level in _dimension_levels(section_id):
+			if level.group_title_key.strip_edges() == title_key:
+				out.append(level)
+		return out
+	if group_key.begins_with("daily:"):
+		var date_key := group_key.substr("daily:".length())
+		var by_date := _daily_levels_by_date()
+		if by_date.has(date_key):
+			return by_date[date_key]
+	return []
+
+
+func _rebuild_sections() -> void:
+	for child in sections_container.get_children():
 		child.queue_free()
-	empty_label.visible = _levels.is_empty()
-	for level in _levels:
-		rows_container.add_child(_make_row(level))
+	var any := false
+	for i in LevelCatalog.SECTIONS.size():
+		var levels := _dimension_levels(i)
+		if levels.is_empty():
+			continue
+		any = true
+		sections_container.add_child(_make_dimension_block(i, levels))
+	var by_date := _daily_levels_by_date()
+	if not by_date.is_empty():
+		any = true
+		var daily_block := VBoxContainer.new()
+		daily_block.add_theme_constant_override("separation", 20)
+		var daily_title := Label.new()
+		daily_title.text = tr("UI_DAILY_PUZZLES")
+		daily_title.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+		daily_title.add_theme_font_size_override("font_size", 36)
+		daily_title.add_theme_color_override("font_color", UiTheme.TEXT)
+		daily_block.add_child(daily_title)
+		var dates: Array = by_date.keys()
+		dates.sort()
+		for date_key in dates:
+			var date_title := str(date_key)
+			if date_key != "?":
+				date_title = DailyCatalog.format_date_key(str(date_key))
+			daily_block.add_child(
+				_make_table(date_title, _group_key_daily(str(date_key)), by_date[date_key], 28)
+			)
+		sections_container.add_child(daily_block)
+	empty_label.visible = not any
+	scroll.visible = any
 
 
-func _make_row(level: LevelConfig) -> Control:
-	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.14, 0.14, 0.18, 1.0)
-	style.corner_radius_top_left = 16
-	style.corner_radius_top_right = 16
-	style.corner_radius_bottom_left = 16
-	style.corner_radius_bottom_right = 16
-	style.content_margin_left = 20
-	style.content_margin_top = 16
-	style.content_margin_right = 20
-	style.content_margin_bottom = 16
-	panel.add_theme_stylebox_override("panel", style)
+func _make_dimension_block(section_id: int, levels: Array[LevelConfig]) -> Control:
+	var block := VBoxContainer.new()
+	block.add_theme_constant_override("separation", 16)
 
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 10)
-	panel.add_child(col)
+	var dim_title := Label.new()
+	dim_title.text = LevelCatalog.get_dimension_title(section_id)
+	dim_title.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	dim_title.add_theme_font_size_override("font_size", 36)
+	dim_title.add_theme_color_override("font_color", UiTheme.TEXT)
+	block.add_child(dim_title)
 
-	var name_label := Label.new()
-	name_label.text = LevelCatalog.get_level_label(level)
-	name_label.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
-	name_label.add_theme_font_size_override("font_size", 28)
-	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	col.add_child(name_label)
+	var buckets := _group_buckets(levels)
+	var has_named_group := false
+	for bucket in buckets:
+		if not str(bucket["key"]).is_empty():
+			has_named_group = true
+			break
 
-	var place_label := Label.new()
-	place_label.text = _placement_text(level)
-	place_label.add_theme_color_override("font_color", Color(0.7, 0.72, 0.78, 1.0))
-	place_label.add_theme_font_size_override("font_size", 22)
-	place_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	col.add_child(place_label)
+	if not has_named_group:
+		block.add_child(
+			_make_table("", _group_key_dimension(section_id, ""), levels, 28, false)
+		)
+		return block
 
-	var id_label := Label.new()
-	id_label.text = level.level_id
-	id_label.add_theme_color_override("font_color", Color(0.5, 0.52, 0.58, 1.0))
-	id_label.add_theme_font_size_override("font_size", 18)
-	id_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	col.add_child(id_label)
-
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 12)
-	col.add_child(actions)
-
-	var edit_button := Button.new()
-	edit_button.text = tr("UI_AUDIT_EDIT")
-	edit_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	UiTheme.style_secondary_button(edit_button, UiTheme.ButtonScale.HUD)
-	edit_button.pressed.connect(_on_edit_pressed.bind(level.level_id))
-	actions.add_child(edit_button)
-
-	var delete_button := Button.new()
-	delete_button.text = tr("UI_AUDIT_DELETE")
-	delete_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	UiTheme.style_danger_button(delete_button, UiTheme.ButtonScale.HUD)
-	delete_button.pressed.connect(_on_delete_pressed.bind(level.level_id))
-	actions.add_child(delete_button)
-
-	return panel
+	for bucket in buckets:
+		var key := str(bucket["key"])
+		var title := tr(key) if not key.is_empty() else tr("UI_AUDIT_UNGROUPED")
+		block.add_child(
+			_make_table(title, _group_key_dimension(section_id, key), bucket["levels"], 28)
+		)
+	return block
 
 
-func _placement_text(level: LevelConfig) -> String:
-	if DailyCatalog.is_daily_level(level) or level.section_index == DailyCatalog.SECTION_DAILY:
-		var date_key := level.daily_date.strip_edges()
-		if date_key.is_empty():
-			return tr("UI_DAILY_PUZZLES")
-		return "%s · %s" % [tr("UI_DAILY_PUZZLES"), DailyCatalog.format_date_key(date_key)]
-	return LevelCatalog.get_dimension_title(clampi(level.section_index, 0, LevelCatalog.SECTIONS.size() - 1))
+func _make_table(
+	title: String,
+	group_key: String,
+	levels: Array[LevelConfig],
+	title_size: int = 36,
+	show_title: bool = true
+) -> Control:
+	var block := VBoxContainer.new()
+	block.add_theme_constant_override("separation", 12)
+	block.set_meta("group_key", group_key)
+
+	if show_title and not title.is_empty():
+		var title_label := Label.new()
+		title_label.text = title
+		title_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+		title_label.add_theme_font_size_override("font_size", title_size)
+		title_label.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
+		block.add_child(title_label)
+
+	block.add_child(_make_header_row())
+
+	var rows := VBoxContainer.new()
+	rows.name = "Rows"
+	rows.add_theme_constant_override("separation", 4)
+	rows.set_meta("group_key", group_key)
+	block.add_child(rows)
+
+	for i in levels.size():
+		rows.add_child(_AuditRow.new(self, group_key, levels[i], i + 1))
+
+	return block
+
+
+func _make_header_row() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	row.custom_minimum_size.y = 40
+
+	var level_h := _header_cell(tr("UI_AUDIT_COL_LEVEL"), COL_LEVEL_W)
+	row.add_child(level_h)
+
+	var name_h := _header_cell(tr("UI_AUDIT_COL_NAME"), 0.0)
+	name_h.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(name_h)
+
+	var actions_h := _header_cell(tr("UI_AUDIT_COL_ACTIONS"), COL_ACTIONS_W)
+	actions_h.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	row.add_child(actions_h)
+
+	return row
+
+
+func _header_cell(text: String, width: float) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
+	if width > 0.0:
+		label.custom_minimum_size.x = width
+	return label
+
+
+func reorder_group(group_key: String, from_index: int, to_index: int) -> void:
+	if from_index == to_index or from_index < 0 or to_index < 0:
+		return
+	var levels := _levels_for_group(group_key)
+	if from_index >= levels.size() or to_index >= levels.size():
+		return
+	var moved: LevelConfig = levels[from_index]
+	levels.remove_at(from_index)
+	levels.insert(to_index, moved)
+
+	## For dimension subtitle tables, rewrite sort_index across the whole dimension
+	## so neighboring groups keep their relative placement.
+	var to_save: Array[LevelConfig] = levels
+	if group_key.begins_with("dim:") and group_key.contains("|"):
+		var rest := group_key.substr("dim:".length())
+		var pipe := rest.find("|")
+		var section_id := int(rest.substr(0, pipe))
+		var title_key := rest.substr(pipe + 1)
+		var full := _dimension_levels(section_id)
+		var rebuilt: Array[LevelConfig] = []
+		var subset_i := 0
+		for level in full:
+			if level.group_title_key.strip_edges() == title_key:
+				rebuilt.append(levels[subset_i])
+				subset_i += 1
+			else:
+				rebuilt.append(level)
+		to_save = rebuilt
+
+	for i in to_save.size():
+		to_save[i].sort_index = (i + 1) * 10
+		var err := CustomLevelStore.save_level(to_save[i])
+		if err != OK:
+			push_warning("Audit reorder save failed for %s: %s" % [to_save[i].level_id, error_string(err)])
+	if not CustomLevelStore.saves_to_project() and LevelCatalog != null:
+		LevelCatalog.reload_levels()
+	_refresh()
 
 
 func _on_delete_pressed(level_id: String) -> void:
@@ -422,7 +558,6 @@ func _on_edit_confirmed() -> void:
 	if err != OK:
 		push_warning("Level audit save failed: %s" % error_string(err))
 	elif not CustomLevelStore.saves_to_project() and LevelCatalog != null:
-		## Editor save_level already reloads; user:// saves need an explicit refresh.
 		LevelCatalog.reload_levels()
 	_refresh()
 
@@ -445,3 +580,121 @@ func _on_back_button_pressed() -> void:
 
 func handle_back() -> void:
 	_on_back_button_pressed()
+
+
+class _AuditRow extends PanelContainer:
+	const ROW_H := 72.0
+	const LEVEL_W := 60.0
+	const ACTIONS_W := 148.0
+	const BTN := 56
+
+	var audit: Control
+	var group_key: String = ""
+	var level_id: String = ""
+	var order_index: int = 1
+	var _order_label: Label
+	var _name_label: Label
+
+	func _init(host: Control, key: String, level: LevelConfig, order: int) -> void:
+		audit = host
+		group_key = key
+		level_id = level.level_id
+		order_index = order
+		mouse_filter = Control.MOUSE_FILTER_STOP
+		custom_minimum_size.y = ROW_H
+		_build(level)
+
+	func _build(level: LevelConfig) -> void:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(1, 1, 1, 0.55)
+		style.set_corner_radius_all(16)
+		style.content_margin_left = 12
+		style.content_margin_right = 12
+		style.content_margin_top = 8
+		style.content_margin_bottom = 8
+		add_theme_stylebox_override("panel", style)
+
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		add_child(row)
+
+		var grip := _GripIcon.new()
+		grip.custom_minimum_size = Vector2(28, 28)
+		grip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(grip)
+
+		_order_label = Label.new()
+		_order_label.text = str(order_index)
+		_order_label.custom_minimum_size.x = LEVEL_W
+		_order_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+		_order_label.add_theme_font_size_override("font_size", 28)
+		_order_label.add_theme_color_override("font_color", UiTheme.TEXT)
+		_order_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		row.add_child(_order_label)
+
+		_name_label = Label.new()
+		_name_label.text = LevelCatalog.get_level_label(level)
+		_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_name_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+		_name_label.add_theme_font_size_override("font_size", 26)
+		_name_label.add_theme_color_override("font_color", UiTheme.TEXT)
+		_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_name_label.clip_text = true
+		_name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		row.add_child(_name_label)
+
+		var actions := HBoxContainer.new()
+		actions.custom_minimum_size.x = ACTIONS_W
+		actions.alignment = BoxContainer.ALIGNMENT_CENTER
+		actions.add_theme_constant_override("separation", 10)
+		row.add_child(actions)
+
+		var edit_btn := CircleIconButton.new()
+		edit_btn.button_size = BTN
+		edit_btn.fa_icon = "pencil"
+		edit_btn.tooltip_key = "UI_AUDIT_EDIT"
+		edit_btn.accent_color = UiTheme.PRIMARY
+		edit_btn.pressed.connect(func() -> void: audit._on_edit_pressed(level_id))
+		actions.add_child(edit_btn)
+
+		var delete_btn := CircleIconButton.new()
+		delete_btn.button_size = BTN
+		delete_btn.fa_icon = "trash"
+		delete_btn.tooltip_key = "UI_AUDIT_DELETE"
+		delete_btn.accent_color = UiTheme.PLAY
+		delete_btn.pressed.connect(func() -> void: audit._on_delete_pressed(level_id))
+		actions.add_child(delete_btn)
+
+	func _get_drag_data(_at_position: Vector2) -> Variant:
+		var preview := Label.new()
+		preview.text = _name_label.text if _name_label else level_id
+		preview.add_theme_font_size_override("font_size", 24)
+		preview.add_theme_color_override("font_color", UiTheme.TEXT)
+		set_drag_preview(preview)
+		modulate = Color(1, 1, 1, 0.45)
+		return {"group_key": group_key, "from_index": order_index - 1, "level_id": level_id}
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_DRAG_END:
+			modulate = Color.WHITE
+
+	func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+		if typeof(data) != TYPE_DICTIONARY:
+			return false
+		return str(data.get("group_key", "")) == group_key
+
+	func _drop_data(_at_position: Vector2, data: Variant) -> void:
+		if not _can_drop_data(_at_position, data):
+			return
+		var from_index := int(data.get("from_index", -1))
+		## Dropping on a row moves the dragged level to that row's index.
+		var to_index := order_index - 1
+		if audit != null and audit.has_method("reorder_group"):
+			audit.reorder_group(group_key, from_index, to_index)
+
+
+
+class _GripIcon extends Control:
+	func _draw() -> void:
+		FaVector.draw_named(self, "bars", size * 0.5, minf(size.x, size.y) * 0.7, UiTheme.TEXT_MUTED)

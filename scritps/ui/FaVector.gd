@@ -28,6 +28,9 @@ const FA_CHARS := {
 	"check": "\uf00c",
 	"star": "\uf005",
 	"heart": "\uf004",
+	"pencil": "\uf040",
+	"trash": "\uf1f8",
+	"bars": "\uf0c9",
 }
 
 

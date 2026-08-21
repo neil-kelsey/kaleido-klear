@@ -554,10 +554,22 @@ msgid "UI_AUDIT_DAILY_MORE"
 msgstr " (+%d more)"
 
 msgid "UI_AUDIT_EDIT"
-msgstr "Edit"
+msgstr "Tinker"
 
 msgid "UI_AUDIT_DELETE"
-msgstr "Delete"
+msgstr "Scuttle"
+
+msgid "UI_AUDIT_COL_LEVEL"
+msgstr "Level"
+
+msgid "UI_AUDIT_COL_NAME"
+msgstr "Name"
+
+msgid "UI_AUDIT_COL_ACTIONS"
+msgstr "Actions"
+
+msgid "UI_AUDIT_UNGROUPED"
+msgstr "No banner"
 
 msgid "UI_AUDIT_SAVE"
 msgstr "Save"
@@ -641,16 +653,16 @@ msgid "UI_TUTORIAL_GOT_IT"
 msgstr "Aye"
 
 msgid "UI_TUTORIAL_BASIC_SWIPE"
-msgstr "Shove each block into the matching colour mark around the board."
+msgstr "Shove each block into the matching colour mark around the board.\n\nYe’ve won when the board’s cleared."
 
 msgid "UI_TUTORIAL_BASIC_GOALS"
-msgstr "Each side of the screen can be a different coloured mark, shown as a coloured bar. Shove a matching block toward a mark to clear that piece. Ye’ve won when the board’s empty."
+msgstr "Each side of the screen can be a different coloured mark, shown as a coloured bar. Shove a matching block toward a mark to clear that piece."
 
 msgid "UI_TUTORIAL_BASIC_LIVES"
 msgstr "Ye get three lives. A botched move costs a heart."
 
 msgid "UI_TUTORIAL_SHIFTING_CHEVRONS"
-msgstr "When a mark hits its quota, it shifts colour. Watch them chevrons for what’s comin’ next."
+msgstr "When a mark hits its quota, it’s wiped.\n\nAnother mark may take the berth — or that edge may stay empty.\n\nChevrons on the edges of the mark show which colour the next mark will be."
 
 msgid "UI_TUTORIAL_SHIFTING_MAP"
 msgstr "Tap the Goals button at the bottom of the screen to spy the whole run of upcoming marks."

@@ -559,6 +559,18 @@ msgstr "Edit"
 msgid "UI_AUDIT_DELETE"
 msgstr "Delete"
 
+msgid "UI_AUDIT_COL_LEVEL"
+msgstr "Level"
+
+msgid "UI_AUDIT_COL_NAME"
+msgstr "Name"
+
+msgid "UI_AUDIT_COL_ACTIONS"
+msgstr "Actions"
+
+msgid "UI_AUDIT_UNGROUPED"
+msgstr "Ungrouped"
+
 msgid "UI_AUDIT_SAVE"
 msgstr "Save"
 
@@ -641,16 +653,16 @@ msgid "UI_TUTORIAL_GOT_IT"
 msgstr "Got it"
 
 msgid "UI_TUTORIAL_BASIC_SWIPE"
-msgstr "Swipe each block into the matching colour goal around the board."
+msgstr "Swipe each block into the matching colour goal around the board.\n\nThe game is complete when the board is cleared."
 
 msgid "UI_TUTORIAL_BASIC_GOALS"
-msgstr "Each side of the screen can be a different coloured goal, shown as a coloured bar. Swipe a matching block towards a goal to clear that piece. The game is complete when the board is empty."
+msgstr "Each side of the screen can be a different coloured goal, shown as a coloured bar. Swipe a matching block towards a goal to clear that piece."
 
 msgid "UI_TUTORIAL_BASIC_LIVES"
 msgstr "You have three lives. A wrong move costs a heart."
 
 msgid "UI_TUTORIAL_SHIFTING_CHEVRONS"
-msgstr "When a goal hits its quota, it shifts to a new colour. Watch the chevrons to see what colour is coming next."
+msgstr "When a goal hits its quota, it’s cleared.\n\nAnother goal may take its place — or that edge may stay empty.\n\nChevrons on the edges of the goal show which colour the next goal will be."
 
 msgid "UI_TUTORIAL_SHIFTING_MAP"
 msgstr "Tap the Goals button at the bottom of the screen to see the full sequence of upcoming goals."
