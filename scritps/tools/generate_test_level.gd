@@ -10,6 +10,7 @@ const REPORT_PATH := "res://build/level_gen_report.txt"
 const _GROUP_BASIC := "UI_GROUP_BASIC_TRAINING"
 ## Tutorial group order by sort_index: Basic → Walls → Shifting → Colour Mix → Bigger.
 ## Colour Mix: 160–200 (see generate_colour_mix_levels.gd).
+## Bigger Boards 2–4: 220–240 (see generate_bigger_board_levels.gd).
 const _GROUP_SHIFTING := "UI_GROUP_SHIFTING_GOALS"
 const _GROUP_WALLS := "UI_GROUP_WALLS"
 const _GROUP_BIGGER := "UI_GROUP_BIGGER_BOARDS"
@@ -128,12 +129,10 @@ func _level_specs() -> Array:
 		{"level": _build_variant_h()},
 		{"level": _build_variant_i()},
 		{"level": _build_variant_j()},
-		## Bigger boards: original packings with the dim1-L4 bait *idea*
-		## (edge-flush piece looks free; must exit a different edge instead).
+		## Bigger Boards 1 is kept here. Levels 2–4 live in
+		## generate_bigger_board_levels.gd so this script cannot recreate the
+		## old bait-2/3/4 duplicates.
 		_spec_bait(_build_bigger_1(), 0, Vector2i.LEFT),
-		_spec_bait(_build_bigger_2(), 0, Vector2i.LEFT),
-		_spec_bait(_build_bigger_3(), 0, Vector2i.LEFT),
-		_spec_bait(_build_bigger_4(), 0, Vector2i.LEFT),
 	]
 
 
@@ -1031,10 +1030,8 @@ func _build_walls_5() -> LevelConfig:
 	)
 
 
-## Bigger Boards — original 7–9 wide layouts using the Dimension 1 level 4 bait
-## idea (not its geometry): an edge-flush piece matches that edge's phase, so it
-## looks free, but it must exit a different edge; its inland twin takes the bait
-## edge later. Taking the obvious exit early bricks the run.
+## Bigger Boards 1 — left-blue bait on interlocking towers. Levels 2–4 are in
+## generate_bigger_board_levels.gd (do not recreate the old bait-2/3/4 copies).
 
 func _bait_phase(color: Block.TileColor, count: int = 1) -> GoalPhase:
 	var phase := GoalPhase.new()
@@ -1153,66 +1150,6 @@ func _build_bigger_1() -> LevelConfig:
 			"01244467",
 			"01222668",
 			"00222688",
-		]),
-		_bigger_std_colors()
-	)
-
-
-func _build_bigger_2() -> LevelConfig:
-	## 8×8 — inland blue sits higher; denser mid reds.
-	return _from_ascii_level(
-		"test_bigger_bait_2",
-		"Bigger Bait 2 — High Key",
-		220,
-		PackedStringArray([
-			"01334557",
-			"01334557",
-			"01234557",
-			"01234457",
-			"01234457",
-			"01244467",
-			"01222668",
-			"00222688",
-		]),
-		_bigger_std_colors()
-	)
-
-
-func _build_bigger_3() -> LevelConfig:
-	## 8×8 — green towers with a connected red step into the bottom shelf.
-	return _from_ascii_level(
-		"test_bigger_bait_3",
-		"Bigger Bait 3 — Green Jaw",
-		230,
-		PackedStringArray([
-			"01135557",
-			"01235557",
-			"01233557",
-			"01233457",
-			"01234457",
-			"01244467",
-			"01222668",
-			"00222688",
-		]),
-		_bigger_std_colors()
-	)
-
-
-func _build_bigger_4() -> LevelConfig:
-	## 9×8 wider left-blue bait — more room, same trap structure.
-	return _from_ascii_level(
-		"test_bigger_bait_4",
-		"Bigger Bait 4 — Wide",
-		240,
-		PackedStringArray([
-			"011335577",
-			"012335577",
-			"012335567",
-			"012335567",
-			"012345567",
-			"012445668",
-			"012446688",
-			"002266688",
 		]),
 		_bigger_std_colors()
 	)

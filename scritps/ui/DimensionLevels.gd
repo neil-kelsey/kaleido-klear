@@ -26,8 +26,8 @@ const HEADER_CLEARANCE := 118.0
 const TITLE_FONT_SIZE := 53
 ## On-screen stroke match for DimensionMap.INTRO_ZOOM_END (map path markers).
 const MAP_DRAW_ZOOM := 2.35
-## Page-snap only when a dimension has more levels than this.
-const PAGE_LEVEL_THRESHOLD := 24
+## Page-snap only above this count. Tutorial (25) must stay compact free-scroll.
+const PAGE_LEVEL_THRESHOLD := 48
 
 const PAGE_SNAP_DURATION := 0.42
 const SNAP_VELOCITY := 220.0
