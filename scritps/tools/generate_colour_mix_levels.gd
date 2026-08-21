@@ -177,12 +177,12 @@ func _level_specs() -> Array:
 	return [
 		{"level": _level_orange_intro()},
 		{"level": _level_purple_pair()},
-		{"level": _level_green_trap()},
+		{"level": _level_green_pair()},
 		{"level": _level_two_mixes()},
 		{
 			"level": _level_deadlock(),
-			## Swipe the top red down, then the remaining yellow down.
-			## Both mixes land in the same band and deadlock.
+			## Swipe both top T’s down: orange and green mix into the same
+			## band and block each other's left/right goals.
 			"trap": [
 				{"block_index": 0, "direction": Vector2i.DOWN},
 				{"color": Block.TileColor.YELLOW, "direction": Vector2i.DOWN},
@@ -231,25 +231,23 @@ func _level_purple_pair() -> LevelConfig:
 	)
 
 
-func _level_green_trap() -> LevelConfig:
-	## Yellow line_3 + blue L → green (left). Extra red L is a wrong-mix bait;
-	## after the correct mix it still scores on the red bottom goal.
+func _level_green_pair() -> LevelConfig:
+	## Yellow line_3 + blue L → green, then swipe left. Third mix colour,
+	## still a 2-move obvious board — no wrong-mix bait.
 	return _make_level(
 		"test_5x5_colour_mix_3",
-		"Colour Mix 3 — Green Trap",
+		"Colour Mix 3 — Green",
 		180,
 		{
 			"left": true,
 			"top": false,
 			"right": false,
-			"bottom": true,
+			"bottom": false,
 			"left_color": Block.TileColor.GREEN,
-			"bottom_color": Block.TileColor.RED,
 		},
 		[
 			_piece("Yellow Bar", Block.TileColor.YELLOW, _line3_h(0, 0), BlockShapes.LINE_3),
 			_piece("Blue L", Block.TileColor.BLUE, _l_se(2, 2), BlockShapes.L_SHAPE),
-			_piece("Red Bait", Block.TileColor.RED, _line3_h(2, 4), BlockShapes.LINE_3),
 		]
 	)
 
@@ -279,8 +277,10 @@ func _level_two_mixes() -> LevelConfig:
 
 
 func _level_deadlock() -> LevelConfig:
-	## Two L bands. Mix each pair on its own row, then send orange right and green
-	## left. Swiping both top pieces down parks orange and green in-line — deadlock.
+	## Two T pairs on a 6×6. Mix each pair on its own row, then send orange
+	## right and green left. Swiping both top T’s down parks two mixed pieces
+	## in the same band — orange cannot reach the right goal, green cannot
+	## reach the left (Dimension 2’s in-line deadlock, 3+ cell pieces).
 	return _make_level(
 		"test_5x5_colour_mix_5",
 		"Colour Mix 5 — Challenge",
@@ -294,11 +294,12 @@ func _level_deadlock() -> LevelConfig:
 			"right_color": Block.TileColor.ORANGE,
 		},
 		[
-			_piece("Red Top L", Block.TileColor.RED, _l_se(1, 0), BlockShapes.L_SHAPE),
-			_piece("Yellow Top L", Block.TileColor.YELLOW, _l_ne(3, 0), BlockShapes.L_SHAPE),
-			_piece("Yellow Low L", Block.TileColor.YELLOW, _l_se(1, 3), BlockShapes.L_SHAPE),
-			_piece("Blue Low L", Block.TileColor.BLUE, _l_ne(3, 3), BlockShapes.L_SHAPE),
-		]
+			_piece("Red Top T", Block.TileColor.RED, _t_south(0, 1), "t_shape"),
+			_piece("Yellow Top T", Block.TileColor.YELLOW, _t_south(3, 1), "t_shape"),
+			_piece("Yellow Low T", Block.TileColor.YELLOW, _t_south(0, 4), "t_shape"),
+			_piece("Blue Low T", Block.TileColor.BLUE, _t_south(3, 4), "t_shape"),
+		],
+		{"columns": 6, "rows": 6}
 	)
 
 
@@ -445,7 +446,17 @@ func _verify_trap(level: LevelConfig, moves: Array) -> Dictionary:
 	var result: Dictionary = LevelSolverScript.solve_state(sim, state)
 	if bool(result.get("solvable", false)):
 		return {"ok": false, "reason": "trap still solvable"}
-	return {"ok": true, "reason": "wrong line deadlocks"}
+	return {"ok": true, "reason": "wrong line deadlocks; %s" % _state_cells(state)}
+
+
+func _state_cells(state) -> String:
+	var parts: PackedStringArray = []
+	for block in state.blocks:
+		var cells: PackedStringArray = []
+		for cell in block.occupied():
+			cells.append("%s,%s" % [cell.x, cell.y])
+		parts.append("c%s[%s]" % [block.color, " ".join(cells)])
+	return " ".join(parts)
 
 
 func _trap_block_index(state, move: Dictionary) -> int:
