@@ -8,7 +8,8 @@ extends SceneTree
 const SECTION_TEST := 10
 const REPORT_PATH := "res://build/level_gen_report.txt"
 const _GROUP_BASIC := "UI_GROUP_BASIC_TRAINING"
-## Colour Mix lives at sort_index 51–59 (see generate_colour_mix_levels.gd).
+## Tutorial group order by sort_index: Basic → Walls → Shifting → Colour Mix → Bigger.
+## Colour Mix: 160–200 (see generate_colour_mix_levels.gd).
 const _GROUP_SHIFTING := "UI_GROUP_SHIFTING_GOALS"
 const _GROUP_WALLS := "UI_GROUP_WALLS"
 const _GROUP_BIGGER := "UI_GROUP_BIGGER_BOARDS"
@@ -117,16 +118,16 @@ func _level_specs() -> Array:
 		{"level": _build_variant_c()},
 		{"level": _build_variant_d()},
 		{"level": _build_variant_e()},
-		{"level": _build_variant_f()},
-		{"level": _build_variant_g()},
-		{"level": _build_variant_h()},
-		{"level": _build_variant_i()},
-		{"level": _build_variant_j()},
 		{"level": _build_walls_1()},
 		{"level": _build_walls_2()},
 		{"level": _build_walls_3()},
 		{"level": _build_walls_4()},
 		{"level": _build_walls_5()},
+		{"level": _build_variant_f()},
+		{"level": _build_variant_g()},
+		{"level": _build_variant_h()},
+		{"level": _build_variant_i()},
+		{"level": _build_variant_j()},
 		## Bigger boards: original packings with the dim1-L4 bait *idea*
 		## (edge-flush piece looks free; must exit a different edge instead).
 		_spec_bait(_build_bigger_1(), 0, Vector2i.LEFT),
@@ -500,7 +501,7 @@ func _build_variant_f() -> LevelConfig:
 	return _make_shifting_level(
 		"test_5x5_shifting_1",
 		"Test 5x5 Shifting 1",
-		100,
+		110,
 		[
 			{"name": "Red Cap", "color": Block.TileColor.RED, "cells": [
 				Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1),
@@ -546,7 +547,7 @@ func _build_variant_g() -> LevelConfig:
 	return _make_shifting_level(
 		"test_5x5_shifting_2",
 		"Test 5x5 Shifting 2",
-		110,
+		120,
 		[
 			{"name": "Green Hook", "color": Block.TileColor.GREEN, "cells": [
 				Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(2, 1),
@@ -592,7 +593,7 @@ func _build_variant_h() -> LevelConfig:
 	return _make_shifting_level(
 		"test_5x5_shifting_3",
 		"Test 5x5 Shifting 3",
-		120,
+		130,
 		[
 			{"name": "Red Cap", "color": Block.TileColor.RED, "cells": [
 				Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1),
@@ -638,7 +639,7 @@ func _build_variant_i() -> LevelConfig:
 	return _make_shifting_level(
 		"test_5x5_shifting_4",
 		"Test 5x5 Shifting 4",
-		130,
+		140,
 		[
 			{"name": "Red Cap", "color": Block.TileColor.RED, "cells": [
 				Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1),
@@ -684,7 +685,7 @@ func _build_variant_j() -> LevelConfig:
 	return _make_shifting_level(
 		"test_5x5_shifting_5",
 		"Test 5x5 Shifting 5",
-		140,
+		150,
 		[
 			{"name": "Red Hook", "color": Block.TileColor.RED, "cells": [
 				Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(1, 1),
@@ -842,7 +843,7 @@ func _build_walls_1() -> LevelConfig:
 	return _make_level(
 		"test_5x5_walls_1",
 		"Test Walls 1 — Single",
-		200,
+		60,
 		_two_color_goals(),
 		_GROUP_WALLS,
 		[
@@ -881,7 +882,7 @@ func _build_walls_2() -> LevelConfig:
 	return _make_level(
 		"test_5x5_walls_2",
 		"Test Walls 2 — L Shape",
-		210,
+		70,
 		_two_color_goals(),
 		_GROUP_WALLS,
 		[
@@ -920,7 +921,7 @@ func _build_walls_3() -> LevelConfig:
 	return _make_level(
 		"test_5x5_walls_3",
 		"Test Walls 3 — Big L",
-		220,
+		80,
 		_two_color_goals(),
 		_GROUP_WALLS,
 		[
@@ -956,7 +957,7 @@ func _build_walls_4() -> LevelConfig:
 	return _make_level(
 		"test_5x5_walls_4",
 		"Test Walls 4 — Two Walls",
-		230,
+		90,
 		_two_color_goals(),
 		_GROUP_WALLS,
 		[
@@ -998,7 +999,7 @@ func _build_walls_5() -> LevelConfig:
 	return _make_level(
 		"test_5x5_walls_5",
 		"Test Walls 5 — Many Walls",
-		240,
+		100,
 		_two_color_goals(),
 		_GROUP_WALLS,
 		[
@@ -1142,7 +1143,7 @@ func _build_bigger_1() -> LevelConfig:
 	return _from_ascii_level(
 		"test_bigger_bait_1",
 		"Bigger Bait 1 — Towers",
-		300,
+		210,
 		PackedStringArray([
 			"01133557",
 			"01233557",
@@ -1162,7 +1163,7 @@ func _build_bigger_2() -> LevelConfig:
 	return _from_ascii_level(
 		"test_bigger_bait_2",
 		"Bigger Bait 2 — High Key",
-		310,
+		220,
 		PackedStringArray([
 			"01334557",
 			"01334557",
@@ -1182,7 +1183,7 @@ func _build_bigger_3() -> LevelConfig:
 	return _from_ascii_level(
 		"test_bigger_bait_3",
 		"Bigger Bait 3 — Green Jaw",
-		320,
+		230,
 		PackedStringArray([
 			"01135557",
 			"01235557",
@@ -1202,7 +1203,7 @@ func _build_bigger_4() -> LevelConfig:
 	return _from_ascii_level(
 		"test_bigger_bait_4",
 		"Bigger Bait 4 — Wide",
-		330,
+		240,
 		PackedStringArray([
 			"011335577",
 			"012335577",

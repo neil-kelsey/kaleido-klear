@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Build the Tutorial Colour Mix chapter (section 10, sort 51–55).
+## Build the Tutorial Colour Mix chapter (section 10, sort 160–200).
 ## Run:
 ##   Godot --headless --path <project> -s res://scritps/tools/generate_colour_mix_levels.gd
 
@@ -170,7 +170,7 @@ func _level_orange_intro() -> LevelConfig:
 	return _make_level(
 		"test_5x5_colour_mix_1",
 		"Colour Mix 1 — Orange",
-		51,
+		160,
 		{
 			"left": false,
 			"top": false,
@@ -190,7 +190,7 @@ func _level_purple_pair() -> LevelConfig:
 	return _make_level(
 		"test_5x5_colour_mix_2",
 		"Colour Mix 2 — Purple",
-		52,
+		170,
 		{
 			"left": false,
 			"top": true,
@@ -211,7 +211,7 @@ func _level_green_trap() -> LevelConfig:
 	return _make_level(
 		"test_5x5_colour_mix_3",
 		"Colour Mix 3 — Green Trap",
-		53,
+		180,
 		{
 			"left": true,
 			"top": false,
@@ -233,7 +233,7 @@ func _level_two_mixes_open() -> LevelConfig:
 	return _make_level(
 		"test_5x5_colour_mix_4",
 		"Colour Mix 4 — Two Mixes",
-		54,
+		190,
 		{
 			"left": false,
 			"top": true,
@@ -257,7 +257,7 @@ func _level_two_mixes_stacked() -> LevelConfig:
 	return _make_level(
 		"test_5x5_colour_mix_5",
 		"Colour Mix 5 — Challenge",
-		55,
+		200,
 		{
 			"left": false,
 			"top": true,
