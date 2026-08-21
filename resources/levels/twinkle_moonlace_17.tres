@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_mt45i"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_bvacm"]
+
+[sub_resource type="Resource" id="Resource_gshmv"]
+script = ExtResource("1_mt45i")
+color = 1
+count = 2
+
+[sub_resource type="Resource" id="Resource_in6vb"]
+script = ExtResource("1_mt45i")
+color = 3
+
+[sub_resource type="Resource" id="Resource_85knf"]
+script = ExtResource("1_mt45i")
+count = 4
+
+[resource]
+script = ExtResource("2_bvacm")
+level_id = "twinkle_moonlace_17"
+level_name_key = ""
+display_name = "Moonlace Walls 17"
+sort_index = 216
+goal_top_color = 0
+goal_right_color = 3
+goal_bottom_color = 1
+multi_goal_mode = true
+goal_top_phases = Array[ExtResource("1_mt45i")]([SubResource("Resource_85knf")])
+goal_right_phases = Array[ExtResource("1_mt45i")]([SubResource("Resource_in6vb")])
+goal_bottom_phases = Array[ExtResource("1_mt45i")]([SubResource("Resource_gshmv")])
+goal_left_enabled = false
+goal_bottom_enabled = true
+disabled_cells = Array[Vector2i]([Vector2i(4, 1), Vector2i(4, 2), Vector2i(4, 3), Vector2i(4, 5), Vector2i(4, 6)])
+block_positions = Array[Vector2i]([Vector2i(0, 3), Vector2i(2, 3), Vector2i(5, 5), Vector2i(0, 5), Vector2i(3, 6), Vector2i(5, 0), Vector2i(1, 0), Vector2i(4, 3), Vector2i(0, 0)])
+block_colors = Array[int]([0, 0, 0, 1, 1, 0, 0, 3, 0])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([2, 2, 0, 0, 0, 0, 0, 0, 0])
+block_cell_patterns = [Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(0, 2), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0), Vector2i(2, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 1), Vector2i(2, 1), Vector2i(1, 2), Vector2i(2, 2), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(2, 2), Vector2i(2, 1), Vector2i(2, 0), Vector2i(1, 1), Vector2i(2, 3), Vector2i(0, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(3, 0), Vector2i(2, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0), Vector2i(4, 0), Vector2i(5, 0), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(3, 2), Vector2i(3, 1), Vector2i(3, 3), Vector2i(2, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(2, 3)])]
+block_shape_names = Array[String](["Wall 0", "Wall 1", "Piece 0", "Piece 1", "Piece 2", "Piece 3", "Piece 4", "Piece 5", "Piece 6"])
+group_title_key = "UI_GROUP_MOONLACE_WALLS"
+verified_solvable = true
+min_moves = 7
+difficulty_score = 63.93
+difficulty_tier = 2

@@ -69,32 +69,6 @@ func _initialize() -> void:
 			continue
 		lines.append("Saved res://resources/levels/%s.tres" % level.level_id)
 
-	lines.append("")
-	lines.append("=== Dimension 2 merge demos (merge-once) ===")
-	for path in [
-		"res://resources/levels/merge_demo.tres",
-		"res://resources/levels/merge_demo_2.tres",
-		"res://resources/levels/merge_demo_level.tres",
-		"res://resources/levels/merge_demo_level_2.tres",
-	]:
-		var demo: LevelConfig = load(path)
-		if demo == null:
-			lines.append("MISSING %s" % path)
-			exit_code = 1
-			continue
-		var demo_result: Dictionary = LevelSolverScript.solve(demo)
-		lines.append(
-			"%s solvable=%s min_moves=%s states=%s"
-			% [
-				demo.level_id,
-				demo_result.get("solvable", false),
-				demo_result.get("min_moves", -1),
-				demo_result.get("states_explored", 0),
-			]
-		)
-		if not bool(demo_result.get("solvable", false)):
-			lines.append("WARN: %s is unsolvable under merge-once." % demo.level_id)
-
 	_finish(lines, exit_code)
 
 

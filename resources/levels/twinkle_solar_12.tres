@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_mpttc"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_da7ie"]
+
+[sub_resource type="Resource" id="Resource_fo0w4"]
+script = ExtResource("1_mpttc")
+count = 3
+
+[sub_resource type="Resource" id="Resource_88px1"]
+script = ExtResource("1_mpttc")
+color = 2
+count = 3
+
+[sub_resource type="Resource" id="Resource_ijwc6"]
+script = ExtResource("1_mpttc")
+color = 3
+count = 4
+
+[resource]
+script = ExtResource("2_da7ie")
+level_id = "twinkle_solar_12"
+level_name_key = ""
+display_name = "Solar Stack 12"
+sort_index = 311
+goal_top_color = 0
+multi_goal_mode = true
+goal_top_phases = Array[ExtResource("1_mpttc")]([SubResource("Resource_fo0w4"), SubResource("Resource_88px1"), SubResource("Resource_ijwc6")])
+goal_left_enabled = false
+goal_right_enabled = false
+block_positions = Array[Vector2i]([Vector2i(0, 4), Vector2i(1, 6), Vector2i(0, 2), Vector2i(6, 4), Vector2i(5, 3), Vector2i(2, 2), Vector2i(2, 0), Vector2i(4, 0), Vector2i(0, 0), Vector2i(6, 0)])
+block_colors = Array[int]([3, 3, 2, 3, 2, 3, 0, 0, 0, 2])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 2), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 3)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(2, 0), Vector2i(3, 1), Vector2i(3, 0), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(1, 2), Vector2i(1, 3)]), Array[Vector2i]([Vector2i(0, 4), Vector2i(0, 3), Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(2, 0), Vector2i(1, 1), Vector2i(2, 2), Vector2i(1, 2), Vector2i(0, 2), Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(2, 1), Vector2i(2, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(1, 3), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 2), Vector2i(0, 3)])]
+block_shape_names = Array[String](["Piece 0", "Piece 1", "Piece 2", "Piece 3", "Piece 4", "Piece 5", "Piece 6", "Piece 7", "Piece 8", "Piece 9"])
+group_title_key = "UI_GROUP_SOLAR_STACK"
+verified_solvable = true
+min_moves = 10
+difficulty_score = 43.07
+difficulty_tier = 2

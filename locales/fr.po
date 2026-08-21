@@ -65,43 +65,43 @@ msgid "UI_MULTI_GOAL_DEMO_2"
 msgstr "Démo multi-objectifs 2"
 
 msgid "UI_SECTION_1"
-msgstr "Dimension 1"
+msgstr "Dérive scintillante"
 
 msgid "UI_SECTION_2"
-msgstr "Dimension 2"
+msgstr "Nébuleuse de rosée"
 
 msgid "UI_SECTION_3"
-msgstr "Dimension 3"
+msgstr "Hauts-fonds des comètes"
 
 msgid "UI_DIMENSION_1"
-msgstr "Dimension 1"
+msgstr "Dérive scintillante"
 
 msgid "UI_DIMENSION_2"
-msgstr "Dimension 2"
+msgstr "Nébuleuse de rosée"
 
 msgid "UI_DIMENSION_3"
-msgstr "Dimension 3"
+msgstr "Hauts-fonds des comètes"
 
 msgid "UI_DIMENSION_4"
-msgstr "Dimension 4"
+msgstr "Prairies d'ions"
 
 msgid "UI_DIMENSION_5"
-msgstr "Dimension 5"
+msgstr "Ceinture du magnétar"
 
 msgid "UI_DIMENSION_6"
-msgstr "Dimension 6"
+msgstr "Tempête de verre"
 
 msgid "UI_DIMENSION_7"
-msgstr "Dimension 7"
+msgstr "Terres du décalage"
 
 msgid "UI_DIMENSION_8"
-msgstr "Dimension 8"
+msgstr "Rivage de l'événement"
 
 msgid "UI_DIMENSION_9"
-msgstr "Dimension 9"
+msgstr "Flèche du néant"
 
 msgid "UI_DIMENSION_10"
-msgstr "Dimension 10"
+msgstr "La Gueule"
 
 msgid "UI_DIMENSION_TUTORIAL"
 msgstr "Tutoriel"
@@ -684,3 +684,39 @@ msgstr "Seule la couleur mélangée correspond à ce but — un bloc rouge n’e
 
 msgid "UI_TUTORIAL_COLOUR_MIX_ONCE"
 msgstr "Une fois deux blocs mélangés, le nouveau bloc ne se mélangera plus."
+
+msgid "UI_SECTION_4"
+msgstr "Prairies d'ions"
+
+msgid "UI_SECTION_5"
+msgstr "Ceinture du magnétar"
+
+msgid "UI_SECTION_6"
+msgstr "Tempête de verre"
+
+msgid "UI_SECTION_7"
+msgstr "Terres du décalage"
+
+msgid "UI_SECTION_8"
+msgstr "Rivage de l'événement"
+
+msgid "UI_SECTION_9"
+msgstr "Flèche du néant"
+
+msgid "UI_SECTION_10"
+msgstr "La Gueule"
+
+msgid "UI_GROUP_PEBBLE_ORBITS"
+msgstr "Orbites de galets"
+
+msgid "UI_GROUP_MOONLACE_WALLS"
+msgstr "Murs de dentelle lunaire"
+
+msgid "UI_GROUP_SOLAR_STACK"
+msgstr "Pile solaire"
+
+msgid "UI_GROUP_PAINT_NOVA"
+msgstr "Nova de peinture"
+
+msgid "UI_GROUP_RIFT_GEOMETRY"
+msgstr "Géométrie de faille"

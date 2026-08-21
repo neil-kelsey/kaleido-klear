@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_qhna4"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_kenp7"]
+
+[sub_resource type="Resource" id="Resource_mcoef"]
+script = ExtResource("1_qhna4")
+count = 9
+
+[sub_resource type="Resource" id="Resource_xrmjd"]
+script = ExtResource("1_qhna4")
+color = 4
+
+[sub_resource type="Resource" id="Resource_iihkf"]
+script = ExtResource("1_qhna4")
+color = 2
+count = 6
+
+[resource]
+script = ExtResource("2_kenp7")
+level_id = "twinkle_paint_30"
+level_name_key = ""
+display_name = "Paint Nova 30"
+sort_index = 429
+columns = 10
+rows = 10
+goal_left_color = 4
+goal_bottom_color = 0
+multi_goal_mode = true
+goal_left_phases = Array[ExtResource("1_qhna4")]([SubResource("Resource_xrmjd")])
+goal_top_phases = Array[ExtResource("1_qhna4")]([SubResource("Resource_iihkf")])
+goal_bottom_phases = Array[ExtResource("1_qhna4")]([SubResource("Resource_mcoef")])
+goal_right_enabled = false
+goal_bottom_enabled = true
+block_positions = Array[Vector2i]([Vector2i(3, 4), Vector2i(0, 7), Vector2i(0, 4), Vector2i(8, 0), Vector2i(1, 5), Vector2i(1, 8), Vector2i(6, 3), Vector2i(8, 8), Vector2i(2, 0), Vector2i(8, 5), Vector2i(5, 0), Vector2i(4, 4), Vector2i(6, 7), Vector2i(4, 6), Vector2i(8, 4), Vector2i(0, 0), Vector2i(6, 0), Vector2i(2, 0)])
+block_colors = Array[int]([0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(1, 3), Vector2i(1, 1), Vector2i(0, 2), Vector2i(1, 0), Vector2i(0, 1), Vector2i(0, 3)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 2), Vector2i(1, 0), Vector2i(0, 0), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 1), Vector2i(1, 0), Vector2i(2, 1), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(0, 2), Vector2i(0, 3), Vector2i(1, 3), Vector2i(1, 1), Vector2i(1, 0), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 3), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2), Vector2i(1, 3), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(2, 0), Vector2i(0, 0), Vector2i(1, 2), Vector2i(0, 1), Vector2i(3, 0), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(2, 3), Vector2i(1, 3), Vector2i(1, 2), Vector2i(0, 3), Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(1, 2), Vector2i(1, 3), Vector2i(1, 4)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(1, 2), Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 1), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(2, 1), Vector2i(2, 2), Vector2i(1, 2), Vector2i(1, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3), Vector2i(0, 4)])]
+block_shape_names = Array[String](["Wall 0", "Mixer A", "Mixer B", "Piece 0", "Piece 1", "Piece 2", "Piece 3", "Piece 4", "Piece 5", "Piece 6", "Piece 7", "Piece 8", "Piece 9", "Piece 10", "Piece 11", "Piece 12", "Piece 13", "Piece 14"])
+group_title_key = "UI_GROUP_PAINT_NOVA"
+verified_solvable = true
+min_moves = 17
+difficulty_score = 72.76
+difficulty_tier = 3

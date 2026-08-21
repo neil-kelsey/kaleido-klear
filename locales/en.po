@@ -65,43 +65,43 @@ msgid "UI_MULTI_GOAL_DEMO_2"
 msgstr "Multi-goal demo 2"
 
 msgid "UI_SECTION_1"
-msgstr "Dimension 1"
+msgstr "Twinkle Drift"
 
 msgid "UI_SECTION_2"
-msgstr "Dimension 2"
+msgstr "Dewfall Nebula"
 
 msgid "UI_SECTION_3"
-msgstr "Dimension 3"
+msgstr "Comet Shallows"
 
 msgid "UI_DIMENSION_1"
-msgstr "Dimension 1"
+msgstr "Twinkle Drift"
 
 msgid "UI_DIMENSION_2"
-msgstr "Dimension 2"
+msgstr "Dewfall Nebula"
 
 msgid "UI_DIMENSION_3"
-msgstr "Dimension 3"
+msgstr "Comet Shallows"
 
 msgid "UI_DIMENSION_4"
-msgstr "Dimension 4"
+msgstr "Ion Meadows"
 
 msgid "UI_DIMENSION_5"
-msgstr "Dimension 5"
+msgstr "Magnetar Belt"
 
 msgid "UI_DIMENSION_6"
-msgstr "Dimension 6"
+msgstr "Glass Tempest"
 
 msgid "UI_DIMENSION_7"
-msgstr "Dimension 7"
+msgstr "Redshift Wastes"
 
 msgid "UI_DIMENSION_8"
-msgstr "Dimension 8"
+msgstr "Event Shore"
 
 msgid "UI_DIMENSION_9"
-msgstr "Dimension 9"
+msgstr "Null Spire"
 
 msgid "UI_DIMENSION_10"
-msgstr "Dimension 10"
+msgstr "The Maw"
 
 msgid "UI_DIMENSION_TUTORIAL"
 msgstr "Tutorial"
@@ -684,3 +684,39 @@ msgstr "Only the mixed colour fits that goal — a red block will not go into an
 
 msgid "UI_TUTORIAL_COLOUR_MIX_ONCE"
 msgstr "Once two blocks have mixed, that new block will not mix again."
+
+msgid "UI_SECTION_4"
+msgstr "Ion Meadows"
+
+msgid "UI_SECTION_5"
+msgstr "Magnetar Belt"
+
+msgid "UI_SECTION_6"
+msgstr "Glass Tempest"
+
+msgid "UI_SECTION_7"
+msgstr "Redshift Wastes"
+
+msgid "UI_SECTION_8"
+msgstr "Event Shore"
+
+msgid "UI_SECTION_9"
+msgstr "Null Spire"
+
+msgid "UI_SECTION_10"
+msgstr "The Maw"
+
+msgid "UI_GROUP_PEBBLE_ORBITS"
+msgstr "Pebble Orbits"
+
+msgid "UI_GROUP_MOONLACE_WALLS"
+msgstr "Moonlace Walls"
+
+msgid "UI_GROUP_SOLAR_STACK"
+msgstr "Solar Stack"
+
+msgid "UI_GROUP_PAINT_NOVA"
+msgstr "Paint Nova"
+
+msgid "UI_GROUP_RIFT_GEOMETRY"
+msgstr "Rift Geometry"

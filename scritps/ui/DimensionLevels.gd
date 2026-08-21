@@ -11,6 +11,8 @@ const STRIP_WORLD := Rect2(-420, -180, 840, 2800)
 const COLUMNS := 5
 const COL_SPACING := 132.0
 const ROW_SPACING := 128.0
+## Slightly tighter rows so a 30-level chapter (6 rows) stays playable on a page.
+const ROW_SPACING_PAGED := 116.0
 const LEVEL_DIAMOND_SIZE := 114.0
 const GROUP_GAP_COMPACT := 168.0
 ## Fraction of viewport width reserved as empty space on each side of the diamond grid.
@@ -27,6 +29,7 @@ const TITLE_FONT_SIZE := 53
 ## On-screen stroke match for DimensionMap.INTRO_ZOOM_END (map path markers).
 const MAP_DRAW_ZOOM := 2.35
 ## Page-snap only above this count. Tutorial (25) must stay compact free-scroll.
+## Twinkle Drift (150) is above; keep this above 25 and at/under 150.
 const PAGE_LEVEL_THRESHOLD := 48
 
 const PAGE_SNAP_DURATION := 0.42
@@ -76,7 +79,7 @@ func _ready() -> void:
 	if back_button != null:
 		back_button.accent_color = _theme_color
 	_levels = LevelCatalog.get_section_levels(_dimension_index)
-	_paging_enabled = _levels.size() > PAGE_LEVEL_THRESHOLD
+	_paging_enabled = _should_enable_paging()
 	_star_chart_tex = load(STAR_CHART_PATH) as Texture2D
 	if _star_chart_tex == null:
 		push_warning("Missing baked level star chart at %s — run bake_level_star_chart.gd" % STAR_CHART_PATH)
@@ -141,14 +144,14 @@ func _on_viewport_resized() -> void:
 
 
 func _rebuild_map() -> void:
-	_paging_enabled = _levels.size() > PAGE_LEVEL_THRESHOLD
+	_paging_enabled = _should_enable_paging()
 	_apply_page_zoom()
 	_group_gap = _group_gap_for_paging() if _paging_enabled else GROUP_GAP_COMPACT
 	var layout: Dictionary = LevelCatalog.build_grouped_level_layout(
 		_levels,
 		COLUMNS,
 		COL_SPACING,
-		ROW_SPACING,
+		_row_spacing(),
 		_hub_gap_for_title(),
 		_group_gap,
 		HEADER_CLEARANCE
@@ -178,11 +181,45 @@ func _apply_page_zoom() -> void:
 	camera.position.x = 0.0
 
 
+func _should_enable_paging() -> bool:
+	## Tutorial stays compact free-scroll even if the global count threshold changes.
+	if LevelCatalog.is_tutorial_dimension(_dimension_index):
+		return false
+	if _levels.size() > PAGE_LEVEL_THRESHOLD:
+		return true
+	## A full 30-level chapter is one page even before the dimension hits 48.
+	return _largest_group_size() >= 30
+
+
+func _largest_group_size() -> int:
+	var counts: Dictionary = {}
+	var largest := 0
+	for level in _levels:
+		if level == null:
+			continue
+		var key := level.group_title_key.strip_edges()
+		if key.is_empty():
+			key = "_"
+		var n := int(counts.get(key, 0)) + 1
+		counts[key] = n
+		largest = maxi(largest, n)
+	return largest
+
+
+func _row_spacing() -> float:
+	return ROW_SPACING_PAGED if _paging_enabled else ROW_SPACING
+
+
 func _group_gap_for_paging() -> float:
 	var page_h := get_viewport_rect().size.y / maxf(camera.zoom.x, 0.001)
-	## Keep sections roughly one viewport apart so snaps feel like full-page jumps.
-	var section_body := ROW_SPACING + LEVEL_DIAMOND_SIZE * 0.35 + 48.0
-	return maxf(page_h - section_body, 240.0)
+	var rows := ceili(float(maxi(_largest_group_size(), 1)) / float(COLUMNS))
+	## Header + 6 diamond rows for a 30-level chapter. Slight in-page scroll is ok.
+	var section_body := (
+		HEADER_CLEARANCE
+		+ float(maxi(rows - 1, 0)) * _row_spacing()
+		+ LEVEL_DIAMOND_SIZE * 0.5
+	)
+	return maxf(page_h * 0.92 - section_body, 220.0)
 
 
 func _camera_y_to_frame_world_y(world_y: float, top_margin_px: float) -> float:

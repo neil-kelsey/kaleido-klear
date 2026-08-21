@@ -65,43 +65,43 @@ msgid "UI_MULTI_GOAL_DEMO_2"
 msgstr "Multi-plunder voyage 2"
 
 msgid "UI_SECTION_1"
-msgstr "Sea 1"
+msgstr "Twinklin' Drift"
 
 msgid "UI_SECTION_2"
-msgstr "Sea 2"
+msgstr "Dewfall Nebuly"
 
 msgid "UI_SECTION_3"
-msgstr "Sea 3"
+msgstr "Comet Shoals"
 
 msgid "UI_DIMENSION_1"
-msgstr "Sea 1"
+msgstr "Twinklin' Drift"
 
 msgid "UI_DIMENSION_2"
-msgstr "Sea 2"
+msgstr "Dewfall Nebuly"
 
 msgid "UI_DIMENSION_3"
-msgstr "Sea 3"
+msgstr "Comet Shoals"
 
 msgid "UI_DIMENSION_4"
-msgstr "Sea 4"
+msgstr "Ion Leys"
 
 msgid "UI_DIMENSION_5"
-msgstr "Sea 5"
+msgstr "Magnetar Cinch"
 
 msgid "UI_DIMENSION_6"
-msgstr "Sea 6"
+msgstr "Glass Squall"
 
 msgid "UI_DIMENSION_7"
-msgstr "Sea 7"
+msgstr "Redshift Doldrums"
 
 msgid "UI_DIMENSION_8"
-msgstr "Sea 8"
+msgstr "Event Strand"
 
 msgid "UI_DIMENSION_9"
-msgstr "Sea 9"
+msgstr "Null Spar"
 
 msgid "UI_DIMENSION_10"
-msgstr "Sea 10"
+msgstr "The Maw"
 
 msgid "UI_DIMENSION_TUTORIAL"
 msgstr "Tutorin'"
@@ -684,3 +684,39 @@ msgstr "Only the mixed colour fits that mark — a crimson block won’t sail in
 
 msgid "UI_TUTORIAL_COLOUR_MIX_ONCE"
 msgstr "Once two blocks have mixed, that new block won’t mix again."
+
+msgid "UI_SECTION_4"
+msgstr "Ion Leys"
+
+msgid "UI_SECTION_5"
+msgstr "Magnetar Cinch"
+
+msgid "UI_SECTION_6"
+msgstr "Glass Squall"
+
+msgid "UI_SECTION_7"
+msgstr "Redshift Doldrums"
+
+msgid "UI_SECTION_8"
+msgstr "Event Strand"
+
+msgid "UI_SECTION_9"
+msgstr "Null Spar"
+
+msgid "UI_SECTION_10"
+msgstr "The Maw"
+
+msgid "UI_GROUP_PEBBLE_ORBITS"
+msgstr "Pebble Gyres"
+
+msgid "UI_GROUP_MOONLACE_WALLS"
+msgstr "Moonlace Bulkheads"
+
+msgid "UI_GROUP_SOLAR_STACK"
+msgstr "Solar Hold"
+
+msgid "UI_GROUP_PAINT_NOVA"
+msgstr "Paintin' Nova"
+
+msgid "UI_GROUP_RIFT_GEOMETRY"
+msgstr "Rift Riggin'"
