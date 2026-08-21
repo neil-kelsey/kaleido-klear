@@ -8,6 +8,7 @@ extends SceneTree
 const SECTION_TEST := 10
 const REPORT_PATH := "res://build/level_gen_report.txt"
 const _GROUP_BASIC := "UI_GROUP_BASIC_TRAINING"
+## Colour Mix lives at sort_index 51–59 (see generate_colour_mix_levels.gd).
 const _GROUP_SHIFTING := "UI_GROUP_SHIFTING_GOALS"
 const _GROUP_WALLS := "UI_GROUP_WALLS"
 const _GROUP_BIGGER := "UI_GROUP_BIGGER_BOARDS"

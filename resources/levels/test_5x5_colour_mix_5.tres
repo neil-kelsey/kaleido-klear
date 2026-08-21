@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_vpmik"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_nxbuj"]
+
+[resource]
+script = ExtResource("2_nxbuj")
+level_id = "test_5x5_colour_mix_5"
+level_name_key = ""
+display_name = "Colour Mix 5 — Challenge"
+section_index = 10
+sort_index = 55
+columns = 5
+rows = 5
+goal_top_color = 4
+goal_right_color = 5
+goal_left_enabled = false
+block_positions = Array[Vector2i]([Vector2i(1, 1), Vector2i(3, 1), Vector2i(1, 3), Vector2i(3, 3)])
+block_colors = Array[int]([0, 3, 0, 2])
+block_shapes = Array[String](["single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0)])]
+block_shape_names = Array[String](["Red Top", "Yellow Top", "Red Low", "Blue Low"])
+group_title_key = "UI_GROUP_COLOUR_MIX"
+verified_solvable = true
+min_moves = 4
+difficulty_score = 27.54
+difficulty_tier = 2

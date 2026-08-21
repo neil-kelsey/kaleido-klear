@@ -672,3 +672,15 @@ msgstr "Walls do not move, and you cannot slide through them. Find another path 
 
 msgid "UI_TUTORIAL_BIGGER_BOARDS"
 msgstr "Boards can get really large, and puzzles get much more complex. Keep your wits about you!"
+
+msgid "UI_GROUP_COLOUR_MIX"
+msgstr "Colour Mix"
+
+msgid "UI_TUTORIAL_COLOUR_MIX_BLEND"
+msgstr "Mix two different colours to make a new one. Red and yellow make orange, yellow and blue make green, red and blue make purple."
+
+msgid "UI_TUTORIAL_COLOUR_MIX_GOALS"
+msgstr "Only the mixed colour fits that goal — a red block will not go into an orange goal."
+
+msgid "UI_TUTORIAL_COLOUR_MIX_ONCE"
+msgstr "Once two blocks have mixed, that new block will not mix again."
