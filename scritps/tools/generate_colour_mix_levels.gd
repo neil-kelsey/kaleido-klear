@@ -6,8 +6,10 @@ extends SceneTree
 
 const SECTION_TUTORIAL := 10
 const _GROUP_COLOUR_MIX := "UI_GROUP_COLOUR_MIX"
+const MIN_CELLS := 3
 const LevelSolverScript := preload("res://scritps/tools/LevelSolver.gd")
 const LevelDifficultyScript := preload("res://scritps/tools/LevelDifficulty.gd")
+const LevelGenRulesScript := preload("res://scritps/tools/LevelGenRules.gd")
 
 
 func _initialize() -> void:
@@ -19,9 +21,17 @@ func _initialize() -> void:
 		_finish(lines, 1)
 		return
 
-	for level in _levels():
+	for spec in _level_specs():
+		var level: LevelConfig = spec.level
 		lines.append("")
 		lines.append("--- %s ---" % level.level_id)
+
+		var cell_err := _min_cell_error(level)
+		if not cell_err.is_empty():
+			lines.append("ERROR: %s" % cell_err)
+			exit_code = 1
+			continue
+
 		var result: Dictionary = LevelSolverScript.solve(level)
 		var rating: Dictionary = LevelDifficultyScript.rate(
 			level, int(result.get("min_moves", -1))
@@ -38,6 +48,14 @@ func _initialize() -> void:
 			lines.append("ERROR: Level is not solvable — not saving.")
 			exit_code = 1
 			continue
+
+		if spec.has("trap"):
+			var trap: Dictionary = _verify_trap(level, spec.trap)
+			lines.append("trap unsolvable=%s (%s)" % [trap.get("ok", false), trap.get("reason", "")])
+			if not bool(trap.get("ok", false)):
+				lines.append("ERROR: Fail-state trap did not brick the puzzle.")
+				exit_code = 1
+				continue
 
 		level.verified_solvable = true
 		level.min_moves = int(result.min_moves)
@@ -140,13 +158,13 @@ func _assert_sim_rejects_remerge(lines: PackedStringArray) -> bool:
 			"right_color": Block.TileColor.ORANGE,
 		},
 		[
-			_piece("Orange", Block.TileColor.ORANGE, Vector2i(1, 2), BlockShapes.SINGLE),
-			_piece("Blue", Block.TileColor.BLUE, Vector2i(3, 2), BlockShapes.SINGLE),
+			_piece("Orange", Block.TileColor.ORANGE, _line3_h(0, 2)),
+			_piece("Blue", Block.TileColor.BLUE, _line3_h(0, 4)),
 		]
 	)
 	var sim := PuzzleSim.new()
 	var state = sim.load_config(level)
-	var applied: Dictionary = sim.apply_move(state, 1, Vector2i.LEFT)
+	var applied: Dictionary = sim.apply_move(state, 1, Vector2i.UP)
 	var outcome := int(applied.get("outcome", PuzzleSim.Outcome.NONE))
 	if outcome == PuzzleSim.Outcome.MERGE:
 		lines.append("FAIL PuzzleSim allowed orange+blue re-merge")
@@ -155,18 +173,26 @@ func _assert_sim_rejects_remerge(lines: PackedStringArray) -> bool:
 	return true
 
 
-func _levels() -> Array[LevelConfig]:
+func _level_specs() -> Array:
 	return [
-		_level_orange_intro(),
-		_level_purple_pair(),
-		_level_green_trap(),
-		_level_two_mixes_open(),
-		_level_two_mixes_stacked(),
+		{"level": _level_orange_intro()},
+		{"level": _level_purple_pair()},
+		{"level": _level_green_trap()},
+		{"level": _level_two_mixes()},
+		{
+			"level": _level_deadlock(),
+			## Swipe the top red down, then the remaining yellow down.
+			## Both mixes land in the same band and deadlock.
+			"trap": [
+				{"block_index": 0, "direction": Vector2i.DOWN},
+				{"color": Block.TileColor.YELLOW, "direction": Vector2i.DOWN},
+			],
+		},
 	]
 
 
 func _level_orange_intro() -> LevelConfig:
-	## Red + yellow on one row; mix then swipe the orange into the right goal.
+	## Two vertical line_3s. Mix, then swipe the orange into the right goal.
 	return _make_level(
 		"test_5x5_colour_mix_1",
 		"Colour Mix 1 — Orange",
@@ -179,14 +205,14 @@ func _level_orange_intro() -> LevelConfig:
 			"right_color": Block.TileColor.ORANGE,
 		},
 		[
-			_piece("Red Drop", Block.TileColor.RED, Vector2i(1, 2), BlockShapes.SINGLE),
-			_piece("Yellow Drop", Block.TileColor.YELLOW, Vector2i(3, 2), BlockShapes.SINGLE),
+			_piece("Red Bar", Block.TileColor.RED, _line3_v(1, 1), BlockShapes.LINE_3),
+			_piece("Yellow Bar", Block.TileColor.YELLOW, _line3_v(3, 1), BlockShapes.LINE_3),
 		]
 	)
 
 
 func _level_purple_pair() -> LevelConfig:
-	## Same idea, vertical: red + blue → purple, exit top.
+	## Two L trominoes. Mix, then swipe the purple into the top goal.
 	return _make_level(
 		"test_5x5_colour_mix_2",
 		"Colour Mix 2 — Purple",
@@ -199,14 +225,14 @@ func _level_purple_pair() -> LevelConfig:
 			"top_color": Block.TileColor.PURPLE,
 		},
 		[
-			_piece("Red Drop", Block.TileColor.RED, Vector2i(2, 1), BlockShapes.SINGLE),
-			_piece("Blue Drop", Block.TileColor.BLUE, Vector2i(2, 3), BlockShapes.SINGLE),
+			_piece("Red L", Block.TileColor.RED, _l_se(1, 1), BlockShapes.L_SHAPE),
+			_piece("Blue L", Block.TileColor.BLUE, _l_se(1, 3), BlockShapes.L_SHAPE),
 		]
 	)
 
 
 func _level_green_trap() -> LevelConfig:
-	## Yellow + blue → green (left). Extra red on the blue column is a wrong-mix bait;
+	## Yellow line_3 + blue L → green (left). Extra red L is a wrong-mix bait;
 	## after the correct mix it still scores on the red bottom goal.
 	return _make_level(
 		"test_5x5_colour_mix_3",
@@ -221,15 +247,15 @@ func _level_green_trap() -> LevelConfig:
 			"bottom_color": Block.TileColor.RED,
 		},
 		[
-			_piece("Yellow Drop", Block.TileColor.YELLOW, Vector2i(1, 1), BlockShapes.SINGLE),
-			_piece("Blue Drop", Block.TileColor.BLUE, Vector2i(3, 1), BlockShapes.SINGLE),
-			_piece("Red Bait", Block.TileColor.RED, Vector2i(3, 3), BlockShapes.SINGLE),
+			_piece("Yellow Bar", Block.TileColor.YELLOW, _line3_h(0, 0), BlockShapes.LINE_3),
+			_piece("Blue L", Block.TileColor.BLUE, _l_se(2, 2), BlockShapes.L_SHAPE),
+			_piece("Red Bait", Block.TileColor.RED, _line3_h(2, 4), BlockShapes.LINE_3),
 		]
 	)
 
 
-func _level_two_mixes_open() -> LevelConfig:
-	## Two independent first-generation mixes: orange exits right, purple exits top.
+func _level_two_mixes() -> LevelConfig:
+	## T + L on top (orange, right) and two L trominoes below (purple, top).
 	return _make_level(
 		"test_5x5_colour_mix_4",
 		"Colour Mix 4 — Two Mixes",
@@ -243,51 +269,88 @@ func _level_two_mixes_open() -> LevelConfig:
 			"right_color": Block.TileColor.ORANGE,
 		},
 		[
-			_piece("Red High", Block.TileColor.RED, Vector2i(0, 1), BlockShapes.SINGLE),
-			_piece("Yellow High", Block.TileColor.YELLOW, Vector2i(2, 1), BlockShapes.SINGLE),
-			_piece("Blue Low", Block.TileColor.BLUE, Vector2i(1, 4), BlockShapes.SINGLE),
-			_piece("Red Low", Block.TileColor.RED, Vector2i(3, 4), BlockShapes.SINGLE),
-		]
+			_piece("Red T", Block.TileColor.RED, _t_south(0, 0), "t_shape"),
+			_piece("Yellow L", Block.TileColor.YELLOW, _l_sw(5, 0), BlockShapes.L_SHAPE),
+			_piece("Blue L", Block.TileColor.BLUE, _l_ne(0, 4), BlockShapes.L_SHAPE),
+			_piece("Red L", Block.TileColor.RED, _l_se(3, 4), BlockShapes.L_SHAPE),
+		],
+		{"columns": 6, "rows": 6}
 	)
 
 
-func _level_two_mixes_stacked() -> LevelConfig:
-	## Two first-generation mixes stacked on the same columns. Orange (right) must
-	## be cleared before purple can reach the top goal — a second mix is never required.
+func _level_deadlock() -> LevelConfig:
+	## Two L bands. Mix each pair on its own row, then send orange right and green
+	## left. Swiping both top pieces down parks orange and green in-line — deadlock.
 	return _make_level(
 		"test_5x5_colour_mix_5",
 		"Colour Mix 5 — Challenge",
 		200,
 		{
-			"left": false,
-			"top": true,
+			"left": true,
+			"top": false,
 			"right": true,
 			"bottom": false,
-			"top_color": Block.TileColor.PURPLE,
+			"left_color": Block.TileColor.GREEN,
 			"right_color": Block.TileColor.ORANGE,
 		},
 		[
-			_piece("Red Top", Block.TileColor.RED, Vector2i(1, 1), BlockShapes.SINGLE),
-			_piece("Yellow Top", Block.TileColor.YELLOW, Vector2i(3, 1), BlockShapes.SINGLE),
-			_piece("Red Low", Block.TileColor.RED, Vector2i(1, 3), BlockShapes.SINGLE),
-			_piece("Blue Low", Block.TileColor.BLUE, Vector2i(3, 3), BlockShapes.SINGLE),
+			_piece("Red Top L", Block.TileColor.RED, _l_se(1, 0), BlockShapes.L_SHAPE),
+			_piece("Yellow Top L", Block.TileColor.YELLOW, _l_ne(3, 0), BlockShapes.L_SHAPE),
+			_piece("Yellow Low L", Block.TileColor.YELLOW, _l_se(1, 3), BlockShapes.L_SHAPE),
+			_piece("Blue Low L", Block.TileColor.BLUE, _l_ne(3, 3), BlockShapes.L_SHAPE),
 		]
 	)
+
+
+func _line3_h(x: int, y: int) -> Array[Vector2i]:
+	return [Vector2i(x, y), Vector2i(x + 1, y), Vector2i(x + 2, y)]
+
+
+func _line3_v(x: int, y: int) -> Array[Vector2i]:
+	return [Vector2i(x, y), Vector2i(x, y + 1), Vector2i(x, y + 2)]
+
+
+func _l_se(x: int, y: int) -> Array[Vector2i]:
+	## #
+	## ##
+	return [Vector2i(x, y), Vector2i(x, y + 1), Vector2i(x + 1, y + 1)]
+
+
+func _l_ne(x: int, y: int) -> Array[Vector2i]:
+	## ##
+	##  #
+	return [Vector2i(x, y), Vector2i(x + 1, y), Vector2i(x + 1, y + 1)]
+
+
+func _l_sw(x: int, y: int) -> Array[Vector2i]:
+	##  #
+	## ##
+	return [Vector2i(x, y), Vector2i(x - 1, y + 1), Vector2i(x, y + 1)]
+
+
+func _t_south(x: int, y: int) -> Array[Vector2i]:
+	## ###
+	##  #
+	return [
+		Vector2i(x, y),
+		Vector2i(x + 1, y),
+		Vector2i(x + 2, y),
+		Vector2i(x + 1, y + 1),
+	]
 
 
 func _piece(
 	piece_name: String,
 	color: Block.TileColor,
-	pos: Vector2i,
-	shape: String,
-	kind: Block.BlockKind = Block.BlockKind.MERGE
+	cells: Array[Vector2i],
+	shape: String = BlockShapes.L_SHAPE
 ) -> Dictionary:
 	return {
 		"name": piece_name,
 		"color": color,
-		"pos": pos,
+		"cells": cells,
 		"shape": shape,
-		"kind": kind,
+		"kind": Block.BlockKind.MERGE,
 	}
 
 
@@ -296,7 +359,8 @@ func _make_level(
 	display_name: String,
 	sort_index: int,
 	goals: Dictionary,
-	pieces: Array
+	pieces: Array,
+	opts: Dictionary = {}
 ) -> LevelConfig:
 	var level := LevelConfig.new()
 	level.level_id = level_id
@@ -305,8 +369,8 @@ func _make_level(
 	level.section_index = SECTION_TUTORIAL
 	level.sort_index = sort_index
 	level.group_title_key = _GROUP_COLOUR_MIX
-	level.columns = 5
-	level.rows = 5
+	level.columns = int(opts.get("columns", 5))
+	level.rows = int(opts.get("rows", 5))
 	level.disabled_cells = []
 	level.multi_goal_mode = false
 
@@ -327,13 +391,72 @@ func _make_level(
 	level.block_shape_names = []
 
 	for piece in pieces:
-		level.block_positions.append(piece.pos as Vector2i)
+		var cells: Array[Vector2i] = []
+		for cell in piece.cells:
+			cells.append(cell as Vector2i)
+		var packed: Dictionary = LevelGenRulesScript.pack_cells(cells)
+		level.block_positions.append(packed.anchor)
 		level.block_colors.append(piece.color as Block.TileColor)
-		level.block_shapes.append(str(piece.shape))
+		level.block_shapes.append(str(piece.get("shape", BlockShapes.L_SHAPE)))
 		level.block_kinds.append(piece.kind as Block.BlockKind)
-		level.block_cell_patterns.append(BlockShapes.get_cells(str(piece.shape)))
+		level.block_cell_patterns.append(packed.offsets)
 		level.block_shape_names.append(str(piece.name))
 	return level
+
+
+func _min_cell_error(level: LevelConfig) -> String:
+	for i in level.block_positions.size():
+		var kind := (
+			int(level.block_kinds[i]) if i < level.block_kinds.size() else int(Block.BlockKind.STANDARD)
+		)
+		if Block.is_wall_kind(kind as Block.BlockKind):
+			continue
+		var cells: Array = LevelGenRulesScript.absolute_cells(level, i)
+		if cells.size() < MIN_CELLS:
+			return "block %d (%s) has %d cells; Colour Mix minimum is %d" % [
+				i,
+				level.block_shape_names[i] if i < level.block_shape_names.size() else "?",
+				cells.size(),
+				MIN_CELLS,
+			]
+		var shape_id := str(level.block_shapes[i]) if i < level.block_shapes.size() else ""
+		if shape_id == BlockShapes.SINGLE or shape_id == BlockShapes.LINE_2:
+			return "block %d uses %s — Colour Mix forbids 1-cell and 2-cell shapes" % [i, shape_id]
+	return ""
+
+
+func _verify_trap(level: LevelConfig, moves: Array) -> Dictionary:
+	var sim := PuzzleSim.new()
+	var state = sim.load_config(level)
+	for move in moves:
+		var block_index := _trap_block_index(state, move)
+		if block_index < 0:
+			return {"ok": false, "reason": "trap block not found"}
+		var applied: Dictionary = sim.apply_move(
+			state,
+			block_index,
+			move.direction as Vector2i
+		)
+		if not bool(applied.get("ok", false)):
+			return {"ok": false, "reason": "trap move not legal"}
+		if int(applied.get("outcome", PuzzleSim.Outcome.NONE)) != PuzzleSim.Outcome.MERGE:
+			return {"ok": false, "reason": "trap move did not merge"}
+		state = applied.state
+	var result: Dictionary = LevelSolverScript.solve_state(sim, state)
+	if bool(result.get("solvable", false)):
+		return {"ok": false, "reason": "trap still solvable"}
+	return {"ok": true, "reason": "wrong line deadlocks"}
+
+
+func _trap_block_index(state, move: Dictionary) -> int:
+	if move.has("block_index"):
+		return int(move.block_index)
+	if move.has("color"):
+		var want := int(move.color)
+		for i in state.blocks.size():
+			if int(state.blocks[i].color) == want:
+				return i
+	return -1
 
 
 func _save_project_level(level: LevelConfig) -> Error:
