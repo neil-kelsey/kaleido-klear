@@ -342,6 +342,11 @@ func _can_merge(a: SimBlock, b: SimBlock) -> bool:
 		return false
 	if a.kind != int(Block.BlockKind.MERGE) or b.kind != int(Block.BlockKind.MERGE):
 		return false
+	if (
+		not Block.is_primary_merge_color(a.color as Block.TileColor)
+		or not Block.is_primary_merge_color(b.color as Block.TileColor)
+	):
+		return false
 	return Block.get_merged_color(a.color as Block.TileColor, b.color as Block.TileColor) != -1
 
 

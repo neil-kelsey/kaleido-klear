@@ -672,3 +672,15 @@ msgstr "Bulkheads don’t budge, and ye can’t slide through ’em. Steer aroun
 
 msgid "UI_TUTORIAL_BIGGER_BOARDS"
 msgstr "Decks can get huge, and the puzzles turn proper fierce. Keep yer wits about ye!"
+
+msgid "UI_GROUP_COLOUR_MIX"
+msgstr "Colour Brewin’"
+
+msgid "UI_TUTORIAL_COLOUR_MIX_BLEND"
+msgstr "Mix two different colours to brew a new one. Crimson an’ gold make sunset orange, gold an’ ocean make sea green, crimson an’ ocean make royal purple."
+
+msgid "UI_TUTORIAL_COLOUR_MIX_GOALS"
+msgstr "Only the mixed colour fits that mark — a crimson block won’t sail into an orange goal."
+
+msgid "UI_TUTORIAL_COLOUR_MIX_ONCE"
+msgstr "Once two blocks have mixed, that new block won’t mix again."

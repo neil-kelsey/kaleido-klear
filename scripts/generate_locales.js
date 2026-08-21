@@ -44,9 +44,16 @@ const EXTRA_EN = {
   UI_CREATOR_ERROR_DAILY_DATE: "Choose a date for this daily puzzle.",
   UI_DIMENSION_TUTORIAL: "Tutorial",
   UI_GROUP_BASIC_TRAINING: "Basic Training",
+  UI_GROUP_COLOUR_MIX: "Colour Mix",
   UI_GROUP_SHIFTING_GOALS: "Shifting Goals",
   UI_GROUP_WALLS: "Walls",
   UI_GROUP_BIGGER_BOARDS: "Bigger Boards",
+  UI_TUTORIAL_COLOUR_MIX_BLEND:
+    "Mix two different colours to make a new one. Red and yellow make orange, yellow and blue make green, red and blue make purple.",
+  UI_TUTORIAL_COLOUR_MIX_GOALS:
+    "Only the mixed colour fits that goal — a red block will not go into an orange goal.",
+  UI_TUTORIAL_COLOUR_MIX_ONCE:
+    "Once two blocks have mixed, that new block will not mix again.",
   UI_CREATOR_GOAL_MAP: "Board",
   UI_CREATOR_ADD_GOAL_TITLE: "Add %s",
   UI_CREATOR_EDIT_GOAL_TITLE: "Edit %s",
@@ -93,9 +100,16 @@ const FR = {
   UI_DIMENSION_10: "Dimension 10",
   UI_DIMENSION_TUTORIAL: "Tutoriel",
   UI_GROUP_BASIC_TRAINING: "Entraînement de base",
+  UI_GROUP_COLOUR_MIX: "Mélange de couleurs",
   UI_GROUP_SHIFTING_GOALS: "Objectifs changeants",
   UI_GROUP_WALLS: "Murs",
   UI_GROUP_BIGGER_BOARDS: "Plus grandes grilles",
+  UI_TUTORIAL_COLOUR_MIX_BLEND:
+    "Mélangez deux couleurs différentes pour en créer une nouvelle. Rouge et jaune donnent orange, jaune et bleu donnent vert, rouge et bleu donnent violet.",
+  UI_TUTORIAL_COLOUR_MIX_GOALS:
+    "Seule la couleur mélangée correspond à ce but — un bloc rouge n’entrera pas dans un but orange.",
+  UI_TUTORIAL_COLOUR_MIX_ONCE:
+    "Une fois deux blocs mélangés, le nouveau bloc ne se mélangera plus.",
   UI_CREATOR_GOAL_MAP: "Grille",
   UI_CREATOR_ADD_GOAL_TITLE: "Ajouter : %s",
   UI_CREATOR_EDIT_GOAL_TITLE: "Modifier : %s",
@@ -284,9 +298,16 @@ const PIRATE = {
   UI_DIMENSION_10: "Sea 10",
   UI_DIMENSION_TUTORIAL: "Tutorin'",
   UI_GROUP_BASIC_TRAINING: "Basic Drillin’",
+  UI_GROUP_COLOUR_MIX: "Colour Brewin’",
   UI_GROUP_SHIFTING_GOALS: "Shiftin’ Marks",
   UI_GROUP_WALLS: "Bulkheads",
   UI_GROUP_BIGGER_BOARDS: "Bigger Decks",
+  UI_TUTORIAL_COLOUR_MIX_BLEND:
+    "Mix two different colours to brew a new one. Crimson an’ gold make sunset orange, gold an’ ocean make sea green, crimson an’ ocean make royal purple.",
+  UI_TUTORIAL_COLOUR_MIX_GOALS:
+    "Only the mixed colour fits that mark — a crimson block won’t sail into an orange goal.",
+  UI_TUTORIAL_COLOUR_MIX_ONCE:
+    "Once two blocks have mixed, that new block won’t mix again.",
   UI_CREATOR_GOAL_MAP: "Deck",
   UI_CREATOR_ADD_GOAL_TITLE: "Add %s",
   UI_CREATOR_EDIT_GOAL_TITLE: "Edit %s",
@@ -473,14 +494,16 @@ function writePo(locale, entries) {
 }
 
 const existing = parsePo(fs.readFileSync(path.join(localesDir, "en.po"), "utf8"));
+const existingFr = parsePo(fs.readFileSync(path.join(localesDir, "fr.po"), "utf8"));
+const existingPirate = parsePo(fs.readFileSync(path.join(localesDir, "pirate.po"), "utf8"));
 const en = { ...existing, ...EXTRA_EN };
 
-// Ensure FR/PIRATE cover every English key (fallback to English if missing).
+// Overlay first, then keep any hand-written FR/pirate strings, then English.
 const fr = {};
 const pirate = {};
 for (const [id, str] of Object.entries(en)) {
-  fr[id] = FR[id] ?? str;
-  pirate[id] = PIRATE[id] ?? str;
+  fr[id] = FR[id] ?? existingFr[id] ?? str;
+  pirate[id] = PIRATE[id] ?? existingPirate[id] ?? str;
 }
 
 writePo("en", en);

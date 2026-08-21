@@ -125,33 +125,19 @@ static func _color_from_primary_flags(flags: int) -> int:
 			return -1
 
 
+## RYB paint mix. Only unused primaries combine: R+Y=orange, Y+B=green, R+B=purple.
+## Already-mixed secondaries cannot mix again (no brown / tertiary path).
 static func get_merged_color(a: TileColor, b: TileColor) -> int:
 	if a == b:
+		return -1
+	if not is_primary_merge_color(a) or not is_primary_merge_color(b):
 		return -1
 
 	var fa := _primary_flags(a)
 	var fb := _primary_flags(b)
 	if fa == 0 or fb == 0:
 		return -1
-
-	var xor := fa ^ fb
-	var from_xor := _color_from_primary_flags(xor)
-	if from_xor != -1:
-		return from_xor
-
-	# Full red/yellow/blue combination — pick the secondary that isn't either input.
-	if xor == 7:
-		if fa == 6 or fb == 6:
-			if fa == 1 or fb == 1:
-				return TileColor.ORANGE
-		if fa == 2 or fb == 2:
-			if fa == 5 or fb == 5:
-				return TileColor.GREEN
-		if fa == 4 or fb == 4:
-			if fa == 3 or fb == 3:
-				return TileColor.GREEN
-
-	return -1
+	return _color_from_primary_flags(fa ^ fb)
 
 
 static func draw_merge_cell_rect(canvas: CanvasItem, rect: Rect2, base: Color, _cell: Vector2i, time_ms: float) -> void:
@@ -170,6 +156,8 @@ static func can_merge_blocks(a: Block, b: Block) -> bool:
 	if is_wall_kind(a.block_kind) or is_wall_kind(b.block_kind):
 		return false
 	if a.block_kind != BlockKind.MERGE or b.block_kind != BlockKind.MERGE:
+		return false
+	if not is_primary_merge_color(a.tile_color) or not is_primary_merge_color(b.tile_color):
 		return false
 	return get_merged_color(a.tile_color, b.tile_color) != -1
 

@@ -672,3 +672,15 @@ msgstr "Les murs ne bougent pas et vous ne pouvez pas les traverser. Contournez-
 
 msgid "UI_TUTORIAL_BIGGER_BOARDS"
 msgstr "Les grilles peuvent devenir très grandes, et les parties bien plus complexes. Restez concentré !"
+
+msgid "UI_GROUP_COLOUR_MIX"
+msgstr "Mélange de couleurs"
+
+msgid "UI_TUTORIAL_COLOUR_MIX_BLEND"
+msgstr "Mélangez deux couleurs différentes pour en créer une nouvelle. Rouge et jaune donnent orange, jaune et bleu donnent vert, rouge et bleu donnent violet."
+
+msgid "UI_TUTORIAL_COLOUR_MIX_GOALS"
+msgstr "Seule la couleur mélangée correspond à ce but — un bloc rouge n’entrera pas dans un but orange."
+
+msgid "UI_TUTORIAL_COLOUR_MIX_ONCE"
+msgstr "Une fois deux blocs mélangés, le nouveau bloc ne se mélangera plus."

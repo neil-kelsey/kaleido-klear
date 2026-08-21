@@ -21,6 +21,15 @@ const SCRIPTS := {
 			{"text_key": "UI_TUTORIAL_BASIC_LIVES", "spotlight": "lives"},
 		],
 	},
+	"UI_GROUP_COLOUR_MIX": {
+		"id": "UI_GROUP_COLOUR_MIX",
+		"title_key": "UI_GROUP_COLOUR_MIX",
+		"steps": [
+			{"text_key": "UI_TUTORIAL_COLOUR_MIX_BLEND", "spotlight": "board"},
+			{"text_key": "UI_TUTORIAL_COLOUR_MIX_GOALS", "spotlight": "goal_edges"},
+			{"text_key": "UI_TUTORIAL_COLOUR_MIX_ONCE", "spotlight": "board"},
+		],
+	},
 	"UI_GROUP_SHIFTING_GOALS": {
 		"id": "UI_GROUP_SHIFTING_GOALS",
 		"title_key": "UI_GROUP_SHIFTING_GOALS",
