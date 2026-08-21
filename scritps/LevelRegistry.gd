@@ -38,6 +38,7 @@ const LEVEL_PATHS: PackedStringArray = [
 	"res://resources/levels/test_5x5_walls_4.tres",
 	"res://resources/levels/test_5x5_walls_5.tres",
 	"res://resources/levels/test_bigger_bait_1.tres",
+	"res://resources/levels/test_bigger_gauntlet.tres",
 	"res://resources/levels/test_bigger_mix_finale.tres",
 	"res://resources/levels/test_bigger_top_cap.tres",
 	"res://resources/levels/test_bigger_wall_path.tres",

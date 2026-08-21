@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Tutorial Bigger Boards levels 2–4 (section 10, sort 220–240).
+## Tutorial Bigger Boards levels 2–5 (section 10, sort 220–250).
 ## Level 1 (test_bigger_bait_1, sort 210) is kept as-is and only verified.
 ## Run:
 ##   Godot --headless --path <project> -s res://scritps/tools/generate_bigger_board_levels.gd
@@ -143,6 +143,8 @@ func _level_specs() -> Array:
 		_spec_bait(_build_wall_path(), 0, Vector2i.RIGHT),
 		## Mix red+yellow once. Dumping the red mixer into the left red goal bricks it.
 		_spec_bait(_build_mix_finale(), 0, Vector2i.LEFT),
+		## Mix red+blue once to purple. Dumping the bottom-flush blue mixer bricks it.
+		_spec_bait(_build_gauntlet(), 0, Vector2i.DOWN),
 	]
 
 
@@ -422,6 +424,80 @@ func _build_mix_finale() -> LevelConfig:
 				"6": "Red Body",
 				"7": "Green Floor",
 				"8": "Blue Corner",
+				"W": "Wall Square",
+			},
+		}
+	)
+
+
+func _build_gauntlet() -> LevelConfig:
+	## Chapter closer: wall + shifting top R→G→Y + MERGE-once (red+blue=purple).
+	## The 7-cell blue mixer is flush with the bottom while bottom wants blue ×1 —
+	## that's the bait. Mix it with the red mixer instead; purple exits right.
+	## The 2×2 wall blocks a left escape, so the mix has to go around. A standard
+	## blue slab takes the bottom-blue quota. MERGE-once only; no second mix.
+	return _from_ascii(
+		"test_bigger_gauntlet",
+		"Bigger 5 — Gauntlet",
+		250,
+		PackedStringArray([
+			"66666588",
+			"66677558",
+			"77775558",
+			"77345442",
+			"WW344422",
+			"WW331122",
+			"00011122",
+			"00001222",
+		]),
+		{
+			"0": Block.TileColor.BLUE,
+			"1": Block.TileColor.RED,
+			"2": Block.TileColor.BLUE,
+			"3": Block.TileColor.RED,
+			"4": Block.TileColor.RED,
+			"5": Block.TileColor.YELLOW,
+			"6": Block.TileColor.GREEN,
+			"7": Block.TileColor.RED,
+			"8": Block.TileColor.GREEN,
+			"W": Block.TileColor.RED,
+		},
+		{
+			"enabled": {"left": true, "top": true, "right": true, "bottom": true},
+			"edge_colors": {
+				"left": Block.TileColor.GREEN,
+				"top": Block.TileColor.RED,
+				"right": Block.TileColor.PURPLE,
+				"bottom": Block.TileColor.BLUE,
+			},
+			"phases": {
+				"left": [_phase(Block.TileColor.GREEN)] as Array[GoalPhase],
+				"top": [
+					_phase(Block.TileColor.RED),
+					_phase(Block.TileColor.GREEN),
+					_phase(Block.TileColor.YELLOW),
+				] as Array[GoalPhase],
+				"right": [_phase(Block.TileColor.PURPLE)] as Array[GoalPhase],
+				"bottom": [
+					_phase(Block.TileColor.BLUE),
+					_phase(Block.TileColor.RED, 2),
+				] as Array[GoalPhase],
+			},
+			"kinds": {
+				"0": Block.BlockKind.MERGE,
+				"1": Block.BlockKind.MERGE,
+				"W": Block.BlockKind.WALL,
+			},
+			"names": {
+				"0": "Blue Mixer",
+				"1": "Red Mixer",
+				"2": "Blue Slab",
+				"3": "Red Stem",
+				"4": "Red Shelf",
+				"5": "Yellow Bend",
+				"6": "Green Rim",
+				"7": "Red Crown",
+				"8": "Green Hook",
 				"W": "Wall Square",
 			},
 		}
