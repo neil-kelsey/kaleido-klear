@@ -29,10 +29,10 @@ const PRIMARY_PRESSED := Color(0.0, 0.22, 0.56, 1.0)
 const PRIMARY_FILL := Color(0.08, 0.05, 0.22, 1.0) ## deep nebula navy
 const PRIMARY_FILL_HOVER := Color(0.12, 0.07, 0.30, 1.0)
 const PRIMARY_FILL_PRESSED := Color(0.05, 0.03, 0.16, 1.0)
-## Destructive CTA — same weight as primary, crimson nebula instead of navy.
-const DANGER_FILL := Color(0.24, 0.03, 0.07, 1.0)
-const DANGER_FILL_HOVER := Color(0.32, 0.05, 0.10, 1.0)
-const DANGER_FILL_PRESSED := Color(0.16, 0.02, 0.05, 1.0)
+## Destructive CTA — bright crimson so it reads as delete, not a dark panel.
+const DANGER_FILL := Color(0.86, 0.18, 0.28, 1.0)
+const DANGER_FILL_HOVER := Color(0.93, 0.28, 0.36, 1.0)
+const DANGER_FILL_PRESSED := Color(0.72, 0.12, 0.22, 1.0)
 const DANGER_TINT := Color(1.55, 0.28, 0.34, 1.0)
 const SECONDARY_BG := Color(1.0, 1.0, 1.0, 1.0)
 const SECONDARY_BG_HOVER := Color(0.96, 0.97, 1.0, 1.0)

@@ -37,6 +37,8 @@ var _chart_sprite: Sprite2D
 var _nebula_mat: ShaderMaterial
 var _fx_time := 0.0
 var _glyph_overlay: Control
+var _overlay_cam_y := INF
+var _overlay_cam_z := 0.0
 var _navigating := false
 
 
@@ -75,8 +77,7 @@ func _process(delta: float) -> void:
 		_nebula_mat.set_shader_parameter("rect_size", nebula_bg.size)
 		var pulse := 0.99 + 0.01 * sin(_fx_time * 0.25)
 		_nebula_mat.set_shader_parameter("brightness", pulse)
-	if _glyph_overlay != null:
-		_glyph_overlay.queue_redraw()
+	_sync_glyph_overlay_to_camera()
 
 
 func _notification(what: int) -> void:
@@ -85,6 +86,7 @@ func _notification(what: int) -> void:
 			return
 		_apply_translations()
 		queue_redraw()
+		_invalidate_glyph_overlay()
 
 
 func _apply_secondary_title_style(label: Label) -> void:
@@ -151,6 +153,7 @@ func _rebuild_map() -> void:
 		camera.position = Vector2(0, _camera_y_for_pole())
 		_sync_chart_sprite()
 		queue_redraw()
+		_invalidate_glyph_overlay()
 		return
 	var start_y := HEADER_CLEARANCE
 	var cols := mini(COLUMNS, _levels.size())
@@ -163,6 +166,7 @@ func _rebuild_map() -> void:
 	camera.position = Vector2(0, _camera_y_for_pole())
 	_sync_chart_sprite()
 	queue_redraw()
+	_invalidate_glyph_overlay()
 
 
 func _camera_y_for_pole() -> float:
@@ -229,6 +233,24 @@ func _world_pos_to_screen(world: Vector2) -> Vector2:
 	return get_viewport().get_canvas_transform() * world
 
 
+func _invalidate_glyph_overlay() -> void:
+	_overlay_cam_y = INF
+	if _glyph_overlay != null:
+		_glyph_overlay.queue_redraw()
+
+
+func _sync_glyph_overlay_to_camera() -> void:
+	if _glyph_overlay == null or camera == null:
+		return
+	var y := camera.position.y
+	var z := camera.zoom.x
+	if is_equal_approx(y, _overlay_cam_y) and is_equal_approx(z, _overlay_cam_z):
+		return
+	_overlay_cam_y = y
+	_overlay_cam_z = z
+	_glyph_overlay.queue_redraw()
+
+
 func _screen_to_world(screen_pos: Vector2) -> Vector2:
 	return get_viewport().get_canvas_transform().affine_inverse() * screen_pos
 
@@ -237,10 +259,14 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 	var z := maxf(camera.zoom.x, 0.001)
 	var dsize := LEVEL_DIAMOND_SIZE * z
 	var rim_w := 1.8 * MAP_DRAW_ZOOM
+	var vp := get_viewport_rect().size
+	var pad := dsize
 	var count := mini(_levels.size(), _level_positions.size())
 	for i in count:
-		var level: LevelConfig = _levels[i]
 		var center := _world_pos_to_screen(_level_positions[i])
+		if center.x < -pad or center.x > vp.x + pad or center.y < -pad or center.y > vp.y + pad:
+			continue
+		var level: LevelConfig = _levels[i]
 		var pts := _diamond_points(center, dsize)
 		var outline := pts + PackedVector2Array([pts[0]])
 		var unlocked := DailyCatalog.is_level_unlocked(_levels, level)

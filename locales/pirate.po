@@ -244,6 +244,18 @@ msgstr "Rows"
 msgid "UI_CREATOR_APPLY_GRID"
 msgstr "Set the grid"
 
+msgid "UI_CREATOR_GRID_SIZE_HINT"
+msgstr "Each side can be %d–%d tiles. Zoom the chart if a big map won’t fit."
+
+msgid "UI_CREATOR_GRID_LIMIT_TITLE"
+msgstr "Grid size limit"
+
+msgid "UI_CREATOR_GRID_LIMIT_BODY"
+msgstr "Boards run %d–%d tiles a side. This chart is now %d × %d."
+
+msgid "UI_CREATOR_GRID_LIMIT_AXIS"
+msgstr "%s was %d, outside %d–%d, so it be set to %d."
+
 msgid "UI_CREATOR_BLOCK_TOOLS"
 msgstr "Block tools"
 
@@ -511,6 +523,9 @@ msgstr "Ye sure ye want to leave the voyage?"
 msgid "UI_YES"
 msgstr "Aye"
 
+msgid "UI_OK"
+msgstr "Aye"
+
 msgid "UI_NO"
 msgstr "Nay"
 
@@ -684,6 +699,18 @@ msgstr "Dump this goal"
 
 msgid "UI_CREATOR_GOAL_TAP_EDIT"
 msgstr "Tap to tweak this goal"
+
+msgid "UI_CREATOR_GOAL_PLACE_FRONT"
+msgstr "Park this goal in front of the others"
+
+msgid "UI_CREATOR_GOAL_PREVIEW"
+msgstr "Spy where this goal will sit"
+
+msgid "UI_CREATOR_GOAL_ORDER_HINT"
+msgstr "Closest to the board →"
+
+msgid "UI_CREATOR_GOAL_DRAG_REORDER"
+msgstr "Haul to reshuffle"
 
 msgid "UI_TUTORIAL_NEXT"
 msgstr "Onward"

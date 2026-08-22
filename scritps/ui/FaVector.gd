@@ -1,16 +1,10 @@
 extends RefCounted
 class_name FaVector
 
-## HUD icons: Font Awesome 4.7 webfont (antialiased, scales like web SVG).
-## Map award stars stay custom polygons. Lock/check on the map keep outlined SVG fills.
+## HUD + map icons: Font Awesome 4.7 webfont via draw_string.
+## Map award stars stay custom polygons.
 
 const LOCK_STEEL := Color(0.46, 0.50, 0.56, 1.0)
-
-const LOCK_D := "M144 144v48H304V144c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192V144C80 64.5 144.5 0 224 0s144 64.5 144 144v48h16c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V256c0-35.3 28.7-64 64-64H80z"
-const LOCK_VIEW := Vector2(448, 512)
-
-const CHECK_D := "M1671 566q0 40-28 68l-724 724-136 136q-28 28-68 28t-68-28l-136-136-362-362q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 295 656-657q28-28 68-28t68 28l136 136q28 28 28 68z"
-const CHECK_VIEW := Vector2(1792, 1792)
 
 const FA_FONT: Font = preload("res://assets/fonts/FontAwesome.otf")
 
@@ -37,11 +31,11 @@ const FA_CHARS := {
 
 
 static func draw_lock(item: CanvasItem, center: Vector2, height: float, fill: Color = LOCK_STEEL) -> void:
-	SvgPath.draw_icon(item, LOCK_D, LOCK_VIEW, center, height, fill, true)
+	_draw_fa_char(item, "lock", center, height, fill, 2.0, 1.0)
 
 
 static func draw_check(item: CanvasItem, center: Vector2, height: float, fill: Color = Color(0.95, 0.78, 0.2, 1.0)) -> void:
-	SvgPath.draw_icon(item, CHECK_D, CHECK_VIEW, center, height, fill, true)
+	_draw_fa_char(item, "check", center, height, fill, 2.0, 1.0)
 
 
 static func draw_star(
@@ -92,11 +86,8 @@ static func draw_award_star_hud(item: CanvasItem, center: Vector2, radius: float
 
 
 static func draw_named(item: CanvasItem, name: String, center: Vector2, height: float, fill: Color) -> void:
-	if name == "lock":
-		draw_lock(item, center, height, fill)
-		return
-	if name == "check":
-		draw_check(item, center, height, fill)
+	if name == "lock" or name == "check":
+		_draw_fa_char(item, name, center, height, fill, 2.0, 1.0)
 		return
 	_draw_fa_char(item, name, center, height, fill)
 

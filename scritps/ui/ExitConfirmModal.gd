@@ -45,7 +45,11 @@ func _apply_translations() -> void:
 		else:
 			message_label.text = tr(_message_key) % _message_args
 	yes_button.label_text = tr(_yes_key)
-	no_button.label_text = tr(_no_key)
+	if _no_key.is_empty():
+		no_button.visible = false
+	else:
+		no_button.visible = true
+		no_button.label_text = tr(_no_key)
 	yes_button.apply_kind(
 		MenuActionButton.Kind.DESTRUCTIVE if _destructive_yes else MenuActionButton.Kind.PRIMARY
 	)

@@ -29,6 +29,10 @@ var _bottom_strips: VBoxContainer
 var _left_strips: HBoxContainer
 var _right_strips: HBoxContainer
 var _add_buttons: Dictionary = {}
+var _preview_edge := ""
+var _preview_goal: Dictionary = {}
+var _preview_index := 0
+var _preview_enabled := false
 
 
 func _ready() -> void:
@@ -55,6 +59,37 @@ func set_all_goals(goals_by_edge: Dictionary) -> void:
 	for edge_key in EDGE_KEYS:
 		_goals[edge_key] = goals_by_edge.get(edge_key, []).duplicate(true)
 	refresh()
+
+
+func set_placement_preview(edge_key: String, goal: Dictionary, insert_index: int, enabled: bool) -> void:
+	_preview_edge = edge_key
+	_preview_goal = goal.duplicate(true)
+	_preview_index = maxi(insert_index, 0)
+	_preview_enabled = enabled and not edge_key.is_empty()
+	refresh()
+
+
+func clear_placement_preview() -> void:
+	_preview_enabled = false
+	_preview_edge = ""
+	_preview_goal = {}
+	refresh()
+
+
+func reorder_edge(edge_key: String, from_index: int, to_index: int) -> void:
+	if not _goals.has(edge_key):
+		return
+	var goals: Array = _goals[edge_key]
+	if from_index < 0 or from_index >= goals.size():
+		return
+	var dest := clampi(to_index, 0, goals.size() - 1)
+	if dest == from_index:
+		return
+	var item: Variant = goals[from_index]
+	goals.remove_at(from_index)
+	goals.insert(dest, item)
+	refresh()
+	goals_changed.emit()
 
 
 func refresh() -> void:
@@ -162,32 +197,59 @@ func _update_map_size() -> void:
 
 func _rebuild_edge_strips(edge_key: String, host: Container) -> void:
 	for child in host.get_children():
-		child.queue_free()
+		child.free()
 	var goals: Array = _goals[edge_key]
-	if goals.is_empty():
+	var show_preview := _preview_enabled and _preview_edge == edge_key
+	var preview_at := clampi(_preview_index, 0, goals.size()) if show_preview else -1
+
+	var entries: Array = []
+	for i in goals.size():
+		if i == preview_at:
+			entries.append({"ghost": true, "index": i, "goal": _preview_goal})
+		entries.append({"ghost": false, "index": i, "goal": goals[i]})
+	if preview_at == goals.size():
+		entries.append({"ghost": true, "index": preview_at, "goal": _preview_goal})
+
+	if entries.is_empty():
 		return
 
 	var horizontal_strip := edge_key == "top" or edge_key == "bottom"
 	## First phase sits closest to the board.
-	match edge_key:
-		"top", "left":
-			for i in range(goals.size() - 1, -1, -1):
-				host.add_child(_make_strip(edge_key, i, goals[i], horizontal_strip))
-		"bottom", "right":
-			for i in goals.size():
-				host.add_child(_make_strip(edge_key, i, goals[i], horizontal_strip))
+	var order: Array = entries.duplicate()
+	if edge_key == "top" or edge_key == "left":
+		order.reverse()
+	for entry in order:
+		host.add_child(_make_strip(
+			edge_key,
+			int(entry.index),
+			entry.goal,
+			horizontal_strip,
+			bool(entry.ghost)
+		))
 
 
-func _make_strip(edge_key: String, index: int, goal: Dictionary, horizontal_strip: bool) -> Button:
-	var fill: Color = Block.get_color(goal["color"] as Block.TileColor)
+func _make_strip(
+	edge_key: String,
+	index: int,
+	goal: Dictionary,
+	horizontal_strip: bool,
+	ghost: bool
+) -> Control:
+	var fill: Color = Block.get_color(goal.get("color", Block.TileColor.RED) as Block.TileColor)
+	if ghost:
+		fill.a = 0.55
 	var strip := Button.new()
 	strip.focus_mode = Control.FOCUS_NONE
-	HintTooltip.bind(strip, tr("UI_CREATOR_GOAL_TAP_EDIT"))
 	strip.clip_contents = false
 	if horizontal_strip:
 		strip.custom_minimum_size = Vector2(MAP_SIZE, maxf(STRIP_THICKNESS, BADGE_SIZE))
 	else:
 		strip.custom_minimum_size = Vector2(maxf(STRIP_THICKNESS, BADGE_SIZE), MAP_SIZE)
+	if ghost:
+		strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		HintTooltip.bind(strip, tr("UI_CREATOR_GOAL_PREVIEW"))
+	else:
+		HintTooltip.bind(strip, tr("UI_CREATOR_GOAL_TAP_EDIT"))
 
 	var bar := ColorRect.new()
 	bar.color = fill
@@ -213,15 +275,16 @@ func _make_strip(edge_key: String, index: int, goal: Dictionary, horizontal_stri
 	strip.add_theme_stylebox_override("hover", empty)
 	strip.add_theme_stylebox_override("pressed", empty)
 	strip.add_theme_stylebox_override("focus", empty)
-	strip.pressed.connect(_on_strip_pressed.bind(edge_key, index))
+	if not ghost:
+		strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var badge := Panel.new()
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	badge.custom_minimum_size = Vector2(BADGE_SIZE, BADGE_SIZE)
 	var badge_style := StyleBoxFlat.new()
 	badge_style.bg_color = fill.darkened(0.22)
-	badge_style.border_color = Color(1, 1, 1, 0.9)
-	badge_style.set_border_width_all(1)
+	badge_style.border_color = Color(1, 1, 1, 0.95 if ghost else 0.9)
+	badge_style.set_border_width_all(2 if ghost else 1)
 	badge_style.set_corner_radius_all(int(BADGE_SIZE * 0.5))
 	badge.add_theme_stylebox_override("panel", badge_style)
 	badge.set_anchors_preset(Control.PRESET_CENTER)
@@ -246,7 +309,18 @@ func _make_strip(edge_key: String, index: int, goal: Dictionary, horizontal_stri
 		badge_label.text = str(int(goal.get("count", 1)))
 	badge.add_child(badge_label)
 
-	return strip
+	if ghost:
+		return strip
+
+	var row := _GoalStripRow.new(self, edge_key, index, horizontal_strip)
+	if horizontal_strip:
+		row.custom_minimum_size = Vector2(MAP_SIZE + 36.0, maxf(STRIP_THICKNESS, BADGE_SIZE))
+	else:
+		row.custom_minimum_size = Vector2(maxf(STRIP_THICKNESS, BADGE_SIZE), MAP_SIZE + 36.0)
+	var grip := _GoalGrip.new(row)
+	row.add_child(grip)
+	row.add_child(strip)
+	return row
 
 
 func _on_strip_pressed(edge_key: String, index: int) -> void:
@@ -264,3 +338,68 @@ func apply_translations() -> void:
 		var map_label := _map_panel.get_child(0) as Label
 		if map_label != null:
 			map_label.text = tr("UI_CREATOR_GOAL_MAP")
+
+
+class _GoalStripRow extends BoxContainer:
+	var map: LevelCreatorGoalsMap
+	var edge_key: String = ""
+	var goal_index: int = 0
+
+	func _init(host: LevelCreatorGoalsMap, edge: String, index: int, horizontal_strip: bool) -> void:
+		map = host
+		edge_key = edge
+		goal_index = index
+		vertical = not horizontal_strip
+		add_theme_constant_override("separation", 6)
+		mouse_filter = Control.MOUSE_FILTER_STOP
+		alignment = BoxContainer.ALIGNMENT_CENTER
+
+	func _gui_input(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			if map != null:
+				map._on_strip_pressed(edge_key, goal_index)
+			accept_event()
+
+	func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+		if typeof(data) != TYPE_DICTIONARY:
+			return false
+		return str(data.get("edge_key", "")) == edge_key
+
+	func _drop_data(_at_position: Vector2, data: Variant) -> void:
+		if not _can_drop_data(_at_position, data):
+			return
+		var from_index := int(data.get("from_index", -1))
+		if map != null:
+			map.reorder_edge(edge_key, from_index, goal_index)
+
+
+class _GoalGrip extends Control:
+	var _row: _GoalStripRow
+
+	func _init(row: _GoalStripRow) -> void:
+		_row = row
+		custom_minimum_size = Vector2(28, 28)
+		mouse_filter = Control.MOUSE_FILTER_STOP
+		HintTooltip.bind(self, tr("UI_CREATOR_GOAL_DRAG_REORDER"))
+
+	func _draw() -> void:
+		FaVector.draw_named(self, "bars", size * 0.5, minf(size.x, size.y) * 0.72, UiTheme.TEXT_MUTED)
+
+	func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
+		return _row._can_drop_data(at_position, data)
+
+	func _drop_data(at_position: Vector2, data: Variant) -> void:
+		_row._drop_data(at_position, data)
+
+	func _get_drag_data(_at_position: Vector2) -> Variant:
+		var preview := Label.new()
+		preview.text = tr("UI_CREATOR_GOAL_DRAG_REORDER")
+		preview.add_theme_font_size_override("font_size", 20)
+		preview.add_theme_color_override("font_color", UiTheme.TEXT)
+		set_drag_preview(preview)
+		_row.modulate = Color(1, 1, 1, 0.45)
+		return {"edge_key": _row.edge_key, "from_index": _row.goal_index}
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_DRAG_END and _row != null:
+			_row.modulate = Color.WHITE

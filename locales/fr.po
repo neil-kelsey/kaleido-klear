@@ -244,6 +244,18 @@ msgstr "Lignes"
 msgid "UI_CREATOR_APPLY_GRID"
 msgstr "Appliquer la grille"
 
+msgid "UI_CREATOR_GRID_SIZE_HINT"
+msgstr "Chaque côté peut faire de %d à %d cases. Zoomez si une grande grille ne tient pas à l’écran."
+
+msgid "UI_CREATOR_GRID_LIMIT_TITLE"
+msgstr "Taille de grille limitée"
+
+msgid "UI_CREATOR_GRID_LIMIT_BODY"
+msgstr "Les plateaux font de %d à %d cases de côté. Ce niveau est maintenant %d × %d."
+
+msgid "UI_CREATOR_GRID_LIMIT_AXIS"
+msgstr "%s était %d, hors de %d–%d, donc il a été réglé sur %d."
+
 msgid "UI_CREATOR_BLOCK_TOOLS"
 msgstr "Outils de blocs"
 
@@ -511,6 +523,9 @@ msgstr "Voulez-vous vraiment quitter ?"
 msgid "UI_YES"
 msgstr "Oui"
 
+msgid "UI_OK"
+msgstr "OK"
+
 msgid "UI_NO"
 msgstr "Non"
 
@@ -684,6 +699,18 @@ msgstr "Supprimer l’objectif"
 
 msgid "UI_CREATOR_GOAL_TAP_EDIT"
 msgstr "Toucher pour modifier cet objectif"
+
+msgid "UI_CREATOR_GOAL_PLACE_FRONT"
+msgstr "Placer devant les objectifs existants"
+
+msgid "UI_CREATOR_GOAL_PREVIEW"
+msgstr "Aperçu de l’emplacement"
+
+msgid "UI_CREATOR_GOAL_ORDER_HINT"
+msgstr "Le plus près du plateau →"
+
+msgid "UI_CREATOR_GOAL_DRAG_REORDER"
+msgstr "Glisser pour réordonner"
 
 msgid "UI_TUTORIAL_NEXT"
 msgstr "Suivant"

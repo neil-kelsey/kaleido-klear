@@ -244,6 +244,18 @@ msgstr "Rows"
 msgid "UI_CREATOR_APPLY_GRID"
 msgstr "Apply grid size"
 
+msgid "UI_CREATOR_GRID_SIZE_HINT"
+msgstr "Each side can be %d–%d tiles. Zoom the board if a large map doesn’t fit."
+
+msgid "UI_CREATOR_GRID_LIMIT_TITLE"
+msgstr "Grid size limit"
+
+msgid "UI_CREATOR_GRID_LIMIT_BODY"
+msgstr "Boards can be %d–%d tiles on each side. This level is now %d × %d."
+
+msgid "UI_CREATOR_GRID_LIMIT_AXIS"
+msgstr "%s was %d, which is outside %d–%d, so it was set to %d."
+
 msgid "UI_CREATOR_BLOCK_TOOLS"
 msgstr "Block tools"
 
@@ -511,6 +523,9 @@ msgstr "Are you sure you want to exit?"
 msgid "UI_YES"
 msgstr "Yes"
 
+msgid "UI_OK"
+msgstr "OK"
+
 msgid "UI_NO"
 msgstr "No"
 
@@ -684,6 +699,18 @@ msgstr "Delete goal"
 
 msgid "UI_CREATOR_GOAL_TAP_EDIT"
 msgstr "Tap to edit this goal"
+
+msgid "UI_CREATOR_GOAL_PLACE_FRONT"
+msgstr "Place in front of existing goals"
+
+msgid "UI_CREATOR_GOAL_PREVIEW"
+msgstr "Preview where this goal will appear"
+
+msgid "UI_CREATOR_GOAL_ORDER_HINT"
+msgstr "Closest to the board →"
+
+msgid "UI_CREATOR_GOAL_DRAG_REORDER"
+msgstr "Drag to reorder"
 
 msgid "UI_TUTORIAL_NEXT"
 msgstr "Next"

@@ -12,6 +12,8 @@ const CREATOR_FIELD_HEIGHT := 64
 const CREATOR_HINT_FONT := 24
 
 const EDGE_KEYS := ["left", "top", "right", "bottom"]
+const GRID_MIN := 3
+const GRID_MAX := 64
 
 @onready var back_button: Button = %BackButton
 @onready var save_button: Button = %SaveButton
@@ -49,6 +51,7 @@ var _subsection_label: Label
 var _subsection_option: OptionButton
 var _level_details_label: Label
 var _grid_details_label: Label
+var _grid_size_hint_label: Label
 var _daily_date_box: VBoxContainer
 var _daily_year_spin: SpinBox
 var _daily_month_option: OptionButton
@@ -69,8 +72,19 @@ var _goal_modal_color: OptionButton
 var _goal_modal_count: OptionButton
 var _goal_modal_infinite: CheckBox
 var _goal_modal_count_box: VBoxContainer
-var _goal_modal_confirm: Button
-var _goal_modal_delete: Button
+var _goal_modal_place_front: CheckBox
+var _goal_modal_preview: CheckBox
+var _goal_modal_order_preview: HBoxContainer
+var _goal_modal_order_hint: Label
+var _goal_modal_panel: ChartModalPanel
+var _goal_modal_color_label: Label
+var _goal_modal_count_label: Label
+var _goal_modal_infinite_label: Label
+var _goal_modal_place_label: Label
+var _goal_modal_preview_label: Label
+var _goal_modal_confirm: MenuActionButton
+var _goal_modal_cancel: MenuActionButton
+var _goal_modal_delete: MenuActionButton
 var _refreshing_shape_list: bool = false
 var _passed_signature: String = ""
 var _baseline_signature: String = ""
@@ -291,16 +305,30 @@ func _apply_translations() -> void:
 		clear_button.text = tr("UI_CREATOR_CLEAR")
 	if _goals_map != null:
 		_goals_map.apply_translations()
-	if _goal_modal_infinite != null:
-		_goal_modal_infinite.text = tr("UI_CREATOR_GOAL_INFINITE")
+	if _goal_modal_color_label != null:
+		_goal_modal_color_label.text = tr("UI_CREATOR_GOAL_COLOR")
+	if _goal_modal_count_label != null:
+		_goal_modal_count_label.text = tr("UI_CREATOR_GOAL_COUNT")
+	if _goal_modal_infinite_label != null:
+		_goal_modal_infinite_label.text = tr("UI_CREATOR_GOAL_INFINITE")
+	if _goal_modal_place_label != null:
+		_goal_modal_place_label.text = tr("UI_CREATOR_GOAL_PLACE_FRONT")
+	if _goal_modal_preview_label != null:
+		_goal_modal_preview_label.text = tr("UI_CREATOR_GOAL_PREVIEW")
+	if _goal_modal_order_hint != null:
+		_goal_modal_order_hint.text = tr("UI_CREATOR_GOAL_ORDER_HINT")
 	if _goal_modal_delete != null:
-		_goal_modal_delete.text = tr("UI_CREATOR_GOAL_DELETE")
+		_goal_modal_delete.set_label(tr("UI_CREATOR_GOAL_DELETE"))
+	if _goal_modal_cancel != null:
+		_goal_modal_cancel.set_label(tr("UI_CANCEL"))
 	if _shapes_header != null:
 		_refresh_shape_table_header()
 	if _level_details_label != null:
 		_level_details_label.text = tr("UI_CREATOR_LEVEL_DETAILS")
 	if _grid_details_label != null:
 		_grid_details_label.text = tr("UI_CREATOR_GRID_DETAILS")
+	if _grid_size_hint_label != null:
+		_grid_size_hint_label.text = tr("UI_CREATOR_GRID_SIZE_HINT") % [GRID_MIN, GRID_MAX]
 	if _subsection_label != null:
 		_subsection_label.text = tr("UI_CREATOR_SUBSECTION")
 	_refresh_subsection_options(_current_subsection_key())
@@ -409,8 +437,16 @@ func _build_setup_panel() -> void:
 	var size_row := HBoxContainer.new()
 	size_row.add_theme_constant_override("separation", 12)
 	setup_panel.add_child(size_row)
-	_columns_field = _add_number_field(size_row, tr("UI_CREATOR_COLUMNS"), 3, 12, 8)
-	_rows_field = _add_number_field(size_row, tr("UI_CREATOR_ROWS"), 3, 16, 8)
+	_columns_field = _add_number_field(size_row, tr("UI_CREATOR_COLUMNS"), GRID_MIN, GRID_MAX, 8)
+	_rows_field = _add_number_field(size_row, tr("UI_CREATOR_ROWS"), GRID_MIN, GRID_MAX, 8)
+	setup_panel.add_child(_make_spacer(8))
+	var size_hint := Label.new()
+	_grid_size_hint_label = size_hint
+	size_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	UiTheme.style_menu_hint(size_hint)
+	size_hint.add_theme_font_size_override("font_size", CREATOR_HINT_FONT)
+	size_hint.text = tr("UI_CREATOR_GRID_SIZE_HINT") % [GRID_MIN, GRID_MAX]
+	setup_panel.add_child(size_hint)
 	setup_panel.add_child(_make_spacer(20))
 	var apply_row := HBoxContainer.new()
 	setup_panel.add_child(apply_row)
@@ -535,36 +571,26 @@ func _build_goal_modal() -> void:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_goal_modal.add_child(center)
 
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(460, 0)
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.14, 0.14, 0.18, 1)
-	panel_style.set_corner_radius_all(20)
-	panel_style.content_margin_left = 28
-	panel_style.content_margin_top = 28
-	panel_style.content_margin_right = 28
-	panel_style.content_margin_bottom = 28
-	panel.add_theme_stylebox_override("panel", panel_style)
-	center.add_child(panel)
+	_goal_modal_panel = ChartModalPanel.new()
+	_goal_modal_panel.custom_minimum_size = Vector2(640, 0)
+	_goal_modal_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	center.add_child(_goal_modal_panel)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 16)
-	panel.add_child(vbox)
+	vbox.add_theme_constant_override("separation", 20)
+	_goal_modal_panel.add_child(vbox)
 
 	_goal_modal_title = Label.new()
 	_goal_modal_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_goal_modal_title.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
-	_goal_modal_title.add_theme_font_size_override("font_size", 30)
+	_goal_modal_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(_goal_modal_title)
+	UiTheme.style_chart_modal_copy(_goal_modal_title)
 
 	var color_box := VBoxContainer.new()
 	color_box.add_theme_constant_override("separation", 8)
 	vbox.add_child(color_box)
-	var color_label := Label.new()
-	color_label.text = tr("UI_CREATOR_GOAL_COLOR")
-	color_label.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
-	color_box.add_child(color_label)
+	_goal_modal_color_label = _make_goal_modal_field_label(tr("UI_CREATOR_GOAL_COLOR"))
+	color_box.add_child(_goal_modal_color_label)
 	_goal_modal_color = OptionButton.new()
 	_populate_color_option(_goal_modal_color)
 	UiTheme.style_light_option_field(_goal_modal_color)
@@ -572,18 +598,19 @@ func _build_goal_modal() -> void:
 	color_box.add_child(_goal_modal_color)
 
 	_goal_modal_infinite = CheckBox.new()
-	_goal_modal_infinite.text = tr("UI_CREATOR_GOAL_INFINITE")
-	_goal_modal_infinite.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
+	_goal_modal_infinite_label = Label.new()
+	vbox.add_child(_make_goal_modal_check_row(
+		_goal_modal_infinite,
+		_goal_modal_infinite_label,
+		tr("UI_CREATOR_GOAL_INFINITE")
+	))
 	_goal_modal_infinite.toggled.connect(_on_goal_modal_infinite_toggled)
-	vbox.add_child(_goal_modal_infinite)
 
 	_goal_modal_count_box = VBoxContainer.new()
 	_goal_modal_count_box.add_theme_constant_override("separation", 8)
 	vbox.add_child(_goal_modal_count_box)
-	var count_label := Label.new()
-	count_label.text = tr("UI_CREATOR_GOAL_COUNT")
-	count_label.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
-	_goal_modal_count_box.add_child(count_label)
+	_goal_modal_count_label = _make_goal_modal_field_label(tr("UI_CREATOR_GOAL_COUNT"))
+	_goal_modal_count_box.add_child(_goal_modal_count_label)
 	_goal_modal_count = OptionButton.new()
 	for n in range(1, 21):
 		_goal_modal_count.add_item(str(n), n)
@@ -592,34 +619,142 @@ func _build_goal_modal() -> void:
 	_register_rainbow_field(_goal_modal_count)
 	_goal_modal_count_box.add_child(_goal_modal_count)
 
-	_goal_modal_delete = Button.new()
-	_goal_modal_delete.text = tr("UI_CREATOR_GOAL_DELETE")
+	_goal_modal_place_front = CheckBox.new()
+	_goal_modal_place_label = Label.new()
+	_goal_modal_place_front.button_pressed = true
+	vbox.add_child(_make_goal_modal_check_row(
+		_goal_modal_place_front,
+		_goal_modal_place_label,
+		tr("UI_CREATOR_GOAL_PLACE_FRONT")
+	))
+	_goal_modal_place_front.toggled.connect(func(_on: bool) -> void: _refresh_goal_placement_preview())
+
+	_goal_modal_preview = CheckBox.new()
+	_goal_modal_preview_label = Label.new()
+	_goal_modal_preview.button_pressed = true
+	vbox.add_child(_make_goal_modal_check_row(
+		_goal_modal_preview,
+		_goal_modal_preview_label,
+		tr("UI_CREATOR_GOAL_PREVIEW")
+	))
+	_goal_modal_preview.toggled.connect(func(_on: bool) -> void: _refresh_goal_placement_preview())
+
+	_goal_modal_order_hint = Label.new()
+	_goal_modal_order_hint.text = tr("UI_CREATOR_GOAL_ORDER_HINT")
+	_goal_modal_order_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(_goal_modal_order_hint)
+	UiTheme.style_menu_hint(_goal_modal_order_hint)
+	_goal_modal_order_hint.add_theme_font_size_override("font_size", 22)
+
+	_goal_modal_order_preview = HBoxContainer.new()
+	_goal_modal_order_preview.add_theme_constant_override("separation", 8)
+	_goal_modal_order_preview.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_child(_goal_modal_order_preview)
+
+	_goal_modal_color.item_selected.connect(func(_i: int) -> void: _refresh_goal_placement_preview())
+	_goal_modal_count.item_selected.connect(func(_i: int) -> void: _refresh_goal_placement_preview())
+
+	_goal_modal_confirm = _make_cta(MenuActionButton.Kind.PRIMARY, tr("UI_CREATOR_GOAL_ADD_CONFIRM"))
+	_goal_modal_confirm.pressed.connect(_on_confirm_goal_modal)
+	vbox.add_child(_goal_modal_confirm)
+
+	_goal_modal_cancel = _make_cta(MenuActionButton.Kind.SECONDARY, tr("UI_CANCEL"))
+	_goal_modal_cancel.pressed.connect(_hide_goal_modal)
+	vbox.add_child(_goal_modal_cancel)
+
+	_goal_modal_delete = _make_cta(MenuActionButton.Kind.DESTRUCTIVE, tr("UI_CREATOR_GOAL_DELETE"))
 	_goal_modal_delete.visible = false
 	_goal_modal_delete.pressed.connect(_on_delete_goal_modal)
 	vbox.add_child(_goal_modal_delete)
-	UiTheme.style_danger_button(_goal_modal_delete, UiTheme.ButtonScale.COMPACT)
 
-	var buttons := HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 12)
-	vbox.add_child(buttons)
 
-	var cancel_button := Button.new()
-	cancel_button.text = tr("UI_CANCEL")
-	cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cancel_button.pressed.connect(_hide_goal_modal)
-	buttons.add_child(cancel_button)
-	_style_compact_secondary_button(cancel_button)
+func _make_goal_modal_field_label(caption: String) -> Label:
+	var label := Label.new()
+	label.text = caption
+	UiTheme.style_settings_row_label(label)
+	return label
 
-	_goal_modal_confirm = Button.new()
-	_goal_modal_confirm.text = tr("UI_CREATOR_GOAL_ADD_CONFIRM")
-	_goal_modal_confirm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_goal_modal_confirm.pressed.connect(_on_confirm_goal_modal)
-	buttons.add_child(_goal_modal_confirm)
-	_style_compact_action_button(_goal_modal_confirm)
+
+func _make_goal_modal_check_row(checkbox: CheckBox, label: Label, caption: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	UiTheme.style_settings_checkbox(checkbox)
+	label.text = caption
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	UiTheme.style_settings_row_label(label)
+	row.add_child(checkbox)
+	row.add_child(label)
+	return row
 
 
 func _on_goal_modal_infinite_toggled(infinite_on: bool) -> void:
 	_goal_modal_count_box.visible = not infinite_on
+	_refresh_goal_placement_preview()
+
+
+func _goal_insert_index() -> int:
+	if _goal_modal_edge.is_empty() or not _edge_panels.has(_goal_modal_edge):
+		return 0
+	var goals: Array = _edge_panels[_goal_modal_edge]["goals"]
+	if _goal_modal_place_front == null or _goal_modal_place_front.button_pressed:
+		return 0
+	return goals.size()
+
+
+func _refresh_goal_placement_preview() -> void:
+	if _goals_map == null or _goal_modal == null or not _goal_modal.visible:
+		return
+	var show_preview := (
+		_goal_modal_edit_index < 0
+		and _goal_modal_preview != null
+		and _goal_modal_preview.button_pressed
+	)
+	if _goal_modal_order_hint != null:
+		_goal_modal_order_hint.visible = show_preview
+		_goal_modal_order_hint.text = tr("UI_CREATOR_GOAL_ORDER_HINT")
+	if _goal_modal_order_preview != null:
+		_goal_modal_order_preview.visible = show_preview
+		_rebuild_goal_order_chips()
+	if not show_preview:
+		_goals_map.clear_placement_preview()
+		return
+	_goals_map.set_placement_preview(
+		_goal_modal_edge,
+		_read_goal_from_modal(),
+		_goal_insert_index(),
+		true
+	)
+
+
+func _rebuild_goal_order_chips() -> void:
+	if _goal_modal_order_preview == null:
+		return
+	for child in _goal_modal_order_preview.get_children():
+		child.free()
+	if _goal_modal_edge.is_empty() or not _edge_panels.has(_goal_modal_edge):
+		return
+	var goals: Array = (_edge_panels[_goal_modal_edge]["goals"] as Array).duplicate(true)
+	var insert_at := _goal_insert_index()
+	goals.insert(insert_at, _read_goal_from_modal())
+	for i in goals.size():
+		var goal: Dictionary = goals[i]
+		var chip := ColorRect.new()
+		chip.custom_minimum_size = Vector2(28, 28)
+		chip.color = Block.get_color(goal.get("color", Block.TileColor.RED) as Block.TileColor)
+		if i == insert_at:
+			var wrap := PanelContainer.new()
+			var ring := StyleBoxFlat.new()
+			ring.bg_color = Color(0, 0, 0, 0)
+			ring.border_color = Color(1, 1, 1, 0.95)
+			ring.set_border_width_all(3)
+			ring.set_corner_radius_all(6)
+			wrap.add_theme_stylebox_override("panel", ring)
+			wrap.add_child(chip)
+			_goal_modal_order_preview.add_child(wrap)
+		else:
+			_goal_modal_order_preview.add_child(chip)
 
 
 func _on_add_goal_requested(edge_key: String) -> void:
@@ -639,9 +774,9 @@ func _open_goal_modal(edge_key: String, edit_index: int) -> void:
 	var editing := edit_index >= 0
 	if editing:
 		_goal_modal_title.text = tr("UI_CREATOR_EDIT_GOAL_TITLE") % edge_label
-		_goal_modal_confirm.text = tr("UI_CREATOR_GOAL_SAVE")
+		_goal_modal_confirm.set_label(tr("UI_CREATOR_GOAL_SAVE"))
 		_goal_modal_delete.visible = true
-		_goal_modal_delete.text = tr("UI_CREATOR_GOAL_DELETE")
+		_goal_modal_delete.set_label(tr("UI_CREATOR_GOAL_DELETE"))
 		var goals: Array = _edge_panels[edge_key]["goals"]
 		if edit_index >= goals.size():
 			_hide_goal_modal()
@@ -655,14 +790,38 @@ func _open_goal_modal(edge_key: String, edit_index: int) -> void:
 		_select_option_by_id(_goal_modal_count, count)
 	else:
 		_goal_modal_title.text = tr("UI_CREATOR_ADD_GOAL_TITLE") % edge_label
-		_goal_modal_confirm.text = tr("UI_CREATOR_GOAL_ADD_CONFIRM")
+		_goal_modal_confirm.set_label(tr("UI_CREATOR_GOAL_ADD_CONFIRM"))
 		_goal_modal_delete.visible = false
 		_goal_modal_color.select(0)
 		_goal_modal_infinite.button_pressed = false
 		_goal_modal_count_box.visible = true
 		_goal_modal_count.select(0)
-	_goal_modal_infinite.text = tr("UI_CREATOR_GOAL_INFINITE")
+	_set_goal_check_row_visible(_goal_modal_place_front, not editing)
+	_set_goal_check_row_visible(_goal_modal_preview, not editing)
+	if not editing:
+		_goal_modal_place_front.button_pressed = true
+		_goal_modal_preview.button_pressed = true
 	_goal_modal.visible = true
+	_refresh_goal_placement_preview()
+	_shrink_goal_modal()
+
+
+func _set_goal_check_row_visible(checkbox: CheckBox, shown: bool) -> void:
+	if checkbox == null:
+		return
+	var row := checkbox.get_parent() as Control
+	if row != null:
+		row.visible = shown
+	else:
+		checkbox.visible = shown
+
+
+func _shrink_goal_modal() -> void:
+	if _goal_modal_panel == null:
+		return
+	await get_tree().process_frame
+	if is_instance_valid(_goal_modal_panel):
+		_goal_modal_panel.shrink_to_content()
 
 
 func _select_option_by_id(option: OptionButton, id: int) -> void:
@@ -675,6 +834,8 @@ func _select_option_by_id(option: OptionButton, id: int) -> void:
 
 
 func _hide_goal_modal() -> void:
+	if _goals_map != null:
+		_goals_map.clear_placement_preview()
 	if _goal_modal != null:
 		_goal_modal.visible = false
 	_goal_modal_edge = ""
@@ -701,6 +862,8 @@ func _on_confirm_goal_modal() -> void:
 			_hide_goal_modal()
 			return
 		goals[_goal_modal_edit_index] = goal
+	elif _goal_modal_place_front != null and _goal_modal_place_front.button_pressed:
+		goals.insert(0, goal)
 	else:
 		goals.append(goal)
 	_goals_map.set_edge_goals(_goal_modal_edge, goals)
@@ -814,8 +977,8 @@ func _collect_draft_from_ui() -> void:
 	else:
 		_draft.daily_date = ""
 		_draft.group_title_key = _current_subsection_key()
-	_draft.columns = _read_number_field(_columns_field, 3, 12, 8)
-	_draft.rows = _read_number_field(_rows_field, 3, 16, 8)
+	_draft.columns = _read_grid_axis(_columns_field, 8)
+	_draft.rows = _read_grid_axis(_rows_field, 8)
 	_draft.multi_goal_mode = _any_edge_has_goals()
 
 	var disabled: Array[Vector2i] = []
@@ -872,11 +1035,20 @@ func _collect_edge_goals_from_ui(edge_key: String) -> void:
 
 
 func _on_apply_grid_pressed() -> void:
-	_draft.columns = _read_number_field(_columns_field, 3, 12, 8)
-	_draft.rows = _read_number_field(_rows_field, 3, 16, 8)
+	var requested_cols := _parse_grid_axis(_columns_field, 8)
+	var requested_rows := _parse_grid_axis(_rows_field, 8)
+	var cols := clampi(requested_cols, GRID_MIN, GRID_MAX)
+	var rows := clampi(requested_rows, GRID_MIN, GRID_MAX)
+	_columns_field.text = str(cols)
+	_rows_field.text = str(rows)
+	_draft.columns = cols
+	_draft.rows = rows
 	_trim_shapes_to_grid()
 	_sync_grid()
-	_set_status(tr("UI_CREATOR_GRID_APPLIED"))
+	if requested_cols != cols or requested_rows != rows:
+		_show_grid_limit_message(requested_cols, requested_rows, cols, rows)
+	else:
+		_set_status(tr("UI_CREATOR_GRID_APPLIED"))
 
 
 func _trim_shapes_to_grid() -> void:
@@ -920,7 +1092,8 @@ func _on_grid_cell_clicked(cell: Vector2i, button_index: int) -> void:
 			_erase_cell_from_shape(hit, cell)
 			return
 		if hit == _selected_shape_index:
-			_open_shape_modal_edit(hit)
+			## Second click carves that square out when the piece stays connected.
+			_erase_cell_from_shape(hit, cell)
 			return
 		_on_select_shape(hit)
 		return
@@ -1319,8 +1492,8 @@ func _has_valid_blocks() -> bool:
 func _sync_grid() -> void:
 	grid.sync_shapes(
 		_shapes,
-		int(_read_number_field(_columns_field, 3, 12, 8)),
-		int(_read_number_field(_rows_field, 3, 16, 8)),
+		int(_read_grid_axis(_columns_field, 8)),
+		int(_read_grid_axis(_rows_field, 8)),
 		_selected_shape_index,
 		_erase_mode,
 		false,
@@ -1727,6 +1900,9 @@ func _on_back_pressed() -> void:
 
 
 func handle_back() -> void:
+	if _goal_modal != null and _goal_modal.visible:
+		_hide_goal_modal()
+		return
 	_on_back_pressed()
 
 
@@ -1734,8 +1910,15 @@ func _on_back_confirmed() -> void:
 	get_tree().change_scene_to_file(SETTINGS_SCENE)
 
 
-func _set_status(_message: String) -> void:
-	pass
+func _set_status(message: String) -> void:
+	if status_label == null:
+		return
+	status_label.visible = not message.is_empty()
+	status_label.text = message
+	UiTheme.style_menu_hint(status_label)
+	status_label.add_theme_font_size_override("font_size", CREATOR_HINT_FONT)
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
 func _register_rainbow_field(host: Control) -> void:
@@ -1854,25 +2037,49 @@ func _add_labeled_line_edit(parent: Control, caption: String, placeholder: Strin
 func _add_number_field(
 	parent: Control,
 	caption: String,
-	min_value: int,
-	max_value: int,
+	_min_value: int,
+	_max_value: int,
 	value: int
 ) -> LineEdit:
 	var edit := _add_labeled_line_edit(parent, caption, str(value))
-	edit.text_changed.connect(_on_number_field_changed.bind(edit, min_value, max_value))
+	edit.text_changed.connect(_on_number_field_changed.bind(edit))
 	return edit
 
 
-func _on_number_field_changed(edit: LineEdit, min_value: int, max_value: int, _new_text: String = "") -> void:
-	if edit.text.is_empty():
-		_on_level_field_changed()
-		return
-	if not edit.text.is_valid_int():
-		return
-	var number := clampi(int(edit.text), min_value, max_value)
-	if edit.text != str(number):
-		edit.text = str(number)
+func _on_number_field_changed(edit: LineEdit, _new_text: String = "") -> void:
 	_on_level_field_changed()
+
+
+func _parse_grid_axis(edit: LineEdit, fallback: int) -> int:
+	if edit == null or edit.text.is_empty() or not edit.text.is_valid_int():
+		return fallback
+	return int(edit.text)
+
+
+func _read_grid_axis(edit: LineEdit, fallback: int) -> int:
+	return clampi(_parse_grid_axis(edit, fallback), GRID_MIN, GRID_MAX)
+
+
+func _show_grid_limit_message(requested_cols: int, requested_rows: int, cols: int, rows: int) -> void:
+	var lines: PackedStringArray = []
+	if requested_cols != cols:
+		lines.append(
+			tr("UI_CREATOR_GRID_LIMIT_AXIS") % [tr("UI_CREATOR_COLUMNS"), requested_cols, GRID_MIN, GRID_MAX, cols]
+		)
+	if requested_rows != rows:
+		lines.append(
+			tr("UI_CREATOR_GRID_LIMIT_AXIS") % [tr("UI_CREATOR_ROWS"), requested_rows, GRID_MIN, GRID_MAX, rows]
+		)
+	_set_status("\n".join(lines))
+	_confirm_action = ""
+	if _confirm_modal != null and _confirm_modal.has_method("show_modal"):
+		_confirm_modal.show_modal(
+			"UI_CREATOR_GRID_LIMIT_TITLE",
+			"UI_CREATOR_GRID_LIMIT_BODY",
+			"UI_OK",
+			"",
+			[GRID_MIN, GRID_MAX, cols, rows]
+		)
 
 
 func _read_number_field(edit: LineEdit, min_value: int, max_value: int, fallback: int) -> int:

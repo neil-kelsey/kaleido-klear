@@ -77,6 +77,9 @@ var _exit_tween: Tween
 var _nebula_mat: ShaderMaterial
 var _fx_time := 0.0
 var _glyph_overlay: Control
+var _page_dots: Control
+var _overlay_cam_y := INF
+var _overlay_cam_z := 0.0
 
 
 func _ready() -> void:
@@ -98,6 +101,7 @@ func _ready() -> void:
 	camera.make_current()
 	_ensure_white_fade()
 	_ensure_glyph_overlay()
+	_ensure_page_dots()
 	GameSession.fade_scene_wipe_out(0.32)
 	back_button.pressed.connect(_on_back_pressed)
 	_apply_translations()
@@ -123,6 +127,7 @@ func _notification(what: int) -> void:
 			return
 		_apply_translations()
 		queue_redraw()
+		_invalidate_glyph_overlay()
 
 
 func _process(delta: float) -> void:
@@ -132,8 +137,7 @@ func _process(delta: float) -> void:
 		_nebula_mat.set_shader_parameter("rect_size", nebula_bg.size)
 		var pulse := 0.99 + 0.01 * sin(_fx_time * 0.25)
 		_nebula_mat.set_shader_parameter("brightness", pulse)
-	if _glyph_overlay != null:
-		_glyph_overlay.queue_redraw()
+	_sync_glyph_overlay_to_camera()
 
 
 func _apply_translations() -> void:
@@ -171,6 +175,7 @@ func _rebuild_map() -> void:
 	_sync_chart_sprite()
 	_sync_title_to_chart_pole()
 	queue_redraw()
+	_invalidate_glyph_overlay()
 
 
 func _content_width() -> float:
@@ -349,10 +354,16 @@ func _go_to_page(index: int, animate: bool) -> void:
 	if not animate:
 		camera.position = target
 		_clamp_camera_to_pages()
+		if _page_dots != null:
+			_page_dots.queue_redraw()
 		return
 	_snap_tween = create_tween()
 	_snap_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_snap_tween.tween_property(camera, "position", target, PAGE_SNAP_DURATION)
+	_snap_tween.finished.connect(func() -> void:
+		if _page_dots != null:
+			_page_dots.queue_redraw()
+	)
 
 
 func _nearest_page_index(cam_y: float) -> int:
@@ -424,8 +435,61 @@ func _ensure_glyph_overlay() -> void:
 	hud.add_child(_glyph_overlay)
 
 
+func _ensure_page_dots() -> void:
+	if _page_dots != null and is_instance_valid(_page_dots):
+		return
+	var hud := get_node_or_null("UI/Root") as Control
+	if hud == null:
+		return
+	_page_dots = _PageDots.new()
+	_page_dots.host = self
+	_page_dots.name = "PageDots"
+	_page_dots.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_page_dots.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_page_dots.offset_top = -56.0
+	_page_dots.offset_bottom = -16.0
+	_page_dots.z_index = 25
+	hud.add_child(_page_dots)
+
+
+func _page_dot_count() -> int:
+	if not _paging_enabled:
+		return 0
+	return _page_ys.size()
+
+
+func _page_dot_index() -> int:
+	if not _paging_enabled or _page_ys.size() < 2:
+		return _page_index
+	if _panning or _snap_tween != null:
+		return _nearest_page_index(camera.position.y)
+	return _page_index
+
+
 func _world_pos_to_screen(world: Vector2) -> Vector2:
 	return get_viewport().get_canvas_transform() * world
+
+
+func _invalidate_glyph_overlay() -> void:
+	_overlay_cam_y = INF
+	if _glyph_overlay != null:
+		_glyph_overlay.queue_redraw()
+	if _page_dots != null:
+		_page_dots.queue_redraw()
+
+
+func _sync_glyph_overlay_to_camera() -> void:
+	if _glyph_overlay == null or camera == null:
+		return
+	var y := camera.position.y
+	var z := camera.zoom.x
+	if is_equal_approx(y, _overlay_cam_y) and is_equal_approx(z, _overlay_cam_z):
+		return
+	_overlay_cam_y = y
+	_overlay_cam_z = z
+	_glyph_overlay.queue_redraw()
+	if _page_dots != null:
+		_page_dots.queue_redraw()
 
 
 func _draw_award_stars_on(item: CanvasItem) -> void:
@@ -433,10 +497,14 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 	var z := maxf(camera.zoom.x, 0.001)
 	var dsize := _diamond_size() * z
 	var rim_w := 1.8 * MAP_DRAW_ZOOM
+	var vp := get_viewport_rect().size
+	var pad := dsize
 	var count := mini(_levels.size(), _level_positions.size())
 	for i in count:
-		var level: LevelConfig = _levels[i]
 		var center := _world_pos_to_screen(_level_positions[i])
+		if center.x < -pad or center.x > vp.x + pad or center.y < -pad or center.y > vp.y + pad:
+			continue
+		var level: LevelConfig = _levels[i]
 		var pts := _diamond_points(center, dsize)
 		var outline := pts + PackedVector2Array([pts[0]])
 		var unlocked := GameSession.is_level_unlocked(level)
@@ -704,3 +772,23 @@ class _AwardStarOverlay extends Control:
 	func _draw() -> void:
 		if host != null and host.has_method("_draw_award_stars_on"):
 			host._draw_award_stars_on(self)
+
+
+class _PageDots extends Control:
+	var host: Node
+
+	func _draw() -> void:
+		if host == null or not host.has_method("_page_dot_count"):
+			return
+		var n := int(host.call("_page_dot_count"))
+		if n < 2:
+			return
+		var radius := 7.0
+		var gap := 22.0
+		var total := float(n - 1) * gap
+		var start_x := size.x * 0.5 - total * 0.5
+		var y := size.y * 0.5
+		var current := int(host.call("_page_dot_index"))
+		for i in n:
+			var colour := Color(1, 1, 1, 0.96) if i == current else Color(0.22, 0.22, 0.26, 0.92)
+			draw_circle(Vector2(start_x + float(i) * gap, y), radius, colour)

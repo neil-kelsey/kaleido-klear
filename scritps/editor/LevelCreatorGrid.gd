@@ -10,6 +10,10 @@ const GRID_BORDER := Color(0.08, 0.09, 0.12, 1.0)
 const GRID_HOLE := Color(0.12, 0.12, 0.14, 1.0)
 const LONG_PRESS_SEC := 0.45
 const LONG_PRESS_MOVE_PX := 20.0
+const ZOOM_MIN := 0.5
+const ZOOM_MAX := 12.0
+const WHEEL_ZOOM_STEP := 0.14
+const PINCH_ZOOM_SENSITIVITY := 1.0
 
 var columns: int = 8
 var rows: int = 8
@@ -30,10 +34,19 @@ var _press_pos := Vector2.ZERO
 var _press_held := false
 var _long_fired := false
 var _long_timer: Timer
+var _view_zoom := 1.0
+var _pan_offset := Vector2.ZERO
+var _middle_panning := false
+var _pinch_active := false
+var _pinch_touches: Dictionary = {}
+var _pinch_start_distance := 0.0
+var _pinch_start_zoom := 1.0
+var _pinch_last_midpoint := Vector2.ZERO
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	clip_contents = true
 	resized.connect(_on_resized)
 	_on_resized()
 	_long_timer = Timer.new()
@@ -66,6 +79,7 @@ func sync_shapes(
 	grid_erase: bool = false,
 	disabled: Array[Vector2i] = []
 ) -> void:
+	var size_changed := columns != grid_columns or rows != grid_rows
 	columns = grid_columns
 	rows = grid_rows
 	shapes = shape_list
@@ -74,6 +88,9 @@ func sync_shapes(
 	grid_edit_active = grid_edit
 	grid_erase_mode = grid_erase
 	disabled_cells = disabled
+	if size_changed:
+		_view_zoom = 1.0
+		_pan_offset = Vector2.ZERO
 	_on_resized()
 	queue_redraw()
 
@@ -85,20 +102,88 @@ func is_cell_disabled(cell: Vector2i) -> bool:
 func _on_resized() -> void:
 	if columns <= 0 or rows <= 0:
 		return
-	cell_size = mini(int(size.x / columns), int(size.y / rows))
+	_apply_view_transform()
+	queue_redraw()
+
+
+func _fit_cell_size() -> int:
+	if columns <= 0 or rows <= 0 or size.x < 2.0 or size.y < 2.0:
+		return 8
+	return maxi(2, mini(int(size.x / columns), int(size.y / rows)))
+
+
+func _apply_view_transform() -> void:
+	cell_size = maxi(2, int(round(float(_fit_cell_size()) * _view_zoom)))
 	var grid_pixel := Vector2(columns * cell_size, rows * cell_size)
-	## Integer origin keeps every cell edge on a whole pixel.
-	grid_origin = ((size - grid_pixel) * 0.5).floor()
+	var centered := ((size - grid_pixel) * 0.5).floor()
+	if grid_pixel.x <= size.x:
+		_pan_offset.x = 0.0
+		grid_origin.x = centered.x
+	else:
+		grid_origin.x = clampf(centered.x + _pan_offset.x, size.x - grid_pixel.x, 0.0)
+		_pan_offset.x = grid_origin.x - centered.x
+	if grid_pixel.y <= size.y:
+		_pan_offset.y = 0.0
+		grid_origin.y = centered.y
+	else:
+		grid_origin.y = clampf(centered.y + _pan_offset.y, size.y - grid_pixel.y, 0.0)
+		_pan_offset.y = grid_origin.y - centered.y
+
+
+func _zoom_at_local(local_point: Vector2, new_zoom: float) -> void:
+	var old_cell := float(maxi(cell_size, 1))
+	var old_origin := grid_origin
+	var cell_pos := (local_point - old_origin) / old_cell
+	_view_zoom = clampf(new_zoom, ZOOM_MIN, ZOOM_MAX)
+	_apply_view_transform()
+	var desired_origin := local_point - cell_pos * float(cell_size)
+	_pan_offset += desired_origin - grid_origin
+	_apply_view_transform()
 	queue_redraw()
 
 
 func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
+			_zoom_at_local(mb.position, _view_zoom * (1.0 + WHEEL_ZOOM_STEP))
+			accept_event()
+			return
+		if mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
+			_zoom_at_local(mb.position, _view_zoom * (1.0 - WHEEL_ZOOM_STEP))
+			accept_event()
+			return
+		if mb.button_index == MOUSE_BUTTON_MIDDLE:
+			_middle_panning = mb.pressed
+			accept_event()
+			return
+
+	if event is InputEventScreenTouch:
+		if _handle_pinch_touch(event as InputEventScreenTouch):
+			accept_event()
+			return
+
+	if event is InputEventScreenDrag:
+		if _handle_pinch_drag(event as InputEventScreenDrag):
+			accept_event()
+			return
+
+	if _pinch_active:
+		return
+
 	if event is InputEventMouseMotion:
-		_hover_cell = _pixel_to_cell(event.position)
+		var motion := event as InputEventMouseMotion
+		if _middle_panning:
+			_pan_offset += motion.relative
+			_apply_view_transform()
+			queue_redraw()
+			accept_event()
+			return
+		_hover_cell = _pixel_to_cell(motion.position)
 		_update_hover_preview()
 		queue_redraw()
 		if _press_held and not _long_fired:
-			if event.position.distance_to(_press_pos) > LONG_PRESS_MOVE_PX:
+			if motion.position.distance_to(_press_pos) > LONG_PRESS_MOVE_PX:
 				_cancel_press()
 		return
 
@@ -127,6 +212,69 @@ func _gui_input(event: InputEvent) -> void:
 			if not fired and emit_cell.x >= 0:
 				cell_clicked.emit(emit_cell, MOUSE_BUTTON_LEFT)
 			accept_event()
+
+
+func _handle_pinch_touch(event: InputEventScreenTouch) -> bool:
+	if event.pressed:
+		_pinch_touches[event.index] = event.position
+		if _pinch_touches.size() >= 2:
+			_cancel_press()
+			_begin_pinch()
+			return true
+		return false
+	var pinching := _pinch_active or _pinch_touches.size() >= 2
+	_pinch_touches.erase(event.index)
+	if _pinch_touches.size() < 2:
+		_pinch_active = false
+	return pinching
+
+
+func _handle_pinch_drag(event: InputEventScreenDrag) -> bool:
+	if not _pinch_touches.has(event.index):
+		return false
+	_pinch_touches[event.index] = event.position
+	if _pinch_touches.size() < 2:
+		return false
+	if not _pinch_active:
+		_cancel_press()
+		_begin_pinch()
+	_update_pinch()
+	return true
+
+
+func _pinch_points() -> Array[Vector2]:
+	var points: Array[Vector2] = []
+	for key in _pinch_touches.keys():
+		points.append(_pinch_touches[key])
+		if points.size() >= 2:
+			break
+	return points
+
+
+func _begin_pinch() -> void:
+	var points := _pinch_points()
+	if points.size() < 2:
+		return
+	_pinch_active = true
+	_pinch_start_distance = points[0].distance_to(points[1])
+	_pinch_start_zoom = _view_zoom
+	_pinch_last_midpoint = (points[0] + points[1]) * 0.5
+
+
+func _update_pinch() -> void:
+	var points := _pinch_points()
+	if points.size() < 2 or _pinch_start_distance <= 0.001:
+		return
+	var midpoint := (points[0] + points[1]) * 0.5
+	var distance := points[0].distance_to(points[1])
+	var target_zoom := _pinch_start_zoom * (distance / _pinch_start_distance) * PINCH_ZOOM_SENSITIVITY
+	_zoom_at_local(midpoint, target_zoom)
+	var mid_delta := midpoint - _pinch_last_midpoint
+	if mid_delta.length_squared() > 0.01:
+		_pan_offset += mid_delta
+		_apply_view_transform()
+		queue_redraw()
+	_pinch_last_midpoint = midpoint
 
 
 func _on_long_press_timeout() -> void:
@@ -174,10 +322,13 @@ func _draw() -> void:
 
 	## Same approach as the playfield: full cell = border color, inset = fill.
 	## Dark border on lighter fill keeps every seam visible under UI scale.
+	var view := Rect2(Vector2.ZERO, size).grow(float(cell_size))
 	for y in rows:
 		for x in columns:
 			var cell := Vector2i(x, y)
 			var rect := _cell_rect(cell)
+			if not view.intersects(rect):
+				continue
 			if is_cell_disabled(cell):
 				draw_rect(rect, GRID_HOLE)
 				continue
