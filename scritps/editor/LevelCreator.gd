@@ -2,6 +2,14 @@ extends Control
 
 const SETTINGS_SCENE := "res://scenes/ui/settings.tscn"
 const GAME_SCENE := "res://scenes/main.tscn"
+const EXIT_CONFIRM_SCENE := preload("res://scenes/ui/exit_confirm_modal.tscn")
+const SHAPE_MODAL_SCENE := preload("res://scenes/editor/shape_editor_modal.tscn")
+const BRAND_RAINBOW := preload("res://scritps/ui/BrandRainbow.gd")
+const CREATOR_TAB_FONT := 32
+const CREATOR_LABEL_FONT := 28
+const CREATOR_FIELD_FONT := 28
+const CREATOR_FIELD_HEIGHT := 64
+const CREATOR_HINT_FONT := 24
 
 const EDGE_KEYS := ["left", "top", "right", "bottom"]
 
@@ -10,6 +18,7 @@ const EDGE_KEYS := ["left", "top", "right", "bottom"]
 @onready var playtest_button: Button = %PlaytestButton
 @onready var clear_button: Button = %ClearButton
 @onready var status_label: Label = %StatusLabel
+@onready var mix_cheat_sheet: VBoxContainer = %MixCheatSheet
 @onready var title_label: Label = %TitleLabel
 @onready var tab_switcher: PanelContainer = %TabSwitcher
 @onready var setup_tab_button: Button = %SetupTabButton
@@ -30,12 +39,16 @@ var _selected_shape_index: int = -1
 var _selected_color: Block.TileColor = Block.TileColor.RED
 var _selected_kind: Block.BlockKind = Block.BlockKind.STANDARD
 var _erase_mode: bool = false
-var _grid_erase_mode: bool = false
 var _active_tab: String = "setup"
 var _disabled_cells: Array[Vector2i] = []
 
 var _display_name_edit: LineEdit
 var _section_option: OptionButton
+var _subsection_box: VBoxContainer
+var _subsection_label: Label
+var _subsection_option: OptionButton
+var _level_details_label: Label
+var _grid_details_label: Label
 var _daily_date_box: VBoxContainer
 var _daily_year_spin: SpinBox
 var _daily_month_option: OptionButton
@@ -43,8 +56,7 @@ var _daily_day_spin: SpinBox
 var _columns_field: LineEdit
 var _rows_field: LineEdit
 var _shapes_list_box: VBoxContainer
-var _create_shape_button: Button
-var _color_flow: HFlowContainer
+var _shapes_header: HBoxContainer
 var _color_buttons: Array[Button] = []
 var _kind_toolbar_buttons: Dictionary = {}
 var _edge_panels: Dictionary = {}
@@ -62,8 +74,12 @@ var _goal_modal_delete: Button
 var _refreshing_shape_list: bool = false
 var _passed_signature: String = ""
 var _baseline_signature: String = ""
-var _clear_confirm: ConfirmationDialog
-var _back_confirm: ConfirmationDialog
+var _confirm_modal: Control
+var _confirm_action: String = ""
+var _shape_modal
+var _pending_shape_cell := Vector2i(-1, -1)
+var _shape_modal_edit_index: int = -1
+var _rainbow_hosts: Array[Control] = []
 
 
 func _ready() -> void:
@@ -78,7 +94,11 @@ func _ready() -> void:
 	_apply_translations()
 	_style_buttons()
 	_style_segmented_tabs()
+	_build_mix_cheat_sheet()
+	status_label.visible = false
 	_setup_confirm_dialogs()
+	_setup_shape_modal()
+	set_process(true)
 	var restored_draft := GameSession.consume_playtest_draft()
 	var restored_passed := GameSession.consume_playtest_passed()
 	if restored_draft != null:
@@ -97,6 +117,7 @@ func _ready() -> void:
 	resized.connect(_sync_panel_widths)
 
 	grid.cell_clicked.connect(_on_grid_cell_clicked)
+	grid.cell_edit_requested.connect(_on_grid_cell_edit_requested)
 	back_button.pressed.connect(_on_back_pressed)
 	save_button.pressed.connect(_on_save_pressed)
 	playtest_button.pressed.connect(_on_playtest_pressed)
@@ -115,7 +136,8 @@ func _sync_panel_widths() -> void:
 	var horizontal_inset := 84.0
 	var panel_width: float = maxf(200.0, size.x - horizontal_inset)
 	setup_panel.custom_minimum_size = Vector2(panel_width, 0.0)
-	blocks_panel.custom_minimum_size = Vector2(panel_width, 0.0)
+	blocks_panel.custom_minimum_size.x = panel_width
+	blocks_panel.custom_minimum_size.y = maxf(blocks_scroll.size.y - 24.0, 360.0)
 	right_panel.custom_minimum_size = Vector2(panel_width, 0.0)
 
 
@@ -127,15 +149,14 @@ func _style_segmented_tabs() -> void:
 	setup_tab_button.button_pressed = true
 
 	var track_style := StyleBoxFlat.new()
-	track_style.bg_color = Color(0.11, 0.12, 0.16, 1.0)
-	track_style.corner_radius_top_left = 14
-	track_style.corner_radius_top_right = 14
-	track_style.corner_radius_bottom_left = 14
-	track_style.corner_radius_bottom_right = 14
-	track_style.content_margin_left = 4
-	track_style.content_margin_top = 4
-	track_style.content_margin_right = 4
-	track_style.content_margin_bottom = 4
+	track_style.bg_color = Color(0.97, 0.97, 0.985, 1.0)
+	track_style.set_corner_radius_all(28)
+	track_style.content_margin_left = 8
+	track_style.content_margin_top = 8
+	track_style.content_margin_right = 8
+	track_style.content_margin_bottom = 8
+	track_style.border_color = Color(0.82, 0.68, 0.28, 0.55)
+	track_style.set_border_width_all(2)
 	tab_switcher.add_theme_stylebox_override("panel", track_style)
 
 	_style_segment_tab_button(setup_tab_button)
@@ -144,39 +165,30 @@ func _style_segmented_tabs() -> void:
 
 
 func _style_segment_tab_button(button: Button) -> void:
-	var radius := 10
+	var radius := 22
 	var inactive := StyleBoxFlat.new()
 	inactive.bg_color = Color(0, 0, 0, 0)
-	inactive.corner_radius_top_left = radius
-	inactive.corner_radius_top_right = radius
-	inactive.corner_radius_bottom_left = radius
-	inactive.corner_radius_bottom_right = radius
+	inactive.set_corner_radius_all(radius)
 
-	var inactive_hover := inactive.duplicate()
-	inactive_hover.bg_color = Color(1, 1, 1, 0.08)
+	var inactive_hover := inactive.duplicate() as StyleBoxFlat
+	inactive_hover.bg_color = Color(0.0, 0.28, 0.66, 0.08)
 
 	var active := StyleBoxFlat.new()
-	active.bg_color = Color(0.28, 0.32, 0.42, 1.0)
-	active.corner_radius_top_left = radius
-	active.corner_radius_top_right = radius
-	active.corner_radius_bottom_left = radius
-	active.corner_radius_bottom_right = radius
-	active.shadow_color = Color(0, 0, 0, 0.28)
-	active.shadow_size = 3
-	active.shadow_offset = Vector2(0, 1)
+	active.bg_color = UiTheme.PRIMARY
+	active.set_corner_radius_all(radius)
 
 	button.add_theme_stylebox_override("normal", inactive)
 	button.add_theme_stylebox_override("hover", inactive_hover)
 	button.add_theme_stylebox_override("pressed", active)
 	button.add_theme_stylebox_override("hover_pressed", active)
 	button.add_theme_stylebox_override("focus", inactive)
-	## Dark track needs light type — UiTheme.TEXT is near-black (for white menus).
-	var inactive_text := Color(0.88, 0.90, 0.95, 1.0)
-	button.add_theme_color_override("font_color", inactive_text)
-	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	button.add_theme_color_override("font_color", UiTheme.PRIMARY)
+	button.add_theme_color_override("font_hover_color", UiTheme.PRIMARY)
 	button.add_theme_color_override("font_pressed_color", Color.WHITE)
 	button.add_theme_color_override("font_hover_pressed_color", Color.WHITE)
-	button.add_theme_font_size_override("font_size", 16)
+	button.add_theme_font_size_override("font_size", CREATOR_TAB_FONT)
+	button.custom_minimum_size.y = 64
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
@@ -197,33 +209,64 @@ func _show_creator_tab(tab: String) -> void:
 	setup_scroll.visible = tab == "setup"
 	blocks_scroll.visible = tab == "blocks"
 	goals_scroll.visible = tab == "goals"
+	_refresh_mix_cheat_sheet()
 	_sync_grid()
 
 
+func _ensure_blocks_tab() -> void:
+	if _active_tab == "blocks":
+		return
+	_show_creator_tab("blocks")
+	setup_tab_button.set_pressed_no_signal(false)
+	blocks_tab_button.set_pressed_no_signal(true)
+	goals_tab_button.set_pressed_no_signal(false)
+
+
+func _process(delta: float) -> void:
+	BRAND_RAINBOW.tick(delta)
+	for host in _rainbow_hosts:
+		if host == null or not is_instance_valid(host):
+			continue
+		var border := host.get_node_or_null("RainbowBorder") as ColorRect
+		if border != null:
+			UiTheme.sync_rainbow_border(border, host.size)
+
+
 func _style_buttons() -> void:
-	back_button.text = "  " + tr("UI_BACK")
-	save_button.text = tr("UI_CREATOR_SAVE")
-	playtest_button.text = tr("UI_CREATOR_PLAYTEST")
-	clear_button.text = tr("UI_CREATOR_CLEAR")
-	_style_compact_secondary_button(back_button)
-	_style_compact_secondary_button(clear_button)
+	if save_button is MenuActionButton:
+		(save_button as MenuActionButton).set_label(tr("UI_CREATOR_SAVE"))
+		(save_button as MenuActionButton).show_trailing_icon = false
+		(save_button as MenuActionButton).compact = true
+	else:
+		save_button.text = tr("UI_CREATOR_SAVE")
+	if playtest_button is MenuActionButton:
+		(playtest_button as MenuActionButton).set_label(tr("UI_CREATOR_PLAYTEST"))
+		(playtest_button as MenuActionButton).show_trailing_icon = false
+		(playtest_button as MenuActionButton).compact = true
+	else:
+		playtest_button.text = tr("UI_CREATOR_PLAYTEST")
+	if clear_button is MenuActionButton:
+		(clear_button as MenuActionButton).set_label(tr("UI_CREATOR_CLEAR"))
+		(clear_button as MenuActionButton).show_trailing_icon = false
+		(clear_button as MenuActionButton).compact = true
+		(clear_button as MenuActionButton).apply_kind(MenuActionButton.Kind.DESTRUCTIVE)
+	else:
+		clear_button.text = tr("UI_CREATOR_CLEAR")
+		UiTheme.style_danger_button(clear_button, UiTheme.ButtonScale.STANDARD)
 	_refresh_action_button_styles()
 
 
 func _setup_confirm_dialogs() -> void:
-	_clear_confirm = ConfirmationDialog.new()
-	_clear_confirm.dialog_text = tr("UI_CREATOR_CLEAR_CONFIRM")
-	_clear_confirm.ok_button_text = tr("UI_CREATOR_CLEAR")
-	_clear_confirm.cancel_button_text = tr("UI_CANCEL")
-	_clear_confirm.confirmed.connect(_on_clear_confirmed)
-	add_child(_clear_confirm)
+	_confirm_modal = EXIT_CONFIRM_SCENE.instantiate()
+	add_child(_confirm_modal)
+	_confirm_modal.confirmed.connect(_on_confirm_modal_confirmed)
 
-	_back_confirm = ConfirmationDialog.new()
-	_back_confirm.dialog_text = tr("UI_CREATOR_BACK_CONFIRM")
-	_back_confirm.ok_button_text = tr("UI_BACK")
-	_back_confirm.cancel_button_text = tr("UI_CANCEL")
-	_back_confirm.confirmed.connect(_on_back_confirmed)
-	add_child(_back_confirm)
+
+func _setup_shape_modal() -> void:
+	_shape_modal = SHAPE_MODAL_SCENE.instantiate()
+	add_child(_shape_modal)
+	_shape_modal.confirmed.connect(_on_shape_modal_confirmed)
+	_shape_modal.deleted.connect(_on_shape_modal_deleted)
 
 
 func _apply_translations() -> void:
@@ -232,26 +275,35 @@ func _apply_translations() -> void:
 	blocks_tab_button.text = tr("UI_CREATOR_TAB_BLOCKS")
 	goals_tab_button.text = tr("UI_CREATOR_TAB_GOALS")
 	actions_label.text = tr("UI_CREATOR_ACTIONS")
-	back_button.text = "  " + tr("UI_BACK")
-	save_button.text = tr("UI_CREATOR_SAVE")
-	playtest_button.text = tr("UI_CREATOR_PLAYTEST")
-	clear_button.text = tr("UI_CREATOR_CLEAR")
-	if status_label.text.is_empty() or status_label.text == "Ready":
-		status_label.text = tr("UI_CREATOR_READY")
-	if _clear_confirm:
-		_clear_confirm.dialog_text = tr("UI_CREATOR_CLEAR_CONFIRM")
-		_clear_confirm.ok_button_text = tr("UI_CREATOR_CLEAR")
-		_clear_confirm.cancel_button_text = tr("UI_CANCEL")
-	if _back_confirm:
-		_back_confirm.dialog_text = tr("UI_CREATOR_BACK_CONFIRM")
-		_back_confirm.ok_button_text = tr("UI_BACK")
-		_back_confirm.cancel_button_text = tr("UI_CANCEL")
+	actions_label.visible = true
+	UiTheme.style_section_subtitle(actions_label)
+	if save_button is MenuActionButton:
+		(save_button as MenuActionButton).set_label(tr("UI_CREATOR_SAVE"))
+	else:
+		save_button.text = tr("UI_CREATOR_SAVE")
+	if playtest_button is MenuActionButton:
+		(playtest_button as MenuActionButton).set_label(tr("UI_CREATOR_PLAYTEST"))
+	else:
+		playtest_button.text = tr("UI_CREATOR_PLAYTEST")
+	if clear_button is MenuActionButton:
+		(clear_button as MenuActionButton).set_label(tr("UI_CREATOR_CLEAR"))
+	else:
+		clear_button.text = tr("UI_CREATOR_CLEAR")
 	if _goals_map != null:
 		_goals_map.apply_translations()
 	if _goal_modal_infinite != null:
 		_goal_modal_infinite.text = tr("UI_CREATOR_GOAL_INFINITE")
 	if _goal_modal_delete != null:
 		_goal_modal_delete.text = tr("UI_CREATOR_GOAL_DELETE")
+	if _shapes_header != null:
+		_refresh_shape_table_header()
+	if _level_details_label != null:
+		_level_details_label.text = tr("UI_CREATOR_LEVEL_DETAILS")
+	if _grid_details_label != null:
+		_grid_details_label.text = tr("UI_CREATOR_GRID_DETAILS")
+	if _subsection_label != null:
+		_subsection_label.text = tr("UI_CREATOR_SUBSECTION")
+	_refresh_subsection_options(_current_subsection_key())
 
 
 func _notification(what: int) -> void:
@@ -262,6 +314,9 @@ func _notification(what: int) -> void:
 
 
 func _build_setup_panel() -> void:
+	_level_details_label = Label.new()
+	_add_section_label(setup_panel, tr("UI_CREATOR_LEVEL_DETAILS"), _level_details_label)
+
 	_display_name_edit = _add_labeled_line_edit(
 		setup_panel,
 		tr("UI_CREATOR_DISPLAY_NAME"),
@@ -273,17 +328,36 @@ func _build_setup_panel() -> void:
 	setup_panel.add_child(section_box)
 	var section_label := Label.new()
 	section_label.text = tr("UI_CREATOR_SECTION")
+	section_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
 	section_label.add_theme_color_override("font_color", UiTheme.TEXT)
-	section_label.add_theme_font_size_override("font_size", 18)
+	section_label.add_theme_font_size_override("font_size", CREATOR_LABEL_FONT)
 	section_box.add_child(section_label)
 	_section_option = OptionButton.new()
-	for i in LevelCatalog.SECTIONS.size():
+	for i in LevelCatalog.get_dimension_map_order():
 		var title_key: String = LevelCatalog.SECTIONS[i]["title_key"]
 		_section_option.add_item(tr(title_key), i)
 	_section_option.add_item(tr("UI_DAILY_PUZZLES"), DailyCatalog.SECTION_DAILY)
-	UiTheme.style_option_field(_section_option)
+	UiTheme.style_light_option_field(_section_option)
+	_register_rainbow_field(_section_option)
+	_style_creator_option(_section_option)
 	_section_option.item_selected.connect(_on_section_changed)
 	section_box.add_child(_section_option)
+
+	_subsection_box = VBoxContainer.new()
+	_subsection_box.add_theme_constant_override("separation", 8)
+	section_box.add_child(_subsection_box)
+	_subsection_label = Label.new()
+	_subsection_label.text = tr("UI_CREATOR_SUBSECTION")
+	_subsection_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	_subsection_label.add_theme_color_override("font_color", UiTheme.TEXT)
+	_subsection_label.add_theme_font_size_override("font_size", CREATOR_LABEL_FONT)
+	_subsection_box.add_child(_subsection_label)
+	_subsection_option = OptionButton.new()
+	UiTheme.style_light_option_field(_subsection_option)
+	_register_rainbow_field(_subsection_option)
+	_style_creator_option(_subsection_option)
+	_subsection_option.item_selected.connect(_on_subsection_changed)
+	_subsection_box.add_child(_subsection_option)
 
 	_daily_date_box = VBoxContainer.new()
 	_daily_date_box.add_theme_constant_override("separation", 8)
@@ -291,8 +365,9 @@ func _build_setup_panel() -> void:
 	section_box.add_child(_daily_date_box)
 	var date_label := Label.new()
 	date_label.text = tr("UI_CREATOR_DAILY_DATE")
+	date_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
 	date_label.add_theme_color_override("font_color", UiTheme.TEXT)
-	date_label.add_theme_font_size_override("font_size", 18)
+	date_label.add_theme_font_size_override("font_size", CREATOR_LABEL_FONT)
 	_daily_date_box.add_child(date_label)
 	var date_row := HBoxContainer.new()
 	date_row.add_theme_constant_override("separation", 8)
@@ -304,13 +379,16 @@ func _build_setup_panel() -> void:
 	_daily_day_spin.value = 1
 	_daily_day_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_daily_day_spin.value_changed.connect(_on_daily_date_changed)
+	_style_creator_spin(_daily_day_spin)
 	date_row.add_child(_daily_day_spin)
 
 	_daily_month_option = OptionButton.new()
 	for m in range(1, 13):
 		_daily_month_option.add_item(tr("UI_MONTH_%d" % m), m)
 	_daily_month_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	UiTheme.style_option_field(_daily_month_option)
+	UiTheme.style_light_option_field(_daily_month_option)
+	_register_rainbow_field(_daily_month_option)
+	_style_creator_option(_daily_month_option)
 	_daily_month_option.item_selected.connect(_on_daily_month_selected)
 	date_row.add_child(_daily_month_option)
 
@@ -320,174 +398,106 @@ func _build_setup_panel() -> void:
 	_daily_year_spin.value = 2026
 	_daily_year_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_daily_year_spin.value_changed.connect(_on_daily_date_changed)
+	_style_creator_spin(_daily_year_spin)
 	date_row.add_child(_daily_year_spin)
 	_set_daily_date_controls_to_today()
+
+	setup_panel.add_child(_make_spacer(28))
+	_grid_details_label = Label.new()
+	_add_section_label(setup_panel, tr("UI_CREATOR_GRID_DETAILS"), _grid_details_label)
 
 	var size_row := HBoxContainer.new()
 	size_row.add_theme_constant_override("separation", 12)
 	setup_panel.add_child(size_row)
 	_columns_field = _add_number_field(size_row, tr("UI_CREATOR_COLUMNS"), 3, 12, 8)
 	_rows_field = _add_number_field(size_row, tr("UI_CREATOR_ROWS"), 3, 16, 8)
+	setup_panel.add_child(_make_spacer(20))
 	var apply_row := HBoxContainer.new()
 	setup_panel.add_child(apply_row)
-	var apply_button := Button.new()
-	apply_button.text = tr("UI_CREATOR_APPLY_GRID")
+	var apply_button := _make_cta(MenuActionButton.Kind.PRIMARY, tr("UI_CREATOR_APPLY_GRID"))
 	apply_button.pressed.connect(_on_apply_grid_pressed)
 	apply_row.add_child(apply_button)
-	_style_compact_action_button(apply_button)
-
-	setup_panel.add_child(_make_spacer(12))
-	_add_section_label(setup_panel, tr("UI_CREATOR_GRID_SECTION"))
-
-	var grid_mode_row := HBoxContainer.new()
-	grid_mode_row.add_theme_constant_override("separation", 12)
-	setup_panel.add_child(grid_mode_row)
-	var grid_mode_group := ButtonGroup.new()
-	var grid_draw_button := Button.new()
-	grid_draw_button.text = tr("UI_CREATOR_GRID_DRAW_MODE")
-	grid_draw_button.toggle_mode = true
-	grid_draw_button.button_group = grid_mode_group
-	grid_draw_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid_draw_button.pressed.connect(_on_grid_draw_selected)
-	grid_mode_row.add_child(grid_draw_button)
-	var grid_erase_button := Button.new()
-	grid_erase_button.text = tr("UI_CREATOR_GRID_ERASE_MODE")
-	grid_erase_button.toggle_mode = true
-	grid_erase_button.button_group = grid_mode_group
-	grid_erase_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid_erase_button.pressed.connect(_on_grid_erase_selected)
-	grid_mode_row.add_child(grid_erase_button)
-	grid_draw_button.button_pressed = true
-	_style_selectable_tool_button(grid_draw_button)
-	_style_selectable_tool_button(grid_erase_button)
-
-	var grid_hint := Label.new()
-	grid_hint.text = tr("UI_CREATOR_GRID_HINT")
-	grid_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	grid_hint.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
-	setup_panel.add_child(grid_hint)
+	setup_panel.add_child(_make_spacer(24))
 
 
 func _build_blocks_panel() -> void:
-	_add_section_label(blocks_panel, tr("UI_CREATOR_BLOCK_TOOLS"))
+	blocks_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var chart := ChartModalPanel.new()
+	chart.shrink_wrap = false
+	chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chart.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	blocks_panel.add_child(chart)
 
-	var create_shape_row := HBoxContainer.new()
-	blocks_panel.add_child(create_shape_row)
-	_create_shape_button = Button.new()
-	_create_shape_button.text = tr("UI_CREATOR_CREATE_SHAPE")
-	_create_shape_button.pressed.connect(_on_create_shape_pressed)
-	create_shape_row.add_child(_create_shape_button)
-	_style_compact_action_button(_create_shape_button)
+	var inner := VBoxContainer.new()
+	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	inner.add_theme_constant_override("separation", 12)
+	chart.add_child(inner)
 
-	var shapes_header := HBoxContainer.new()
-	shapes_header.add_theme_constant_override("separation", 6)
-	blocks_panel.add_child(shapes_header)
-	var name_header := Label.new()
-	name_header.text = tr("UI_CREATOR_SHAPE_NAME")
-	name_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_header.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
-	name_header.add_theme_font_size_override("font_size", 14)
-	shapes_header.add_child(name_header)
-	var type_header := Label.new()
-	type_header.text = tr("UI_CREATOR_SHAPE_TYPE")
-	type_header.custom_minimum_size = Vector2(104.0, 0.0)
-	type_header.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
-	type_header.add_theme_font_size_override("font_size", 14)
-	shapes_header.add_child(type_header)
-	var color_header := Label.new()
-	color_header.text = tr("UI_CREATOR_SHAPE_COLOR")
-	color_header.custom_minimum_size = Vector2(92.0, 0.0)
-	color_header.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
-	color_header.add_theme_font_size_override("font_size", 14)
-	shapes_header.add_child(color_header)
-	var delete_header := Label.new()
-	delete_header.custom_minimum_size = Vector2(40.0, 0.0)
-	shapes_header.add_child(delete_header)
+	_shapes_header = HBoxContainer.new()
+	_shapes_header.add_theme_constant_override("separation", 12)
+	_shapes_header.custom_minimum_size.y = 40
+	inner.add_child(_shapes_header)
+	_refresh_shape_table_header()
 
-	var shapes_scroll := ScrollContainer.new()
-	shapes_scroll.custom_minimum_size = Vector2(0.0, 168.0)
-	shapes_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	blocks_panel.add_child(shapes_scroll)
 	_shapes_list_box = VBoxContainer.new()
 	_shapes_list_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	shapes_scroll.add_child(_shapes_list_box)
+	_shapes_list_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_shapes_list_box.add_theme_constant_override("separation", 4)
+	inner.add_child(_shapes_list_box)
+	_style_blocks_scrollbar()
 
-	var color_group := ButtonGroup.new()
-	_color_flow = HFlowContainer.new()
-	_color_flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	blocks_panel.add_child(_color_flow)
-	for color in Block.TileColor.values():
-		var button := Button.new()
-		button.set_meta("tile_color", color)
-		button.text = _color_label(color)
-		button.toggle_mode = true
-		button.button_group = color_group
-		button.pressed.connect(_on_color_selected.bind(color, button))
-		_color_flow.add_child(button)
-		_color_buttons.append(button)
-		_style_color_tool_button(button, color)
-	if _color_flow.get_child_count() > 0:
-		(_color_flow.get_child(0) as Button).button_pressed = true
 
-	var kind_row := HBoxContainer.new()
-	blocks_panel.add_child(kind_row)
-	var kind_group := ButtonGroup.new()
-	var standard_button := Button.new()
-	standard_button.text = tr("UI_CREATOR_KIND_STANDARD")
-	standard_button.toggle_mode = true
-	standard_button.button_group = kind_group
-	standard_button.pressed.connect(_on_kind_selected.bind(Block.BlockKind.STANDARD, standard_button))
-	kind_row.add_child(standard_button)
-	_kind_toolbar_buttons[Block.BlockKind.STANDARD] = standard_button
-	var merge_button := Button.new()
-	merge_button.text = tr("UI_CREATOR_KIND_MERGE")
-	merge_button.toggle_mode = true
-	merge_button.button_group = kind_group
-	merge_button.pressed.connect(_on_kind_selected.bind(Block.BlockKind.MERGE, merge_button))
-	kind_row.add_child(merge_button)
-	_kind_toolbar_buttons[Block.BlockKind.MERGE] = merge_button
-	var wall_button := Button.new()
-	wall_button.text = tr("UI_CREATOR_KIND_WALL")
-	wall_button.toggle_mode = true
-	wall_button.button_group = kind_group
-	wall_button.pressed.connect(_on_kind_selected.bind(Block.BlockKind.WALL, wall_button))
-	kind_row.add_child(wall_button)
-	_kind_toolbar_buttons[Block.BlockKind.WALL] = wall_button
-	standard_button.button_pressed = true
-	for child in kind_row.get_children():
-		_style_selectable_tool_button(child as Button)
+func _refresh_shape_table_header() -> void:
+	if _shapes_header == null:
+		return
+	for child in _shapes_header.get_children():
+		child.queue_free()
+	var name_h := _shape_header_cell(tr("UI_CREATOR_SHAPE_NAME"), 0.0)
+	name_h.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_shapes_header.add_child(name_h)
+	_shapes_header.add_child(_shape_header_cell(tr("UI_CREATOR_SHAPE_TYPE"), 150.0))
+	_shapes_header.add_child(_shape_header_cell(tr("UI_CREATOR_SHAPE_COLOR"), 150.0))
+	var actions_h := _shape_header_cell(tr("UI_AUDIT_COL_ACTIONS"), 80.0)
+	actions_h.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_shapes_header.add_child(actions_h)
 
-	_sync_color_picker_for_kind()
 
-	blocks_panel.add_child(_make_spacer(8))
-	_add_section_label(blocks_panel, tr("UI_CREATOR_MODE"))
+func _shape_header_cell(text: String, width: float) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
+	if width > 0.0:
+		label.custom_minimum_size.x = width
+	return label
 
-	var mode_row := HBoxContainer.new()
-	blocks_panel.add_child(mode_row)
-	var mode_group := ButtonGroup.new()
-	var draw_button := Button.new()
-	draw_button.text = tr("UI_CREATOR_DRAW_MODE")
-	draw_button.toggle_mode = true
-	draw_button.button_group = mode_group
-	draw_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	draw_button.pressed.connect(_on_draw_mode_selected)
-	mode_row.add_child(draw_button)
-	var erase_mode_button := Button.new()
-	erase_mode_button.text = tr("UI_CREATOR_ERASE_MODE")
-	erase_mode_button.toggle_mode = true
-	erase_mode_button.button_group = mode_group
-	erase_mode_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	erase_mode_button.pressed.connect(_on_erase_mode_selected)
-	mode_row.add_child(erase_mode_button)
-	draw_button.button_pressed = true
-	_style_selectable_tool_button(draw_button)
-	_style_selectable_tool_button(erase_mode_button)
 
-	var hint := Label.new()
-	hint.text = tr("UI_CREATOR_PAINT_HINT")
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
-	blocks_panel.add_child(hint)
+func _style_blocks_scrollbar() -> void:
+	var bar := blocks_scroll.get_v_scroll_bar()
+	if bar == null:
+		return
+	bar.custom_minimum_size.x = 40
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color(0.82, 0.78, 0.70, 0.55)
+	track.set_corner_radius_all(12)
+	track.content_margin_left = 4
+	track.content_margin_right = 4
+	var grabber := StyleBoxFlat.new()
+	grabber.bg_color = UiTheme.PRIMARY
+	grabber.set_corner_radius_all(12)
+	var grabber_hover := grabber.duplicate() as StyleBoxFlat
+	grabber_hover.bg_color = UiTheme.PRIMARY_HOVER
+	var grabber_pressed := grabber.duplicate() as StyleBoxFlat
+	grabber_pressed.bg_color = UiTheme.PRIMARY_PRESSED
+	bar.add_theme_stylebox_override("scroll", track)
+	bar.add_theme_stylebox_override("scroll_focus", track)
+	bar.add_theme_stylebox_override("grabber", grabber)
+	bar.add_theme_stylebox_override("grabber_highlight", grabber_hover)
+	bar.add_theme_stylebox_override("grabber_pressed", grabber_pressed)
+	blocks_scroll.add_theme_constant_override("scrollbar_h_separation", 16)
+	blocks_scroll.scroll_deadzone = 8
 
 
 func _build_right_panel() -> void:
@@ -557,7 +567,8 @@ func _build_goal_modal() -> void:
 	color_box.add_child(color_label)
 	_goal_modal_color = OptionButton.new()
 	_populate_color_option(_goal_modal_color)
-	UiTheme.style_option_field(_goal_modal_color)
+	UiTheme.style_light_option_field(_goal_modal_color)
+	_register_rainbow_field(_goal_modal_color)
 	color_box.add_child(_goal_modal_color)
 
 	_goal_modal_infinite = CheckBox.new()
@@ -577,7 +588,8 @@ func _build_goal_modal() -> void:
 	for n in range(1, 21):
 		_goal_modal_count.add_item(str(n), n)
 	_goal_modal_count.select(0)
-	UiTheme.style_option_field(_goal_modal_count)
+	UiTheme.style_light_option_field(_goal_modal_count)
+	_register_rainbow_field(_goal_modal_count)
 	_goal_modal_count_box.add_child(_goal_modal_count)
 
 	_goal_modal_delete = Button.new()
@@ -722,6 +734,7 @@ func _new_level() -> void:
 	_draft.level_id = "custom_level_%d" % stamp
 	_draft.display_name = tr("UI_CREATOR_DEFAULT_DISPLAY_NAME")
 	_draft.section_index = 0
+	_draft.group_title_key = ""
 	_draft.daily_date = ""
 	_draft.sort_index = stamp
 	_draft.columns = 8
@@ -760,6 +773,7 @@ func _apply_draft_to_ui() -> void:
 	else:
 		_set_daily_date_controls_to_today()
 	_refresh_daily_date_visibility()
+	_refresh_subsection_options(_draft.group_title_key.strip_edges())
 	_columns_field.text = str(_draft.columns)
 	_rows_field.text = str(_draft.rows)
 
@@ -796,8 +810,10 @@ func _collect_draft_from_ui() -> void:
 		_draft.daily_date = _daily_date_key_from_controls()
 		## Keep campaign index unused for dailies.
 		_draft.section_index = DailyCatalog.SECTION_DAILY
+		_draft.group_title_key = ""
 	else:
 		_draft.daily_date = ""
+		_draft.group_title_key = _current_subsection_key()
 	_draft.columns = _read_number_field(_columns_field, 3, 12, 8)
 	_draft.rows = _read_number_field(_rows_field, 3, 16, 8)
 	_draft.multi_goal_mode = _any_edge_has_goals()
@@ -894,72 +910,67 @@ func _trim_shapes_to_grid() -> void:
 func _on_grid_cell_clicked(cell: Vector2i, button_index: int) -> void:
 	if button_index != MOUSE_BUTTON_LEFT:
 		return
-
-	if _active_tab == "goals":
+	_ensure_blocks_tab()
+	if cell in _disabled_cells:
 		return
 
-	if _active_tab == "setup":
-		_edit_grid_cell(cell)
+	var hit := grid.find_shape_at_cell(cell)
+	if hit != -1:
+		if _erase_mode:
+			_erase_cell_from_shape(hit, cell)
+			return
+		if hit == _selected_shape_index:
+			_open_shape_modal_edit(hit)
+			return
+		_on_select_shape(hit)
 		return
 
 	if _erase_mode:
-		var shape_index := grid.find_shape_at_cell(cell)
-		if shape_index == -1:
-			return
-		var cells: Array[Vector2i] = LevelCreatorShapes.as_cells(_shapes[shape_index]["cells"])
-		if not LevelCreatorShapes.can_remove_cell(cells, cell):
-			_set_status(tr("UI_CREATOR_INVALID_CELL"))
-			return
-		cells.erase(cell)
-		_shapes[shape_index]["cells"] = cells
-		if cells.is_empty():
-			_shapes.remove_at(shape_index)
-			if _selected_shape_index == shape_index:
-				_selected_shape_index = mini(shape_index, _shapes.size() - 1)
-			elif _selected_shape_index > shape_index:
-				_selected_shape_index -= 1
-			_rebuild_shape_list_ui()
+		return
+
+	if (
+		_selected_shape_index >= 0
+		and _selected_shape_index < _shapes.size()
+		and LevelCreatorShapes.can_add_cell(
+			LevelCreatorShapes.as_cells(_shapes[_selected_shape_index]["cells"]),
+			cell,
+			_blocked_cells_except(_selected_shape_index)
+		)
+	):
+		var shape_cells: Array[Vector2i] = LevelCreatorShapes.as_cells(
+			_shapes[_selected_shape_index]["cells"]
+		)
+		shape_cells.append(cell)
+		_shapes[_selected_shape_index]["cells"] = shape_cells
 		_sync_grid()
-		_set_status(tr("UI_CREATOR_CELL_REMOVED"))
 		return
 
-	if _selected_shape_index < 0 or _selected_shape_index >= _shapes.size():
-		_set_status(tr("UI_CREATOR_NO_SHAPE_SELECTED"))
-		return
+	_open_shape_modal_create(cell)
 
-	if cell in _disabled_cells:
-		_set_status(tr("UI_CREATOR_CELL_DISABLED"))
-		return
 
-	var blocked := _blocked_cells_except(_selected_shape_index)
-	var shape_cells: Array[Vector2i] = LevelCreatorShapes.as_cells(_shapes[_selected_shape_index]["cells"])
-	if not LevelCreatorShapes.can_add_cell(shape_cells, cell, blocked):
-		_set_status(tr("UI_CREATOR_INVALID_CELL"))
+func _on_grid_cell_edit_requested(cell: Vector2i) -> void:
+	_ensure_blocks_tab()
+	var hit := grid.find_shape_at_cell(cell)
+	if hit == -1:
 		return
+	_open_shape_modal_edit(hit)
 
-	shape_cells.append(cell)
-	_shapes[_selected_shape_index]["cells"] = shape_cells
+
+func _erase_cell_from_shape(shape_index: int, cell: Vector2i) -> void:
+	var cells: Array[Vector2i] = LevelCreatorShapes.as_cells(_shapes[shape_index]["cells"])
+	if not LevelCreatorShapes.can_remove_cell(cells, cell):
+		return
+	cells.erase(cell)
+	_shapes[shape_index]["cells"] = cells
+	if cells.is_empty():
+		_shapes.remove_at(shape_index)
+		if _selected_shape_index == shape_index:
+			_selected_shape_index = mini(shape_index, _shapes.size() - 1)
+		elif _selected_shape_index > shape_index:
+			_selected_shape_index -= 1
+		_rebuild_shape_list_ui()
+		_sync_toolbar_from_selected_shape()
 	_sync_grid()
-	_set_status(tr("UI_CREATOR_CELL_ADDED"))
-
-
-func _edit_grid_cell(cell: Vector2i) -> void:
-	if _grid_erase_mode:
-		if cell in _disabled_cells:
-			return
-		if grid.find_shape_at_cell(cell) != -1:
-			_set_status(tr("UI_CREATOR_SQUARE_OCCUPIED"))
-			return
-		_disabled_cells.append(cell)
-		_sync_grid()
-		_set_status(tr("UI_CREATOR_SQUARE_REMOVED"))
-		return
-
-	if cell not in _disabled_cells:
-		return
-	_disabled_cells.erase(cell)
-	_sync_grid()
-	_set_status(tr("UI_CREATOR_SQUARE_ADDED"))
 
 
 func _blocked_cells_except(ignore_index: int) -> Array[Vector2i]:
@@ -973,19 +984,77 @@ func _blocked_cells_except(ignore_index: int) -> Array[Vector2i]:
 
 
 func _on_create_shape_pressed() -> void:
+	_open_shape_modal_create(Vector2i(-1, -1))
+
+
+func _open_shape_modal_create(cell: Vector2i) -> void:
+	_pending_shape_cell = cell
+	_shape_modal_edit_index = -1
+	if _shape_modal == null:
+		return
+	_shape_modal.show_create(
+		LevelCreatorShapes.default_shape_name(_shapes.size()),
+		_selected_kind,
+		_selected_color
+	)
+
+
+func _open_shape_modal_edit(index: int) -> void:
+	if index < 0 or index >= _shapes.size() or _shape_modal == null:
+		return
+	_on_select_shape(index)
+	_pending_shape_cell = Vector2i(-1, -1)
+	_shape_modal_edit_index = index
+	var shape: Dictionary = _shapes[index]
+	_shape_modal.show_edit(
+		str(shape.get("name", "")),
+		shape.get("kind", Block.BlockKind.STANDARD),
+		shape.get("color", Block.TileColor.RED)
+	)
+
+
+func _on_shape_modal_confirmed(shape_name: String, kind: int, color: int) -> void:
+	if _shape_modal_edit_index >= 0:
+		if _shape_modal_edit_index >= _shapes.size():
+			_shape_modal_edit_index = -1
+			return
+		var shape: Dictionary = _shapes[_shape_modal_edit_index]
+		shape["name"] = shape_name
+		shape["kind"] = kind
+		shape["color"] = color
+		_shapes[_shape_modal_edit_index] = shape
+		_selected_kind = kind as Block.BlockKind
+		_selected_color = color as Block.TileColor
+		_rebuild_shape_list_ui()
+		_sync_toolbar_from_selected_shape()
+		_sync_grid()
+		_shape_modal_edit_index = -1
+		_refresh_save_button()
+		return
+
 	var cells: Array[Vector2i] = []
-	var shape := {
-		"name": LevelCreatorShapes.default_shape_name(_shapes.size()),
+	if _pending_shape_cell.x >= 0:
+		cells.append(_pending_shape_cell)
+	_shapes.append({
+		"name": shape_name,
 		"cells": cells,
-		"color": _selected_color,
-		"kind": _selected_kind,
-	}
-	_shapes.append(shape)
+		"color": color,
+		"kind": kind,
+	})
 	_selected_shape_index = _shapes.size() - 1
+	_selected_kind = kind as Block.BlockKind
+	_selected_color = color as Block.TileColor
+	_pending_shape_cell = Vector2i(-1, -1)
 	_rebuild_shape_list_ui()
 	_sync_toolbar_from_selected_shape()
 	_sync_grid()
-	_set_status(tr("UI_CREATOR_SHAPE_CREATED"))
+	_refresh_save_button()
+
+
+func _on_shape_modal_deleted() -> void:
+	var index := _shape_modal_edit_index
+	_shape_modal_edit_index = -1
+	_on_delete_shape(index)
 
 
 func _on_select_shape(index: int) -> void:
@@ -1069,58 +1138,122 @@ func _rebuild_shape_list_ui() -> void:
 	for child in _shapes_list_box.get_children():
 		child.queue_free()
 	for i in _shapes.size():
-		var shape: Dictionary = _shapes[i]
-		var shape_kind: Block.BlockKind = shape.get("kind", Block.BlockKind.STANDARD)
-		var shape_color: Block.TileColor = shape.get("color", Block.TileColor.RED)
-
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		_shapes_list_box.add_child(row)
-
-		var name_edit := LineEdit.new()
-		name_edit.text = shape["name"]
-		name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		name_edit.focus_entered.connect(_on_select_shape.bind(i))
-		name_edit.text_changed.connect(_on_shape_renamed.bind(i))
-		UiTheme.style_row_text_field(name_edit)
-		row.add_child(name_edit)
-
-		var kind_option := OptionButton.new()
-		_populate_kind_option(kind_option)
-		UiTheme.style_row_option_field(kind_option)
-		kind_option.custom_minimum_size = Vector2(104.0, 0.0)
-		var kind_index := kind_option.get_item_index(shape_kind)
-		if kind_index >= 0:
-			kind_option.select(kind_index)
-		row.add_child(kind_option)
-
-		var color_option := OptionButton.new()
-		_populate_color_option(color_option)
-		UiTheme.style_row_option_field(color_option)
-		color_option.custom_minimum_size = Vector2(92.0, 0.0)
-		var color_index := color_option.get_item_index(shape_color)
-		if color_index >= 0:
-			color_option.select(color_index)
-		_style_shape_color_option(color_option, shape_color)
-		color_option.disabled = Block.is_wall_kind(shape_kind)
-		color_option.item_selected.connect(
-			_on_shape_row_color_changed.bind(i, color_option)
-		)
-		kind_option.item_selected.connect(
-			_on_shape_row_kind_changed.bind(i, kind_option, color_option)
-		)
-		row.add_child(color_option)
-
-		var delete_button := Button.new()
-		delete_button.text = "X"
-		delete_button.pressed.connect(_on_delete_shape.bind(i))
-		delete_button.custom_minimum_size = Vector2(40.0, 0.0)
-		row.add_child(delete_button)
-		_style_selectable_tool_button(delete_button)
-
-		if i == _selected_shape_index:
-			row.modulate = Color(1.15, 1.15, 1.15, 1.0)
+		_shapes_list_box.add_child(_make_shape_table_row(i))
 	_refreshing_shape_list = false
+
+
+func _make_shape_table_row(index: int) -> PanelContainer:
+	var shape: Dictionary = _shapes[index]
+	var shape_kind: Block.BlockKind = shape.get("kind", Block.BlockKind.STANDARD)
+	var shape_color: Block.TileColor = shape.get("color", Block.TileColor.RED)
+	var selected := index == _selected_shape_index
+
+	var row := PanelContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	row.custom_minimum_size.y = 72
+	row.add_theme_stylebox_override("panel", _shape_row_style(selected))
+	row.gui_input.connect(_on_shape_row_gui_input.bind(index))
+
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 12)
+	line.alignment = BoxContainer.ALIGNMENT_CENTER
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(line)
+
+	var name_label := Label.new()
+	name_label.text = str(shape.get("name", ""))
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	name_label.add_theme_font_size_override("font_size", 26)
+	name_label.add_theme_color_override("font_color", UiTheme.TEXT)
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.clip_text = true
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	line.add_child(name_label)
+
+	var type_label := Label.new()
+	type_label.text = _kind_label(shape_kind)
+	type_label.custom_minimum_size.x = 150
+	type_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	type_label.add_theme_font_size_override("font_size", 24)
+	type_label.add_theme_color_override("font_color", UiTheme.TEXT)
+	type_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	type_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	line.add_child(type_label)
+
+	line.add_child(_make_color_badge(shape_kind, shape_color))
+
+	var actions := HBoxContainer.new()
+	actions.custom_minimum_size.x = 80
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	line.add_child(actions)
+	var edit_btn := CircleIconButton.new()
+	edit_btn.button_size = 56
+	edit_btn.fa_icon = "pencil"
+	edit_btn.tooltip_key = "UI_AUDIT_EDIT"
+	edit_btn.accent_color = UiTheme.PRIMARY
+	edit_btn.pressed.connect(_open_shape_modal_edit.bind(index))
+	actions.add_child(edit_btn)
+	return row
+
+
+func _shape_row_style(selected: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.90, 0.93, 1.0, 0.9) if selected else Color(1, 1, 1, 0.55)
+	style.set_corner_radius_all(16)
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	return style
+
+
+func _make_color_badge(kind: Block.BlockKind, color: Block.TileColor) -> PanelContainer:
+	var fill := Block.WALL_FILL if Block.is_wall_kind(kind) else Block.get_color(color)
+	var badge := PanelContainer.new()
+	badge.custom_minimum_size = Vector2(150, 40)
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.set_corner_radius_all(18)
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 6
+	style.content_margin_bottom = 6
+	badge.add_theme_stylebox_override("panel", style)
+	var label := Label.new()
+	label.text = tr("UI_CREATOR_KIND_WALL") if Block.is_wall_kind(kind) else _color_label(color)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", _readable_text_color(fill))
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(label)
+	return badge
+
+
+func _kind_label(kind: Block.BlockKind) -> String:
+	match kind:
+		Block.BlockKind.MERGE:
+			return tr("UI_CREATOR_KIND_MERGE")
+		Block.BlockKind.WALL:
+			return tr("UI_CREATOR_KIND_WALL")
+		_:
+			return tr("UI_CREATOR_KIND_STANDARD")
+
+
+func _on_shape_row_gui_input(index: int, event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if index == _selected_shape_index:
+			_open_shape_modal_edit(index)
+		else:
+			_on_select_shape(index)
+
+
+func _update_shape_list_row_widgets() -> void:
+	_rebuild_shape_list_ui()
 
 
 func _shapes_from_draft() -> void:
@@ -1190,39 +1323,12 @@ func _sync_grid() -> void:
 		int(_read_number_field(_rows_field, 3, 16, 8)),
 		_selected_shape_index,
 		_erase_mode,
-		_active_tab == "setup",
-		_grid_erase_mode,
+		false,
+		false,
 		_disabled_cells
 	)
 	_update_shape_list_row_widgets()
 	_refresh_save_button()
-
-
-func _update_shape_list_row_widgets() -> void:
-	_refreshing_shape_list = true
-	for i in _shapes_list_box.get_child_count():
-		if i >= _shapes.size():
-			break
-		var row := _shapes_list_box.get_child(i) as HBoxContainer
-		if row == null or row.get_child_count() < 4:
-			continue
-		var shape: Dictionary = _shapes[i]
-		var kind_option := row.get_child(1) as OptionButton
-		var color_option := row.get_child(2) as OptionButton
-		if kind_option == null or color_option == null:
-			continue
-		var kind: Block.BlockKind = shape.get("kind", Block.BlockKind.STANDARD)
-		var color: Block.TileColor = shape.get("color", Block.TileColor.RED)
-		var kind_index := kind_option.get_item_index(kind)
-		if kind_index >= 0:
-			kind_option.select(kind_index)
-		var color_index := color_option.get_item_index(color)
-		if color_index >= 0:
-			color_option.select(color_index)
-		_style_shape_color_option(color_option, color)
-		color_option.disabled = Block.is_wall_kind(kind)
-		row.modulate = Color(1.15, 1.15, 1.15) if i == _selected_shape_index else Color.WHITE
-	_refreshing_shape_list = false
 
 
 func _on_color_selected(color: Block.TileColor, _button: Button) -> void:
@@ -1240,13 +1346,16 @@ func _on_kind_selected(kind: Block.BlockKind, _button: Button) -> void:
 	if _selected_shape_index >= 0 and _selected_shape_index < _shapes.size():
 		_shapes[_selected_shape_index]["kind"] = kind
 	_sync_color_picker_for_kind()
+	_sync_toolbar_kind_buttons()
 	_update_shape_list_row_widgets()
+	_refresh_mix_cheat_sheet()
 	_sync_grid()
 
 
 func _sync_toolbar_from_selected_shape() -> void:
 	if _selected_shape_index < 0 or _selected_shape_index >= _shapes.size():
 		_sync_color_picker_for_kind()
+		_refresh_mix_cheat_sheet()
 		return
 	var shape: Dictionary = _shapes[_selected_shape_index]
 	_selected_kind = shape.get("kind", Block.BlockKind.STANDARD)
@@ -1254,14 +1363,20 @@ func _sync_toolbar_from_selected_shape() -> void:
 	_sync_toolbar_kind_buttons()
 	_sync_toolbar_color_buttons()
 	_sync_color_picker_for_kind()
+	_refresh_mix_cheat_sheet()
 
 
 func _sync_toolbar_kind_buttons() -> void:
 	for kind_key in _kind_toolbar_buttons:
 		var button: Button = _kind_toolbar_buttons[kind_key]
+		var selected := int(kind_key) == int(_selected_kind)
 		button.set_block_signals(true)
-		button.button_pressed = int(kind_key) == int(_selected_kind)
+		button.button_pressed = selected
 		button.set_block_signals(false)
+		if selected:
+			UiTheme.style_primary_button(button, UiTheme.ButtonScale.COMPACT)
+		else:
+			UiTheme.style_secondary_button(button, UiTheme.ButtonScale.COMPACT)
 
 
 func _sync_toolbar_color_buttons() -> void:
@@ -1286,16 +1401,6 @@ func _on_draw_mode_selected() -> void:
 
 func _on_erase_mode_selected() -> void:
 	_erase_mode = true
-	_sync_grid()
-
-
-func _on_grid_draw_selected() -> void:
-	_grid_erase_mode = false
-	_sync_grid()
-
-
-func _on_grid_erase_selected() -> void:
-	_grid_erase_mode = true
 	_sync_grid()
 
 
@@ -1363,6 +1468,11 @@ func _on_level_field_changed(_value: Variant = null) -> void:
 
 func _on_section_changed(_index: int = 0) -> void:
 	_refresh_daily_date_visibility()
+	_refresh_subsection_options("")
+	_on_level_field_changed()
+
+
+func _on_subsection_changed(_index: int = 0) -> void:
 	_on_level_field_changed()
 
 
@@ -1384,6 +1494,45 @@ func _refresh_daily_date_visibility() -> void:
 	_daily_date_box.visible = show_date
 	## Keep layout from collapsing oddly in the scroll panel.
 	_daily_date_box.custom_minimum_size = Vector2(0, 96) if show_date else Vector2.ZERO
+	if _subsection_box != null:
+		_subsection_box.visible = not show_date
+
+
+func _current_subsection_key() -> String:
+	if _subsection_option == null or _subsection_option.item_count <= 0:
+		return ""
+	var idx := _subsection_option.selected
+	if idx < 0:
+		return ""
+	return str(_subsection_option.get_item_metadata(idx))
+
+
+func _refresh_subsection_options(preferred_key: String) -> void:
+	if _subsection_option == null or _section_option == null:
+		return
+	var section_id := _section_option.get_selected_id()
+	var show_sub := section_id != DailyCatalog.SECTION_DAILY
+	if _subsection_box != null:
+		_subsection_box.visible = show_sub
+	_subsection_option.clear()
+	if not show_sub:
+		return
+	_subsection_option.add_item(tr("UI_CREATOR_SUBSECTION_NONE"))
+	_subsection_option.set_item_metadata(0, "")
+	var keys := LevelCatalog.list_group_title_keys(section_id)
+	if not preferred_key.is_empty() and not keys.has(preferred_key):
+		keys.append(preferred_key)
+		keys.sort()
+	for key in keys:
+		var idx := _subsection_option.item_count
+		_subsection_option.add_item(tr(key))
+		_subsection_option.set_item_metadata(idx, key)
+	var select_idx := 0
+	for i in _subsection_option.item_count:
+		if str(_subsection_option.get_item_metadata(i)) == preferred_key:
+			select_idx = i
+			break
+	_subsection_option.select(select_idx)
 
 
 func _select_section_option(section_id: int) -> void:
@@ -1462,13 +1611,20 @@ func _refresh_save_button() -> void:
 func _refresh_action_button_styles() -> void:
 	var can_save := _is_playtest_passed()
 	save_button.disabled = not can_save
-	if can_save:
-		_style_compact_action_button(save_button)
-		_style_compact_secondary_button(playtest_button)
+	if save_button is MenuActionButton:
+		(save_button as MenuActionButton).apply_kind(
+			MenuActionButton.Kind.PRIMARY if can_save else MenuActionButton.Kind.SECONDARY
+		)
+		(playtest_button as MenuActionButton).apply_kind(
+			MenuActionButton.Kind.SECONDARY if can_save else MenuActionButton.Kind.PRIMARY
+		)
+	elif can_save:
+		UiTheme.style_primary_button(save_button, UiTheme.ButtonScale.STANDARD)
+		UiTheme.style_secondary_button(playtest_button, UiTheme.ButtonScale.STANDARD)
 	else:
-		_style_compact_secondary_button(save_button)
+		UiTheme.style_secondary_button(save_button, UiTheme.ButtonScale.STANDARD)
 		_apply_compact_disabled_style(save_button)
-		_style_compact_action_button(playtest_button)
+		UiTheme.style_primary_button(playtest_button, UiTheme.ButtonScale.STANDARD)
 
 
 func _current_signature() -> String:
@@ -1534,7 +1690,22 @@ func _edge_signature(edge_key: String) -> String:
 
 
 func _on_clear_pressed() -> void:
-	_clear_confirm.popup_centered()
+	_confirm_action = "clear"
+	if _confirm_modal != null and _confirm_modal.has_method("show_modal"):
+		_confirm_modal.show_modal(
+			"UI_CREATOR_CONFIRM_TITLE",
+			"UI_CREATOR_CLEAR_CONFIRM",
+			"UI_CREATOR_CLEAR",
+			"UI_CANCEL"
+		)
+
+
+func _on_confirm_modal_confirmed() -> void:
+	if _confirm_action == "clear":
+		_on_clear_confirmed()
+	elif _confirm_action == "back":
+		_on_back_confirmed()
+	_confirm_action = ""
 
 
 func _on_clear_confirmed() -> void:
@@ -1545,7 +1716,14 @@ func _on_back_pressed() -> void:
 	if not _has_unsaved_changes():
 		_on_back_confirmed()
 		return
-	_back_confirm.popup_centered()
+	_confirm_action = "back"
+	if _confirm_modal != null and _confirm_modal.has_method("show_modal"):
+		_confirm_modal.show_modal(
+			"UI_CREATOR_CONFIRM_TITLE",
+			"UI_CREATOR_BACK_CONFIRM",
+			"UI_BACK",
+			"UI_CANCEL"
+		)
 
 
 func handle_back() -> void:
@@ -1556,15 +1734,101 @@ func _on_back_confirmed() -> void:
 	get_tree().change_scene_to_file(SETTINGS_SCENE)
 
 
-func _set_status(message: String) -> void:
-	status_label.text = message
+func _set_status(_message: String) -> void:
+	pass
 
 
-func _add_section_label(parent: Control, text: String) -> void:
+func _register_rainbow_field(host: Control) -> void:
+	if host != null and not _rainbow_hosts.has(host):
+		_rainbow_hosts.append(host)
+
+
+func _make_cta(kind: MenuActionButton.Kind, caption: String) -> MenuActionButton:
+	var button := MenuActionButton.new()
+	button.compact = true
+	button.show_trailing_icon = false
+	button.kind = kind
+	button.label_text = caption
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return button
+
+
+func _build_mix_cheat_sheet() -> void:
+	for child in mix_cheat_sheet.get_children():
+		child.queue_free()
+	var title := Label.new()
+	title.text = tr("UI_CREATOR_MERGE_CHEAT_TITLE")
+	title.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	title.add_theme_font_size_override("font_size", CREATOR_LABEL_FONT)
+	title.add_theme_color_override("font_color", UiTheme.TEXT)
+	mix_cheat_sheet.add_child(title)
+	var pairs: Array = [
+		[Block.TileColor.RED, Block.TileColor.YELLOW, Block.TileColor.ORANGE],
+		[Block.TileColor.YELLOW, Block.TileColor.BLUE, Block.TileColor.GREEN],
+		[Block.TileColor.RED, Block.TileColor.BLUE, Block.TileColor.PURPLE],
+	]
+	for pair in pairs:
+		mix_cheat_sheet.add_child(_make_mix_row(pair[0], pair[1], pair[2]))
+	_refresh_mix_cheat_sheet()
+
+
+func _make_mix_row(a: Block.TileColor, b: Block.TileColor, result: Block.TileColor) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(_make_color_chip(a))
+	row.add_child(_make_mix_symbol("+"))
+	row.add_child(_make_color_chip(b))
+	row.add_child(_make_mix_symbol("="))
+	row.add_child(_make_color_chip(result))
+	var name_label := Label.new()
+	name_label.text = _color_label(result)
+	name_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	name_label.add_theme_font_size_override("font_size", CREATOR_HINT_FONT)
+	name_label.add_theme_color_override("font_color", UiTheme.TEXT)
+	row.add_child(name_label)
+	return row
+
+
+func _make_mix_symbol(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", 20)
+	label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	label.add_theme_font_size_override("font_size", CREATOR_LABEL_FONT)
 	label.add_theme_color_override("font_color", UiTheme.TEXT)
+	return label
+
+
+func _make_color_chip(color: Block.TileColor) -> Control:
+	var wrap := VBoxContainer.new()
+	wrap.add_theme_constant_override("separation", 4)
+	wrap.alignment = BoxContainer.ALIGNMENT_CENTER
+	var chip := ColorRect.new()
+	chip.custom_minimum_size = Vector2(36, 36)
+	chip.color = Block.get_color(color)
+	wrap.add_child(chip)
+	var label := Label.new()
+	label.text = _color_label(color)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", UiTheme.TEXT)
+	wrap.add_child(label)
+	return wrap
+
+
+func _refresh_mix_cheat_sheet() -> void:
+	if mix_cheat_sheet == null:
+		return
+	mix_cheat_sheet.visible = (
+		_active_tab == "blocks" and _selected_kind == Block.BlockKind.MERGE
+	)
+
+
+func _add_section_label(parent: Control, text: String, label: Label = null) -> void:
+	if label == null:
+		label = Label.new()
+	label.text = text
+	UiTheme.style_section_subtitle(label)
 	parent.add_child(label)
 
 
@@ -1574,12 +1838,15 @@ func _add_labeled_line_edit(parent: Control, caption: String, placeholder: Strin
 	parent.add_child(box)
 	var label := Label.new()
 	label.text = caption
+	label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
 	label.add_theme_color_override("font_color", UiTheme.TEXT)
-	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_font_size_override("font_size", CREATOR_LABEL_FONT)
 	box.add_child(label)
 	var edit := LineEdit.new()
 	edit.placeholder_text = placeholder
-	UiTheme.style_text_field(edit)
+	UiTheme.style_light_text_field(edit)
+	_register_rainbow_field(edit)
+	_style_creator_line_edit(edit)
 	box.add_child(edit)
 	return edit
 
@@ -1675,12 +1942,29 @@ func _color_label(color: Block.TileColor) -> String:
 			return tr("UI_COLOR")
 
 
+func _style_creator_line_edit(edit: LineEdit) -> void:
+	edit.custom_minimum_size.y = maxf(edit.custom_minimum_size.y, 72.0)
+	edit.add_theme_font_size_override("font_size", CREATOR_FIELD_FONT)
+	edit.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+
+
+func _style_creator_option(option: OptionButton) -> void:
+	option.custom_minimum_size.y = maxf(option.custom_minimum_size.y, 72.0)
+	option.add_theme_font_size_override("font_size", CREATOR_FIELD_FONT)
+	option.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+
+
+func _style_creator_spin(spin: SpinBox) -> void:
+	spin.custom_minimum_size.y = CREATOR_FIELD_HEIGHT
+	spin.add_theme_font_size_override("font_size", CREATOR_FIELD_FONT)
+
+
 func _style_compact_action_button(button: Button) -> void:
-	UiTheme.style_primary_button(button, UiTheme.ButtonScale.COMPACT)
+	UiTheme.style_primary_button(button, UiTheme.ButtonScale.STANDARD)
 
 
 func _style_compact_secondary_button(button: Button) -> void:
-	UiTheme.style_secondary_button(button, UiTheme.ButtonScale.COMPACT)
+	UiTheme.style_secondary_button(button, UiTheme.ButtonScale.STANDARD)
 
 
 func _apply_compact_disabled_style(button: Button) -> void:
@@ -1690,23 +1974,6 @@ func _apply_compact_disabled_style(button: Button) -> void:
 		UiTheme.rounded_stylebox(Color(0.12, 0.13, 0.17, 1.0), radius)
 	)
 	button.add_theme_color_override("font_disabled_color", Color(0.55, 0.57, 0.62, 1.0))
-
-
-func _style_selectable_tool_button(button: Button) -> void:
-	var radius := 10
-	button.add_theme_stylebox_override("normal", UiTheme.rounded_stylebox(UiTheme.BUTTON, radius))
-	button.add_theme_stylebox_override("hover", UiTheme.rounded_stylebox(UiTheme.BUTTON_HOVER, radius))
-	button.add_theme_stylebox_override("pressed", UiTheme.rounded_stylebox(UiTheme.ACCENT, radius))
-	button.add_theme_stylebox_override(
-		"hover_pressed",
-		UiTheme.rounded_stylebox(UiTheme.ACCENT.lightened(0.12), radius)
-	)
-	button.add_theme_stylebox_override("focus", UiTheme.rounded_stylebox(UiTheme.BUTTON_HOVER, radius))
-	button.add_theme_color_override("font_color", UiTheme.TEXT_ON_DARK)
-	button.add_theme_color_override("font_hover_color", UiTheme.TEXT_ON_DARK)
-	button.add_theme_color_override("font_pressed_color", Color.WHITE)
-	button.add_theme_color_override("font_hover_pressed_color", Color.WHITE)
-	button.add_theme_font_size_override("font_size", 18)
 
 
 func _style_color_tool_button(button: Button, tile_color: Block.TileColor) -> void:
@@ -1730,7 +1997,9 @@ func _style_color_tool_button(button: Button, tile_color: Block.TileColor) -> vo
 	button.add_theme_color_override("font_hover_color", UiTheme.TEXT_ON_DARK)
 	button.add_theme_color_override("font_pressed_color", text_on)
 	button.add_theme_color_override("font_hover_pressed_color", text_on)
-	button.add_theme_font_size_override("font_size", 18)
+	button.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	button.add_theme_font_size_override("font_size", CREATOR_LABEL_FONT)
+	button.custom_minimum_size.y = CREATOR_FIELD_HEIGHT
 
 
 func _readable_text_color(background: Color) -> Color:

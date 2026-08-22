@@ -142,6 +142,15 @@ msgstr "Mode développeur"
 msgid "UI_COMING_SOON"
 msgstr "Bientôt disponible"
 
+msgid "UI_SETTINGS_PREFERENCES"
+msgstr "Préférences"
+
+msgid "UI_SETTINGS_DEVELOPER"
+msgstr "Développeur"
+
+msgid "UI_SETTINGS_DATA"
+msgstr "Données"
+
 msgid "UI_LEVEL_COMPLETE"
 msgstr "Niveau terminé"
 
@@ -214,6 +223,18 @@ msgstr "Nom affiché"
 msgid "UI_CREATOR_SECTION"
 msgstr "Section"
 
+msgid "UI_CREATOR_SUBSECTION"
+msgstr "Sous-section"
+
+msgid "UI_CREATOR_SUBSECTION_NONE"
+msgstr "Aucune"
+
+msgid "UI_CREATOR_LEVEL_DETAILS"
+msgstr "Détails du niveau"
+
+msgid "UI_CREATOR_GRID_DETAILS"
+msgstr "Détails de la grille"
+
 msgid "UI_CREATOR_COLUMNS"
 msgstr "Colonnes"
 
@@ -272,10 +293,22 @@ msgid "UI_CREATOR_ACTIONS"
 msgstr "Actions"
 
 msgid "UI_CREATOR_PAINT_HINT"
-msgstr "Créez une forme, sélectionnez-la, puis dessinez des cases connectées une par une. Utilisez Effacer pour retirer des cases."
+msgstr "Touchez une case vide pour créer une forme. Touchez une forme pour la sélectionner, puis ajoutez des cases connectées. Appui long ou clic droit pour modifier."
 
 msgid "UI_CREATOR_CREATE_SHAPE"
 msgstr "Créer une forme"
+
+msgid "UI_CREATOR_SHAPE_MODAL_CREATE"
+msgstr "Créer une forme"
+
+msgid "UI_CREATOR_SHAPE_MODAL_EDIT"
+msgstr "Modifier la forme"
+
+msgid "UI_CREATOR_SHAPE_MODAL_CONFIRM"
+msgstr "Créer"
+
+msgid "UI_CREATOR_SHAPE_MODAL_SAVE"
+msgstr "Enregistrer"
 
 msgid "UI_CREATOR_SELECT_SHAPE"
 msgstr "Sélectionner"
@@ -364,8 +397,14 @@ msgstr "Effacer"
 msgid "UI_CREATOR_CLEAR_CONFIRM"
 msgstr "Effacer toutes les données. Confirmer ?"
 
+msgid "UI_CREATOR_CONFIRM_TITLE"
+msgstr "Confirmer"
+
 msgid "UI_CREATOR_BACK_CONFIRM"
 msgstr "Confirmer ? Retourner aux réglages perdra toutes les données non enregistrées."
+
+msgid "UI_CREATOR_MERGE_CHEAT_TITLE"
+msgstr "Mélanges fusion"
 
 msgid "UI_CANCEL"
 msgstr "Annuler"
@@ -536,7 +575,7 @@ msgid "UI_AUDIT_EMPTY"
 msgstr "No levels found."
 
 msgid "UI_AUDIT_TOTAL"
-msgstr "Total levels: %d"
+msgstr "Total des niveaux : %d"
 
 msgid "UI_AUDIT_DAILY_TOTAL"
 msgstr "Daily puzzles: %d across %d dates"

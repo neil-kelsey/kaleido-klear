@@ -78,12 +78,14 @@ func _ensure_top_gap() -> void:
 	if not compact:
 		return
 	var parent := get_parent()
-	if parent == null:
+	if parent == null or parent is HBoxContainer:
 		return
 	var idx := get_index()
 	if idx > 0:
 		var prev := parent.get_child(idx - 1)
 		if prev is MenuActionButton or prev == _top_gap:
+			return
+		if prev.get_meta("ui_section_subtitle", false):
 			return
 	if _top_gap != null and is_instance_valid(_top_gap):
 		return
@@ -153,6 +155,19 @@ func _process(delta: float) -> void:
 func set_label(text_value: String) -> void:
 	label_text = text_value
 	_apply_label()
+
+
+func apply_kind(new_kind: Kind) -> void:
+	if kind == new_kind and is_node_ready() and _face != null:
+		return
+	kind = new_kind
+	if not is_node_ready():
+		return
+	custom_minimum_size.y = maxf(custom_minimum_size.y, float(_min_height()))
+	_build()
+	_apply_label()
+	_refresh_face_color()
+	_layout()
 
 
 func _clear_button_chrome() -> void:

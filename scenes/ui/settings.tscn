@@ -69,63 +69,91 @@ horizontal_scroll_mode = 0
 [node name="SettingsList" type="VBoxContainer" parent="Margin/Panel/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 28
+theme_override_constants/separation = 40
 
-[node name="LanguageRow" type="HBoxContainer" parent="Margin/Panel/Scroll/SettingsList"]
+[node name="PreferencesSection" type="VBoxContainer" parent="Margin/Panel/Scroll/SettingsList"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 10
 
-[node name="LanguageLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/LanguageRow"]
+[node name="PreferencesTitle" type="Label" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-theme_override_font_sizes/font_size = 22
+text = "Preferences"
+
+[node name="LanguageRow" type="VBoxContainer" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LanguageLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection/LanguageRow"]
+unique_name_in_owner = true
+layout_mode = 2
 text = "Language"
 
-[node name="LanguageOption" type="OptionButton" parent="Margin/Panel/Scroll/SettingsList/LanguageRow"]
+[node name="LanguageOption" type="OptionButton" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection/LanguageRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(280, 84)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-size_flags_horizontal = 0
+size_flags_horizontal = 3
 fit_to_longest_item = true
+clip_contents = false
 
-[node name="SoundLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Sound"
-
-[node name="MusicLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Music"
-
-[node name="ComingSoonLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Coming soon"
-
-[node name="DevelopModeRow" type="HBoxContainer" parent="Margin/Panel/Scroll/SettingsList"]
-unique_name_in_owner = true
+[node name="SoundRow" type="HBoxContainer" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection"]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="DevelopModeLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/DevelopModeRow"]
+[node name="SoundLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection/SoundRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
-theme_override_font_sizes/font_size = 22
-text = "Develop mode"
+text = "Sound"
 
-[node name="DevelopModeCheckBox" type="CheckBox" parent="Margin/Panel/Scroll/SettingsList/DevelopModeRow"]
+[node name="SoundCheckBox" type="CheckBox" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection/SoundRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+clip_contents = false
+
+[node name="MusicLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection"]
 unique_name_in_owner = true
 layout_mode = 2
+text = "Music"
 
-[node name="LevelCreatorButton" type="Button" parent="Margin/Panel/Scroll/SettingsList"]
+[node name="ComingSoonLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Coming soon"
+
+[node name="DeveloperSection" type="VBoxContainer" parent="Margin/Panel/Scroll/SettingsList"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DeveloperTitle" type="Label" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Developer"
+
+[node name="DevelopModeRow" type="HBoxContainer" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="DevelopModeLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection/DevelopModeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "Develop mode"
+
+[node name="DevelopModeCheckBox" type="CheckBox" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection/DevelopModeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+clip_contents = false
+
+[node name="LevelCreatorButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection"]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(0, 112)
@@ -136,7 +164,7 @@ compact = true
 show_trailing_icon = false
 label_text = "Level creator"
 
-[node name="LevelAuditButton" type="Button" parent="Margin/Panel/Scroll/SettingsList"]
+[node name="LevelAuditButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection"]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(0, 112)
@@ -147,7 +175,16 @@ compact = true
 show_trailing_icon = false
 label_text = "Level audit"
 
-[node name="ResetTutorialsButton" type="Button" parent="Margin/Panel/Scroll/SettingsList"]
+[node name="DataSection" type="VBoxContainer" parent="Margin/Panel/Scroll/SettingsList"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DataTitle" type="Label" parent="Margin/Panel/Scroll/SettingsList/DataSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Data"
+
+[node name="ResetTutorialsButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/DataSection"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
@@ -157,7 +194,7 @@ compact = true
 show_trailing_icon = false
 label_text = "Reset tutorials"
 
-[node name="ResetProgressButton" type="Button" parent="Margin/Panel/Scroll/SettingsList"]
+[node name="ResetProgressButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/DataSection"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 128)
 layout_mode = 2
@@ -179,11 +216,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/ResetTutorialsButton" to="." method="_on_reset_tutorials_button_pressed"]
-[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]
-[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/LevelCreatorButton" to="." method="_on_level_creator_button_pressed"]
-[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/LevelAuditButton" to="." method="_on_level_audit_button_pressed"]
-[connection signal="toggled" from="Margin/Panel/Scroll/SettingsList/DevelopModeRow/DevelopModeCheckBox" to="." method="_on_develop_mode_checkbox_toggled"]
-[connection signal="item_selected" from="Margin/Panel/Scroll/SettingsList/LanguageRow/LanguageOption" to="." method="_on_language_option_item_selected"]
+[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/DataSection/ResetTutorialsButton" to="." method="_on_reset_tutorials_button_pressed"]
+[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/DataSection/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]
+[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/DeveloperSection/LevelCreatorButton" to="." method="_on_level_creator_button_pressed"]
+[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/DeveloperSection/LevelAuditButton" to="." method="_on_level_audit_button_pressed"]
+[connection signal="toggled" from="Margin/Panel/Scroll/SettingsList/PreferencesSection/SoundRow/SoundCheckBox" to="." method="_on_sound_checkbox_toggled"]
+[connection signal="toggled" from="Margin/Panel/Scroll/SettingsList/DeveloperSection/DevelopModeRow/DevelopModeCheckBox" to="." method="_on_develop_mode_checkbox_toggled"]
+[connection signal="item_selected" from="Margin/Panel/Scroll/SettingsList/PreferencesSection/LanguageRow/LanguageOption" to="." method="_on_language_option_item_selected"]
 [connection signal="confirmed" from="ResetConfirmModal" to="." method="_on_reset_confirm_modal_confirmed"]
 [connection signal="cancelled" from="ResetConfirmModal" to="." method="_on_reset_confirm_modal_cancelled"]

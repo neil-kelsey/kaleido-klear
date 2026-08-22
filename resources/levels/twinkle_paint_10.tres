@@ -21,7 +21,6 @@ script = ExtResource("2_33380")
 level_id = "twinkle_paint_10"
 level_name_key = ""
 display_name = "Paint Nova 10"
-sort_index = 409
 goal_left_color = 3
 goal_top_color = 0
 goal_right_color = 5

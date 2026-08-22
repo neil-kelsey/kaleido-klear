@@ -142,6 +142,15 @@ msgstr "Develop mode"
 msgid "UI_COMING_SOON"
 msgstr "Coming soon"
 
+msgid "UI_SETTINGS_PREFERENCES"
+msgstr "Preferences"
+
+msgid "UI_SETTINGS_DEVELOPER"
+msgstr "Developer"
+
+msgid "UI_SETTINGS_DATA"
+msgstr "Data"
+
 msgid "UI_LEVEL_COMPLETE"
 msgstr "Level complete"
 
@@ -214,6 +223,18 @@ msgstr "Display name"
 msgid "UI_CREATOR_SECTION"
 msgstr "Section"
 
+msgid "UI_CREATOR_SUBSECTION"
+msgstr "Subsection"
+
+msgid "UI_CREATOR_SUBSECTION_NONE"
+msgstr "None"
+
+msgid "UI_CREATOR_LEVEL_DETAILS"
+msgstr "Level details"
+
+msgid "UI_CREATOR_GRID_DETAILS"
+msgstr "Grid details"
+
 msgid "UI_CREATOR_COLUMNS"
 msgstr "Columns"
 
@@ -272,10 +293,22 @@ msgid "UI_CREATOR_ACTIONS"
 msgstr "Actions"
 
 msgid "UI_CREATOR_PAINT_HINT"
-msgstr "Create a shape, select it, then use draw mode to add connected squares one at a time. Use erase mode to remove squares."
+msgstr "Tap an empty square to create a shape. Tap a shape to select it, then tap connected squares to add to it. Long-press or right-click a shape to edit it."
 
 msgid "UI_CREATOR_CREATE_SHAPE"
 msgstr "Create shape"
+
+msgid "UI_CREATOR_SHAPE_MODAL_CREATE"
+msgstr "Create shape"
+
+msgid "UI_CREATOR_SHAPE_MODAL_EDIT"
+msgstr "Edit shape"
+
+msgid "UI_CREATOR_SHAPE_MODAL_CONFIRM"
+msgstr "Create"
+
+msgid "UI_CREATOR_SHAPE_MODAL_SAVE"
+msgstr "Save"
 
 msgid "UI_CREATOR_SELECT_SHAPE"
 msgstr "Select"
@@ -364,8 +397,14 @@ msgstr "Clear"
 msgid "UI_CREATOR_CLEAR_CONFIRM"
 msgstr "Clear all data. Are you sure?"
 
+msgid "UI_CREATOR_CONFIRM_TITLE"
+msgstr "Please confirm"
+
 msgid "UI_CREATOR_BACK_CONFIRM"
 msgstr "Are you sure? Going back to the settings menu will lose all unsaved data."
+
+msgid "UI_CREATOR_MERGE_CHEAT_TITLE"
+msgstr "Merge mixes"
 
 msgid "UI_CANCEL"
 msgstr "Cancel"

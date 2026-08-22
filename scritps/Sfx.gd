@@ -30,14 +30,14 @@ func _make_player(player_name: String, stream: AudioStream, volume_db: float) ->
 func play_bump() -> void:
 	## Wrong move — solid puck hit.
 	Haptics.medium()
-	if _error_player == null:
+	if not GameSession.sfx_enabled or _error_player == null:
 		return
 	_error_player.pitch_scale = 1.0
 	_error_player.play()
 
 
 func play_swoosh() -> void:
-	if _swoosh_player == null:
+	if not GameSession.sfx_enabled or _swoosh_player == null:
 		return
 	_swoosh_player.pitch_scale = randf_range(0.96, 1.05)
 	_swoosh_player.play()
@@ -45,10 +45,10 @@ func play_swoosh() -> void:
 
 func play_fail() -> void:
 	## Level failed — leave a beat after the puck so they don't collide.
-	if _fail_player == null:
+	if not GameSession.sfx_enabled or _fail_player == null:
 		return
 	await get_tree().create_timer(0.45).timeout
-	if _fail_player == null:
+	if not GameSession.sfx_enabled or _fail_player == null:
 		return
 	_fail_player.pitch_scale = 1.0
 	_fail_player.play()

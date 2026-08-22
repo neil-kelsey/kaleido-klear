@@ -109,12 +109,39 @@ func reload_levels() -> void:
 		(_project_levels_by_section[index] as Array).append(level)
 
 	for i in SECTIONS.size():
-		var levels: Array = _project_levels_by_section[i]
-		levels.sort_custom(func(a: LevelConfig, b: LevelConfig) -> bool:
-			if a.sort_index == b.sort_index:
-				return a.level_id < b.level_id
-			return a.sort_index < b.sort_index
-		)
+		sort_levels_by_chapter(_project_levels_by_section[i] as Array)
+
+
+## Keep each chapter contiguous. Order chapters by the earliest sort_index in
+## that group, then order levels inside the chapter by sort_index.
+func sort_levels_by_chapter(levels: Array) -> void:
+	if levels.size() < 2:
+		return
+	var chapter_min: Dictionary = {}
+	for item in levels:
+		var level := item as LevelConfig
+		if level == null:
+			continue
+		var key := level.group_title_key.strip_edges()
+		if not chapter_min.has(key) or level.sort_index < int(chapter_min[key]):
+			chapter_min[key] = level.sort_index
+	levels.sort_custom(func(a: Variant, b: Variant) -> bool:
+		var la := a as LevelConfig
+		var lb := b as LevelConfig
+		if la == null or lb == null:
+			return false
+		var ka := la.group_title_key.strip_edges()
+		var kb := lb.group_title_key.strip_edges()
+		if ka != kb:
+			var ma := int(chapter_min.get(ka, la.sort_index))
+			var mb := int(chapter_min.get(kb, lb.sort_index))
+			if ma != mb:
+				return ma < mb
+			return ka < kb
+		if la.sort_index != lb.sort_index:
+			return la.sort_index < lb.sort_index
+		return la.level_id < lb.level_id
+	)
 
 
 func get_dimension_count() -> int:
@@ -220,6 +247,21 @@ func get_level_label(level: LevelConfig) -> String:
 	return level.level_id
 
 
+func list_group_title_keys(section_index: int) -> Array[String]:
+	var seen: Dictionary = {}
+	var keys: Array[String] = []
+	for level in get_section_levels(section_index):
+		if level == null:
+			continue
+		var key := level.group_title_key.strip_edges()
+		if key.is_empty() or seen.has(key):
+			continue
+		seen[key] = true
+		keys.append(key)
+	keys.sort()
+	return keys
+
+
 func get_section_levels(section_index: int) -> Array[LevelConfig]:
 	var levels: Array[LevelConfig] = []
 	if section_index < 0 or section_index >= SECTIONS.size():
@@ -235,6 +277,7 @@ func get_section_levels(section_index: int) -> Array[LevelConfig]:
 	for custom_level in _custom_levels_for_section(section_index):
 		if not known_ids.has(custom_level.level_id):
 			levels.append(custom_level)
+	sort_levels_by_chapter(levels)
 	return levels
 
 
@@ -378,8 +421,7 @@ func build_level_grid_positions(
 	return positions
 
 
-## Like build_level_grid_positions, but starts a new row (+ header gap) when
-## level.group_title_key changes. Returns { positions, headers }.
+## Group all levels of a chapter together, then lay out each chapter as a grid.
 ## headers: Array[{ "title_key": String, "position": Vector2 }]
 func build_grouped_level_layout(
 	levels: Array[LevelConfig],

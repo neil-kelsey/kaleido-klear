@@ -36,7 +36,7 @@ func _build_sections() -> void:
 		var section: Dictionary = LevelCatalog.SECTIONS[section_index]
 		var section_title := Label.new()
 		section_title.text = tr(section["title_key"])
-		UiTheme.style_menu_section_title(section_title)
+		UiTheme.style_section_subtitle(section_title)
 		sections_container.add_child(section_title)
 
 		var section_levels := LevelCatalog.get_section_levels(section_index)
@@ -46,7 +46,7 @@ func _build_sections() -> void:
 			if not group.is_empty() and group != prev_group:
 				var group_title := Label.new()
 				group_title.text = tr(group)
-				UiTheme.style_menu_section_title(group_title)
+				UiTheme.style_section_subtitle(group_title)
 				group_title.add_theme_font_size_override("font_size", UiTheme.menu_font_size(22, 18))
 				sections_container.add_child(group_title)
 				prev_group = group

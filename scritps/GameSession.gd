@@ -26,6 +26,7 @@ var current_dimension_index: int = 0
 ## When true, DimensionMap plays a zoom-out from the current diamond (back from levels).
 var pending_map_zoom_out: bool = false
 var locale: String = "en"
+var sfx_enabled: bool = true
 ## Scene to return to from gameplay (dimensions map, daily list, etc.).
 var return_scene_path: String = "res://scenes/ui/dimension_map.tscn"
 ## Optional ordered playlist (daily puzzles). Empty = campaign catalog order.
@@ -307,6 +308,11 @@ func has_next_level(current: LevelConfig) -> bool:
 	return get_next_level(current) != null
 
 
+func set_sfx_enabled(enabled: bool) -> void:
+	sfx_enabled = enabled
+	_save_settings()
+
+
 func set_develop_mode(enabled: bool) -> void:
 	develop_mode = enabled
 	_save_settings()
@@ -347,6 +353,7 @@ func _load_settings() -> void:
 	if config.load(SETTINGS_PATH) == OK:
 		develop_mode = bool(config.get_value("dev", "develop_mode", false))
 		locale = _normalize_locale(str(config.get_value("i18n", "locale", "en")))
+		sfx_enabled = bool(config.get_value("audio", "sfx_enabled", true))
 		return
 	if config.load(DEV_SETTINGS_PATH) == OK:
 		develop_mode = bool(config.get_value("dev", "develop_mode", false))
@@ -356,6 +363,7 @@ func _save_settings() -> void:
 	var config := ConfigFile.new()
 	config.set_value("dev", "develop_mode", develop_mode)
 	config.set_value("i18n", "locale", locale)
+	config.set_value("audio", "sfx_enabled", sfx_enabled)
 	var err := config.save(SETTINGS_PATH)
 	if err != OK:
 		push_warning("Failed to save settings.cfg: %s" % error_string(err))

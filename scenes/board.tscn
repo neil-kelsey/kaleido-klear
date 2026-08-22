@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://qwpopfwnvd7c"]
 
 [ext_resource type="Script" path="res://scritps/Board.gd" id="1_board"]
-[ext_resource type="Resource" path="res://resources/levels/demo_level.tres" id="2_level"]
+[ext_resource type="Resource" path="res://resources/levels/twinkle_moonlace_01.tres" id="2_level"]
 
 [node name="Board" type="Node2D"]
 script = ExtResource("1_board")

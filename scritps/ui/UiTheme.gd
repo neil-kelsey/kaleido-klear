@@ -54,6 +54,7 @@ enum ButtonScale { STANDARD, HUD, COMPACT }
 ## Floor sizes so phone / small preview windows stay readable.
 const MIN_MENU_FONT_SIZE := 56
 const MIN_MENU_TITLE_FONT_SIZE := 64
+const MIN_SECTION_SUBTITLE_FONT_SIZE := 64
 const MIN_MENU_HINT_FONT_SIZE := 36
 const MIN_MENU_BUTTON_HEIGHT := 108
 const MENU_BUTTON_FONT_SIZE := 40
@@ -264,16 +265,23 @@ static func style_menu_hint(label: Label) -> void:
 	apply_label_font(label, 36, MIN_MENU_HINT_FONT_SIZE)
 
 
+## Section subtitles (level select dimensions, creator setup groups, audit chapters).
 static func style_menu_section_title(label: Label) -> void:
+	style_section_subtitle(label)
+
+
+static func style_section_subtitle(label: Label) -> void:
+	label.add_theme_font_override("font", BUTTON_FONT)
 	label.add_theme_color_override("font_color", TEXT)
-	apply_label_font(label, 48, MIN_MENU_FONT_SIZE)
+	apply_label_font(label, 72, MIN_SECTION_SUBTITLE_FONT_SIZE)
+	label.set_meta("ui_section_subtitle", true)
 
 
 static func style_settings_row_label(label: Label) -> void:
-	## Settings rows sit on the cream star-chart card.
+	## Field captions under a section subtitle — keep clearly smaller.
 	label.add_theme_color_override("font_color", TEXT)
 	label.add_theme_font_override("font", BUTTON_FONT)
-	apply_label_font(label, 44, 36)
+	apply_label_font(label, 32, 28)
 
 
 static func settings_option_field_stylebox(focused: bool = false) -> StyleBoxFlat:
@@ -290,53 +298,79 @@ static func settings_option_field_stylebox(focused: bool = false) -> StyleBoxFla
 
 
 static func style_settings_option_field(option: OptionButton) -> void:
-	## Language picker matches secondary CTAs on the cream chart card.
-	var font_size := menu_font_size(36, 32)
-	var min_height := HUD_BUTTON_HEIGHT + 12
-	_apply_option_field_theme(
-		option,
-		settings_option_field_stylebox(false),
-		settings_option_field_stylebox(true),
-		min_height,
-		font_size
-	)
-	option.add_theme_color_override("font_color", PRIMARY)
-	option.add_theme_color_override("font_hover_color", PRIMARY)
-	option.add_theme_color_override("font_pressed_color", PRIMARY)
-	option.add_theme_color_override("font_focus_color", PRIMARY)
-	option.add_theme_font_override("font", button_typeface())
-	option.custom_minimum_size = Vector2(maxi(int(option.custom_minimum_size.x), 280), min_height)
-	option.add_theme_constant_override("arrow_margin", 20)
+	## Same light field + rainbow border as the level creator pickers.
+	style_light_option_field(option)
+	option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	option.custom_minimum_size.x = 0
 	option.fit_to_longest_item = true
-	var popup := option.get_popup()
-	popup.add_theme_font_size_override("font_size", font_size)
-	popup.add_theme_constant_override("item_start_padding", 20)
-	popup.add_theme_constant_override("item_end_padding", 20)
-	popup.add_theme_constant_override("v_separation", 12)
-	var panel := StyleBoxFlat.new()
-	panel.bg_color = Color(0.97, 0.97, 0.985, 1.0)
-	panel.set_corner_radius_all(20)
-	panel.content_margin_left = 12
-	panel.content_margin_top = 12
-	panel.content_margin_right = 12
-	panel.content_margin_bottom = 12
-	popup.add_theme_stylebox_override("panel", panel)
-	var hover := StyleBoxFlat.new()
-	hover.bg_color = SECONDARY_BG_HOVER
-	hover.set_corner_radius_all(12)
-	popup.add_theme_stylebox_override("hover", hover)
-	popup.add_theme_color_override("font_color", TEXT)
-	popup.add_theme_color_override("font_hover_color", PRIMARY)
-	popup.add_theme_color_override("font_separator_color", TEXT_MUTED)
 
 
 static func style_settings_checkbox(checkbox: CheckBox) -> void:
-	checkbox.custom_minimum_size = Vector2(64, 64)
-	checkbox.add_theme_color_override("font_color", TEXT)
-	checkbox.add_theme_color_override("font_pressed_color", PRIMARY)
-	checkbox.add_theme_color_override("font_hover_color", PRIMARY)
-	checkbox.add_theme_color_override("font_focus_color", PRIMARY)
+	var size := 80
+	checkbox.text = ""
+	checkbox.clip_contents = false
+	checkbox.custom_minimum_size = Vector2(size, size)
+	checkbox.expand_icon = true
+	checkbox.add_theme_constant_override("icon_max_width", 48)
+	var blank := _blank_checkbox_icon()
+	var check := preload("res://assets/icons/check_icon.svg")
+	checkbox.add_theme_icon_override("unchecked", blank)
+	checkbox.add_theme_icon_override("unchecked_disabled", blank)
+	checkbox.add_theme_icon_override("unchecked_mirrored", blank)
+	checkbox.add_theme_icon_override("checked", check)
+	checkbox.add_theme_icon_override("checked_disabled", check)
+	checkbox.add_theme_icon_override("checked_mirrored", check)
+	checkbox.add_theme_color_override("icon_normal_color", Color.WHITE)
+	checkbox.add_theme_color_override("icon_pressed_color", Color.WHITE)
+	checkbox.add_theme_color_override("icon_hover_color", Color.WHITE)
+	checkbox.add_theme_color_override("icon_hover_pressed_color", Color.WHITE)
+	checkbox.add_theme_color_override("icon_focus_color", Color.WHITE)
 	checkbox.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	refresh_settings_checkbox_face(checkbox)
+	if not checkbox.get_meta("ui_checkbox_face_hook", false):
+		checkbox.set_meta("ui_checkbox_face_hook", true)
+		checkbox.toggled.connect(_on_settings_checkbox_toggled.bind(checkbox))
+	attach_rainbow_border(checkbox, 16.0, 3.0)
+
+
+static func _on_settings_checkbox_toggled(_pressed: bool, checkbox: CheckBox) -> void:
+	refresh_settings_checkbox_face(checkbox)
+
+
+static func refresh_settings_checkbox_face(checkbox: CheckBox) -> void:
+	if checkbox == null:
+		return
+	var face := light_field_stylebox()
+	face.set_corner_radius_all(16)
+	face.content_margin_left = 12
+	face.content_margin_top = 12
+	face.content_margin_right = 12
+	face.content_margin_bottom = 12
+	## Solid fill: grey when empty, brand blue when ticked so the white check reads.
+	if checkbox.button_pressed:
+		face.bg_color = PRIMARY
+	else:
+		face.bg_color = Color(0.86, 0.86, 0.89, 1.0)
+	checkbox.add_theme_stylebox_override("normal", face)
+	checkbox.add_theme_stylebox_override("pressed", face)
+	checkbox.add_theme_stylebox_override("hover", face)
+	checkbox.add_theme_stylebox_override("hover_pressed", face)
+	checkbox.add_theme_stylebox_override("focus", face)
+	checkbox.add_theme_stylebox_override("disabled", face)
+
+
+static func _blank_checkbox_icon() -> Texture2D:
+	var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	return ImageTexture.create_from_image(img)
+
+
+static func sync_host_rainbow_border(host: Control) -> void:
+	if host == null:
+		return
+	var border := host.get_node_or_null("RainbowBorder") as ColorRect
+	if border != null:
+		sync_rainbow_border(border, host.size)
 
 
 static func text_field_stylebox(focused: bool = false) -> StyleBoxFlat:
@@ -397,6 +431,31 @@ static func style_row_text_field(field: LineEdit) -> void:
 	field.caret_blink = true
 
 
+static func _style_option_popup(option: OptionButton, font_size: int) -> void:
+	var popup := option.get_popup()
+	var popup_font := maxi(font_size, 32)
+	popup.add_theme_font_override("font", button_typeface())
+	popup.add_theme_font_size_override("font_size", popup_font)
+	popup.add_theme_constant_override("item_start_padding", 20)
+	popup.add_theme_constant_override("item_end_padding", 20)
+	popup.add_theme_constant_override("v_separation", 14)
+	var panel := StyleBoxFlat.new()
+	panel.bg_color = Color(0.97, 0.97, 0.985, 1.0)
+	panel.set_corner_radius_all(20)
+	panel.content_margin_left = 16
+	panel.content_margin_top = 16
+	panel.content_margin_right = 16
+	panel.content_margin_bottom = 16
+	popup.add_theme_stylebox_override("panel", panel)
+	var hover := StyleBoxFlat.new()
+	hover.bg_color = SECONDARY_BG_HOVER
+	hover.set_corner_radius_all(12)
+	popup.add_theme_stylebox_override("hover", hover)
+	popup.add_theme_color_override("font_color", TEXT)
+	popup.add_theme_color_override("font_hover_color", PRIMARY)
+	popup.add_theme_color_override("font_separator_color", TEXT_MUTED)
+
+
 static func _apply_option_field_theme(
 	option: OptionButton,
 	normal_style: StyleBoxFlat,
@@ -413,6 +472,51 @@ static func _apply_option_field_theme(
 	option.add_theme_font_size_override("font_size", font_size)
 	option.add_theme_constant_override("arrow_margin", 12)
 	option.add_theme_constant_override("align_to_largest_stylebox", 0)
+	_style_option_popup(option, font_size)
+
+
+static func light_field_stylebox(_focused: bool = false) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.92, 0.92, 0.94, 1.0)
+	style.set_border_width_all(0)
+	style.set_corner_radius_all(18)
+	style.content_margin_left = 28
+	style.content_margin_top = 22
+	style.content_margin_right = 28
+	style.content_margin_bottom = 22
+	return style
+
+
+static func style_light_text_field(field: LineEdit) -> void:
+	field.clip_contents = false
+	field.custom_minimum_size = Vector2(0, 72)
+	field.add_theme_stylebox_override("normal", light_field_stylebox(false))
+	field.add_theme_stylebox_override("focus", light_field_stylebox(true))
+	field.add_theme_stylebox_override("read_only", light_field_stylebox(false))
+	field.add_theme_color_override("font_color", TEXT)
+	field.add_theme_color_override("font_placeholder_color", TEXT_MUTED)
+	field.add_theme_color_override("caret_color", TEXT)
+	field.add_theme_font_override("font", button_typeface())
+	field.add_theme_font_size_override("font_size", 28)
+	field.caret_blink = true
+	attach_rainbow_border(field, 18.0, 3.0)
+
+
+static func style_light_option_field(option: OptionButton) -> void:
+	option.clip_contents = false
+	var normal := light_field_stylebox(false)
+	normal.content_margin_right = 48
+	var focus := light_field_stylebox(true)
+	focus.content_margin_right = 48
+	_apply_option_field_theme(option, normal, focus, 72, 28)
+	option.add_theme_color_override("font_color", TEXT)
+	option.add_theme_color_override("font_hover_color", TEXT)
+	option.add_theme_color_override("font_pressed_color", TEXT)
+	option.add_theme_color_override("font_focus_color", TEXT)
+	option.add_theme_font_override("font", button_typeface())
+	option.add_theme_constant_override("arrow_margin", 20)
+	option.fit_to_longest_item = true
+	attach_rainbow_border(option, 18.0, 3.0)
 
 
 static func style_option_field(option: OptionButton) -> void:

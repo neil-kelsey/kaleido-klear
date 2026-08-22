@@ -10,9 +10,14 @@ enum ResetKind { NONE, PROGRESS, TUTORIALS }
 @onready var title_badge: DiamondTitleBadge = %TitleBadge
 @onready var nebula_bg: TextureRect = %NebulaBg
 @onready var back_button: CircleBackButton = %BackButton
+@onready var preferences_title: Label = %PreferencesTitle
+@onready var data_title: Label = %DataTitle
+@onready var developer_title: Label = %DeveloperTitle
+@onready var developer_section: VBoxContainer = %DeveloperSection
 @onready var language_label: Label = %LanguageLabel
 @onready var language_option: OptionButton = %LanguageOption
 @onready var sound_label: Label = %SoundLabel
+@onready var sound_checkbox: CheckBox = %SoundCheckBox
 @onready var music_label: Label = %MusicLabel
 @onready var develop_mode_row: HBoxContainer = %DevelopModeRow
 @onready var develop_mode_label: Label = %DevelopModeLabel
@@ -36,19 +41,27 @@ func _ready() -> void:
 	_populate_language_option()
 	_apply_translations()
 	back_button.pressed.connect(_on_back_button_pressed)
+	UiTheme.style_section_subtitle(preferences_title)
+	UiTheme.style_section_subtitle(data_title)
+	UiTheme.style_section_subtitle(developer_title)
 	UiTheme.style_settings_row_label(language_label)
 	UiTheme.style_settings_option_field(language_option)
 	UiTheme.style_settings_row_label(sound_label)
+	UiTheme.style_settings_checkbox(sound_checkbox)
+	sound_checkbox.set_pressed_no_signal(GameSession.sfx_enabled)
+	UiTheme.refresh_settings_checkbox_face(sound_checkbox)
 	UiTheme.style_settings_row_label(music_label)
 	UiTheme.style_settings_row_label(develop_mode_label)
 	UiTheme.style_menu_hint(coming_soon_label)
 	if OS.is_debug_build():
+		developer_section.visible = true
+		develop_mode_row.visible = true
 		develop_mode_checkbox.button_pressed = GameSession.develop_mode
 		UiTheme.style_settings_checkbox(develop_mode_checkbox)
 		level_creator_button.visible = GameSession.develop_mode
 		level_audit_button.visible = GameSession.develop_mode
 	else:
-		develop_mode_row.visible = false
+		developer_section.visible = false
 		level_creator_button.visible = false
 		level_audit_button.visible = false
 	get_viewport().size_changed.connect(_sync_title_badge)
@@ -62,6 +75,12 @@ func _process(delta: float) -> void:
 		_nebula_mat.set_shader_parameter("rect_size", nebula_bg.size)
 		var pulse := 0.99 + 0.01 * sin(_fx_time * 0.25)
 		_nebula_mat.set_shader_parameter("brightness", pulse)
+	BrandRainbow.tick(delta)
+	UiTheme.sync_host_rainbow_border(language_option)
+	if develop_mode_checkbox != null and develop_mode_checkbox.visible:
+		UiTheme.sync_host_rainbow_border(develop_mode_checkbox)
+	if sound_checkbox != null:
+		UiTheme.sync_host_rainbow_border(sound_checkbox)
 
 
 func _notification(what: int) -> void:
@@ -98,6 +117,15 @@ func _apply_translations() -> void:
 	sound_label.text = tr("UI_SOUND")
 	music_label.text = tr("UI_MUSIC")
 	develop_mode_label.text = tr("UI_DEVELOP_MODE")
+	if preferences_title != null:
+		preferences_title.text = tr("UI_SETTINGS_PREFERENCES")
+		UiTheme.style_section_subtitle(preferences_title)
+	if data_title != null:
+		data_title.text = tr("UI_SETTINGS_DATA")
+		UiTheme.style_section_subtitle(data_title)
+	if developer_title != null:
+		developer_title.text = tr("UI_SETTINGS_DEVELOPER")
+		UiTheme.style_section_subtitle(developer_title)
 	level_creator_button.set_label(tr("UI_LEVEL_CREATOR"))
 	level_audit_button.set_label(tr("UI_LEVEL_AUDIT"))
 	reset_tutorials_button.set_label(tr("UI_RESET_TUTORIALS"))
@@ -126,6 +154,10 @@ func _on_language_option_item_selected(index: int) -> void:
 		return
 	var code := str(language_option.get_item_metadata(index))
 	GameSession.set_locale(code)
+
+
+func _on_sound_checkbox_toggled(enabled: bool) -> void:
+	GameSession.set_sfx_enabled(enabled)
 
 
 func _on_develop_mode_checkbox_toggled(enabled: bool) -> void:

@@ -73,7 +73,7 @@ var swipe_hints: SwipeHintOverlay = null
 
 func _ready() -> void:
 	if level_config == null:
-		level_config = load("res://resources/levels/demo_level.tres") as LevelConfig
+		level_config = load("res://resources/levels/twinkle_moonlace_01.tres") as LevelConfig
 	lives = starting_lives
 	await get_tree().process_frame
 	_rebuild_board()

@@ -24,6 +24,8 @@ const FA_CHARS := {
 	"xmark": "\uf00d",
 	"gear": "\uf013",
 	"angles-right": "\uf101",
+	"chevron-right": "\uf054",
+	"chevron-down": "\uf078",
 	"lock": "\uf023",
 	"check": "\uf00c",
 	"star": "\uf005",

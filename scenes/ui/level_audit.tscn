@@ -62,18 +62,30 @@ shrink_wrap = false
 [node name="Content" type="VBoxContainer" parent="Margin/Panel"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="CountLabel" type="Label" parent="Margin/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Total levels: 0"
 
 [node name="Scroll" type="ScrollContainer" parent="Margin/Panel/Content"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
+theme_override_constants/scrollbar_h_separation = 16
 
-[node name="SectionsContainer" type="VBoxContainer" parent="Margin/Panel/Content/Scroll"]
+[node name="InnerMargin" type="MarginContainer" parent="Margin/Panel/Content/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_right = 48
+
+[node name="SectionsContainer" type="VBoxContainer" parent="Margin/Panel/Content/Scroll/InnerMargin"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 36
+theme_override_constants/separation = 48
 
 [node name="EmptyLabel" type="Label" parent="Margin/Panel/Content"]
 unique_name_in_owner = true

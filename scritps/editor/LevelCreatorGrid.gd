@@ -2,11 +2,14 @@ extends Control
 class_name LevelCreatorGrid
 
 signal cell_clicked(cell: Vector2i, button_index: int)
+signal cell_edit_requested(cell: Vector2i)
 
 ## High-contrast editor grid (playfield colors are too close to see seams).
 const GRID_FILL := Color(0.26, 0.28, 0.34, 1.0)
 const GRID_BORDER := Color(0.08, 0.09, 0.12, 1.0)
 const GRID_HOLE := Color(0.12, 0.12, 0.14, 1.0)
+const LONG_PRESS_SEC := 0.45
+const LONG_PRESS_MOVE_PX := 20.0
 
 var columns: int = 8
 var rows: int = 8
@@ -22,12 +25,22 @@ var disabled_cells: Array[Vector2i] = []
 
 var _hover_cell := Vector2i(-1, -1)
 var _preview_valid: bool = false
+var _press_cell := Vector2i(-1, -1)
+var _press_pos := Vector2.ZERO
+var _press_held := false
+var _long_fired := false
+var _long_timer: Timer
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	resized.connect(_on_resized)
 	_on_resized()
+	_long_timer = Timer.new()
+	_long_timer.one_shot = true
+	_long_timer.wait_time = LONG_PRESS_SEC
+	_long_timer.timeout.connect(_on_long_press_timeout)
+	add_child(_long_timer)
 	set_process(true)
 
 
@@ -84,12 +97,50 @@ func _gui_input(event: InputEvent) -> void:
 		_hover_cell = _pixel_to_cell(event.position)
 		_update_hover_preview()
 		queue_redraw()
+		if _press_held and not _long_fired:
+			if event.position.distance_to(_press_pos) > LONG_PRESS_MOVE_PX:
+				_cancel_press()
 		return
 
-	if event is InputEventMouseButton and event.pressed:
+	if event is InputEventMouseButton:
 		var cell := _pixel_to_cell(event.position)
-		if cell.x >= 0:
-			cell_clicked.emit(cell, event.button_index)
+		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and cell.x >= 0:
+			_cancel_press()
+			cell_edit_requested.emit(cell)
+			accept_event()
+			return
+		if event.button_index != MOUSE_BUTTON_LEFT:
+			return
+		if event.pressed:
+			if cell.x < 0:
+				return
+			_press_cell = cell
+			_press_pos = event.position
+			_press_held = true
+			_long_fired = false
+			_long_timer.start()
+			accept_event()
+		else:
+			var emit_cell := _press_cell
+			var fired := _long_fired
+			_cancel_press()
+			if not fired and emit_cell.x >= 0:
+				cell_clicked.emit(emit_cell, MOUSE_BUTTON_LEFT)
+			accept_event()
+
+
+func _on_long_press_timeout() -> void:
+	if not _press_held or _press_cell.x < 0:
+		return
+	_long_fired = true
+	cell_edit_requested.emit(_press_cell)
+
+
+func _cancel_press() -> void:
+	_press_held = false
+	_press_cell = Vector2i(-1, -1)
+	if _long_timer != null:
+		_long_timer.stop()
 
 
 func _update_hover_preview() -> void:

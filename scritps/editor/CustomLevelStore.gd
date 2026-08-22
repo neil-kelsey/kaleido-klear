@@ -35,9 +35,29 @@ func save_level(level: LevelConfig) -> Error:
 	if level.sort_index <= 0:
 		level.sort_index = int(Time.get_unix_time_from_system())
 	if saves_to_project():
-		return _save_project_level(level)
+		return _save_project_levels([level])
 	ensure_directory()
 	return ResourceSaver.save(level, _user_level_path(level.level_id))
+
+
+func save_levels(levels: Array[LevelConfig]) -> Error:
+	## One manifest rewrite / catalog reload for the whole batch.
+	if levels.is_empty():
+		return OK
+	if saves_to_project():
+		return _save_project_levels(levels)
+	ensure_directory()
+	var last_err := OK
+	for level in levels:
+		if level == null or level.level_id.strip_edges().is_empty():
+			last_err = ERR_INVALID_PARAMETER
+			continue
+		if level.sort_index <= 0:
+			level.sort_index = int(Time.get_unix_time_from_system())
+		var err := ResourceSaver.save(level, _user_level_path(level.level_id))
+		if err != OK:
+			last_err = err
+	return last_err
 
 
 func load_level(level_id: String) -> LevelConfig:
@@ -168,33 +188,54 @@ func delete_level(level_id: String) -> Error:
 	return user_err
 
 
-func _save_project_level(level: LevelConfig) -> Error:
-	## Write every on-disk copy of this id so renamed/legacy files stay in sync.
-	var paths := _project_paths_for_level_id(level.level_id)
-	if paths.is_empty():
-		paths = PackedStringArray([_project_level_path(level.level_id)])
-	for path in paths:
-		var abs_path := ProjectSettings.globalize_path(path)
-		DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
-		var error := ResourceSaver.save(level, path)
-		if error != OK:
-			return error
-	rewrite_project_manifest()
-	if LevelCatalog != null:
-		LevelCatalog.reload_levels()
-	return OK
+func _save_project_levels(levels: Array[LevelConfig]) -> Error:
+	var path_index := _project_path_index()
+	var last_err := OK
+	var wrote := false
+	for level in levels:
+		if level == null or level.level_id.strip_edges().is_empty():
+			last_err = ERR_INVALID_PARAMETER
+			continue
+		if level.sort_index <= 0:
+			level.sort_index = int(Time.get_unix_time_from_system())
+		var paths: PackedStringArray = path_index.get(level.level_id.strip_edges(), PackedStringArray())
+		if paths.is_empty():
+			paths = PackedStringArray([_project_level_path(level.level_id)])
+		for path in paths:
+			var abs_path := ProjectSettings.globalize_path(path)
+			DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
+			var error := ResourceSaver.save(level, path)
+			if error != OK:
+				return error
+			wrote = true
+	if wrote:
+		rewrite_project_manifest()
+		if LevelCatalog != null:
+			LevelCatalog.reload_levels()
+	return last_err
+
+
+func _project_path_index() -> Dictionary:
+	## level_id -> PackedStringArray of on-disk paths (legacy filenames included).
+	var index: Dictionary = {}
+	for path in list_project_level_paths():
+		var level := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
+		if level == null:
+			continue
+		var id := level.level_id.strip_edges()
+		if id.is_empty():
+			continue
+		var bucket: PackedStringArray = index.get(id, PackedStringArray())
+		bucket.append(path)
+		index[id] = bucket
+	return index
 
 
 func _project_paths_for_level_id(level_id: String) -> PackedStringArray:
 	var id := level_id.strip_edges()
-	var paths := PackedStringArray()
 	if id.is_empty():
-		return paths
-	for path in list_project_level_paths():
-		var level := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
-		if level != null and level.level_id.strip_edges() == id:
-			paths.append(path)
-	return paths
+		return PackedStringArray()
+	return _project_path_index().get(id, PackedStringArray())
 
 
 func _scan_project_level_paths() -> PackedStringArray:

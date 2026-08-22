@@ -1,22 +1,13 @@
-[gd_scene load_steps=4 format=3 uid="uid://kaleido_level_creator"]
+[gd_scene load_steps=5 format=3 uid="uid://kaleido_level_creator"]
 
 [ext_resource type="Script" path="res://scritps/editor/LevelCreator.gd" id="1"]
 [ext_resource type="Script" path="res://scritps/editor/LevelCreatorGrid.gd" id="2"]
+[ext_resource type="PackedScene" uid="uid://kaleido_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="3_back"]
+[ext_resource type="Script" path="res://scritps/ui/MenuActionButton.gd" id="4_cta"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.14, 0.14, 0.18, 1)
 draw_center = false
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_footer"]
-bg_color = Color(0.16, 0.16, 0.2, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-content_margin_left = 16.0
-content_margin_top = 16.0
-content_margin_right = 16.0
-content_margin_bottom = 16.0
 
 [node name="LevelCreator" type="Control"]
 layout_mode = 3
@@ -44,9 +35,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 48
+theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 32
+theme_override_constants/margin_bottom = 176
 
 [node name="VBox" type="VBoxContainer" parent="ContentMargin"]
 layout_mode = 2
@@ -54,15 +45,17 @@ theme_override_constants/separation = 16
 
 [node name="TitleLabel" type="Label" parent="ContentMargin/VBox"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "Level creator"
 horizontal_alignment = 1
 
 [node name="GridPanel" type="PanelContainer" parent="ContentMargin/VBox"]
-custom_minimum_size = Vector2(0, 300)
+custom_minimum_size = Vector2(0, 360)
 layout_mode = 2
 size_flags_vertical = 3
+size_flags_stretch_ratio = 1.35
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
 [node name="LevelCreatorGrid" type="Control" parent="ContentMargin/VBox/GridPanel"]
@@ -77,6 +70,12 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("2")
 
+[node name="MixCheatSheet" type="VBoxContainer" parent="ContentMargin/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
 [node name="ToolsSection" type="VBoxContainer" parent="ContentMargin/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 280)
@@ -86,7 +85,7 @@ theme_override_constants/separation = 12
 
 [node name="TabSwitcher" type="PanelContainer" parent="ContentMargin/VBox/ToolsSection"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 
 [node name="TabRow" type="HBoxContainer" parent="ContentMargin/VBox/ToolsSection/TabSwitcher"]
@@ -125,7 +124,7 @@ horizontal_scroll_mode = 0
 [node name="SetupScrollContent" type="VBoxContainer" parent="ContentMargin/VBox/ToolsSection/Setup"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 32
 
 [node name="SetupMargin" type="MarginContainer" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent"]
 layout_mode = 2
@@ -133,24 +132,25 @@ size_flags_horizontal = 3
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 0
+theme_override_constants/margin_bottom = 8
 
 [node name="SetupPanel" type="VBoxContainer" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent/SetupMargin"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 16
 
-[node name="SetupActionsPanel" type="PanelContainer" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent"]
+[node name="SetupActionsPanel" type="VBoxContainer" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent"]
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_footer")
+theme_override_constants/separation = 20
 
 [node name="BottomContent" type="VBoxContainer" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent/SetupActionsPanel"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 16
 
 [node name="ActionsLabel" type="Label" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent/SetupActionsPanel/BottomContent"]
 unique_name_in_owner = true
+visible = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.95, 0.95, 0.97, 1)
@@ -158,30 +158,40 @@ text = "Actions"
 
 [node name="PrimaryActionRow" type="HBoxContainer" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent/SetupActionsPanel/BottomContent"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 16
 
 [node name="SaveButton" type="Button" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent/SetupActionsPanel/BottomContent/PrimaryActionRow"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Save"
+script = ExtResource("4_cta")
+kind = 1
+compact = true
+show_trailing_icon = false
+label_text = "Save"
 
 [node name="PlaytestButton" type="Button" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent/SetupActionsPanel/BottomContent/PrimaryActionRow"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Playtest"
+script = ExtResource("4_cta")
+kind = 0
+compact = true
+show_trailing_icon = false
+label_text = "Playtest"
 
-[node name="SecondaryActionRow" type="HBoxContainer" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent/SetupActionsPanel/BottomContent"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="BackButton" type="Button" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent/SetupActionsPanel/BottomContent/SecondaryActionRow"]
+[node name="ClearButton" type="Button" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent/SetupActionsPanel/BottomContent"]
 unique_name_in_owner = true
 layout_mode = 2
-
-[node name="ClearButton" type="Button" parent="ContentMargin/VBox/ToolsSection/Setup/SetupScrollContent/SetupActionsPanel/BottomContent/SecondaryActionRow"]
-unique_name_in_owner = true
-layout_mode = 2
+size_flags_horizontal = 3
 text = "Clear"
+script = ExtResource("4_cta")
+kind = 2
+compact = true
+show_trailing_icon = false
+label_text = "Clear"
 
 [node name="Blocks" type="ScrollContainer" parent="ContentMargin/VBox/ToolsSection"]
 unique_name_in_owner = true
@@ -194,15 +204,17 @@ horizontal_scroll_mode = 0
 [node name="BlocksMargin" type="MarginContainer" parent="ContentMargin/VBox/ToolsSection/Blocks"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/margin_left = 16
+size_flags_vertical = 3
+theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
 
 [node name="BlocksPanel" type="VBoxContainer" parent="ContentMargin/VBox/ToolsSection/Blocks/BlocksMargin"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 12
 
 [node name="Goals" type="ScrollContainer" parent="ContentMargin/VBox/ToolsSection"]
@@ -231,7 +243,8 @@ theme_override_constants/separation = 12
 
 [node name="StatusLabel" type="Label" parent="ContentMargin/VBox"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.67, 0.72, 1)
-autowrap_mode = 3
-text = "Ready"
+
+[node name="BackButton" parent="." instance=ExtResource("3_back")]
+unique_name_in_owner = true
