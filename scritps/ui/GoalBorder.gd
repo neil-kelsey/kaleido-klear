@@ -25,6 +25,10 @@ const FADE_DEPTH_RATIO := 0.72
 @onready var progress_label: Label = %ProgressLabel
 
 var _preview_active: bool = false
+## 45° corner cuts when the adjacent bar is also live. Left/Right: leading=top,
+## trailing=bottom. Top/Bottom: leading=left, trailing=right.
+var _miter_leading := false
+var _miter_trailing := false
 const BADGE_PAD_H := 16.0
 const BADGE_PAD_V := 8.0
 const BADGE_OVERLAP := 8.0
@@ -44,6 +48,14 @@ func _ready() -> void:
 	_layout_label()
 	resized.connect(func() -> void: queue_redraw())
 	set_process(false)
+	queue_redraw()
+
+
+func set_miters(leading: bool, trailing: bool) -> void:
+	if _miter_leading == leading and _miter_trailing == trailing:
+		return
+	_miter_leading = leading
+	_miter_trailing = trailing
 	queue_redraw()
 
 
@@ -137,8 +149,11 @@ func _draw() -> void:
 	if not visible:
 		return
 
+	var bar_poly := _bar_polygon()
+	if bar_poly.size() < 3:
+		return
 	var base_color: Color = get_meta("base_color", Color.WHITE)
-	draw_rect(Rect2(Vector2.ZERO, size), base_color)
+	draw_colored_polygon(bar_poly, base_color)
 
 	if not _preview_active:
 		return
@@ -153,15 +168,23 @@ func _draw() -> void:
 	match edge_kind:
 		EdgeKind.LEFT, EdgeKind.RIGHT:
 			var vertical_zone := Rect2(0.0, 0.0, size.x, zone_size)
-			_draw_end_zone_chevrons(vertical_zone, next_color, scroll, false)
+			_draw_end_zone_chevrons(
+				vertical_zone, next_color, scroll, false, _clip_poly_in_draw_space(false, false)
+			)
 			draw_set_transform(Vector2(0.0, size.y), 0.0, Vector2(1.0, -1.0))
-			_draw_end_zone_chevrons(vertical_zone, next_color, scroll, false)
+			_draw_end_zone_chevrons(
+				vertical_zone, next_color, scroll, false, _clip_poly_in_draw_space(false, true)
+			)
 			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		EdgeKind.TOP, EdgeKind.BOTTOM:
 			var horizontal_zone := Rect2(0.0, 0.0, zone_size, size.y)
-			_draw_end_zone_chevrons(horizontal_zone, next_color, scroll, true)
+			_draw_end_zone_chevrons(
+				horizontal_zone, next_color, scroll, true, _clip_poly_in_draw_space(false, false)
+			)
 			draw_set_transform(Vector2(size.x, 0.0), 0.0, Vector2(-1.0, 1.0))
-			_draw_end_zone_chevrons(horizontal_zone, next_color, scroll, true)
+			_draw_end_zone_chevrons(
+				horizontal_zone, next_color, scroll, true, _clip_poly_in_draw_space(true, false)
+			)
 			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
@@ -187,12 +210,20 @@ func _draw_end_zone_chevrons(
 	zone: Rect2,
 	accent: Color,
 	scroll: float,
-	horizontal: bool
+	horizontal: bool,
+	bar_clip: PackedVector2Array
 ) -> void:
 	var step: float = ZONE_STRIPE_WIDTH
 	var normal: Vector2 = _STRIPE_NORMAL_HORIZONTAL if horizontal else _STRIPE_NORMAL
 	var tangent: Vector2 = _STRIPE_TANGENT_HORIZONTAL if horizontal else _STRIPE_TANGENT
 	var zone_poly := _rect_polygon(zone)
+	if bar_clip.size() >= 3:
+		var clipped_zones: Array = Geometry2D.intersect_polygons(zone_poly, bar_clip)
+		if clipped_zones.is_empty():
+			return
+		zone_poly = clipped_zones[0] as PackedVector2Array
+		if zone_poly.size() < 3:
+			return
 
 	var corners: Array[Vector2] = [
 		zone.position,
@@ -290,3 +321,124 @@ func _rect_polygon(rect: Rect2) -> PackedVector2Array:
 		rect.position + rect.size,
 		rect.position + Vector2(0.0, rect.size.y),
 	])
+
+
+func _bar_polygon() -> PackedVector2Array:
+	var w := size.x
+	var h := size.y
+	if w <= 0.0 or h <= 0.0:
+		return PackedVector2Array()
+	var cut := minf(minf(w, h), maxf(w, h) * 0.5)
+	var lead := _miter_leading
+	var trail := _miter_trailing
+	match edge_kind:
+		EdgeKind.LEFT:
+			if lead and trail:
+				return PackedVector2Array([
+					Vector2(0.0, 0.0),
+					Vector2(w, cut),
+					Vector2(w, h - cut),
+					Vector2(0.0, h),
+				])
+			if lead:
+				return PackedVector2Array([
+					Vector2(0.0, 0.0),
+					Vector2(w, cut),
+					Vector2(w, h),
+					Vector2(0.0, h),
+				])
+			if trail:
+				return PackedVector2Array([
+					Vector2(0.0, 0.0),
+					Vector2(w, 0.0),
+					Vector2(w, h - cut),
+					Vector2(0.0, h),
+				])
+			return _rect_polygon(Rect2(Vector2.ZERO, size))
+		EdgeKind.RIGHT:
+			if lead and trail:
+				return PackedVector2Array([
+					Vector2(w, 0.0),
+					Vector2(0.0, cut),
+					Vector2(0.0, h - cut),
+					Vector2(w, h),
+				])
+			if lead:
+				return PackedVector2Array([
+					Vector2(w, 0.0),
+					Vector2(0.0, cut),
+					Vector2(0.0, h),
+					Vector2(w, h),
+				])
+			if trail:
+				return PackedVector2Array([
+					Vector2(w, 0.0),
+					Vector2(0.0, 0.0),
+					Vector2(0.0, h - cut),
+					Vector2(w, h),
+				])
+			return _rect_polygon(Rect2(Vector2.ZERO, size))
+		EdgeKind.TOP:
+			if lead and trail:
+				return PackedVector2Array([
+					Vector2(0.0, 0.0),
+					Vector2(w, 0.0),
+					Vector2(w - cut, h),
+					Vector2(cut, h),
+				])
+			if lead:
+				return PackedVector2Array([
+					Vector2(0.0, 0.0),
+					Vector2(w, 0.0),
+					Vector2(w, h),
+					Vector2(cut, h),
+				])
+			if trail:
+				return PackedVector2Array([
+					Vector2(0.0, 0.0),
+					Vector2(w, 0.0),
+					Vector2(w - cut, h),
+					Vector2(0.0, h),
+				])
+			return _rect_polygon(Rect2(Vector2.ZERO, size))
+		EdgeKind.BOTTOM:
+			if lead and trail:
+				return PackedVector2Array([
+					Vector2(0.0, h),
+					Vector2(cut, 0.0),
+					Vector2(w - cut, 0.0),
+					Vector2(w, h),
+				])
+			if lead:
+				return PackedVector2Array([
+					Vector2(0.0, h),
+					Vector2(cut, 0.0),
+					Vector2(w, 0.0),
+					Vector2(w, h),
+				])
+			if trail:
+				return PackedVector2Array([
+					Vector2(0.0, h),
+					Vector2(0.0, 0.0),
+					Vector2(w - cut, 0.0),
+					Vector2(w, h),
+				])
+			return _rect_polygon(Rect2(Vector2.ZERO, size))
+		_:
+			return _rect_polygon(Rect2(Vector2.ZERO, size))
+
+
+func _clip_poly_in_draw_space(flip_h: bool, flip_v: bool) -> PackedVector2Array:
+	var poly := _bar_polygon()
+	if not flip_h and not flip_v:
+		return poly
+	var out := PackedVector2Array()
+	out.resize(poly.size())
+	for i in poly.size():
+		var p: Vector2 = poly[i]
+		if flip_h:
+			p.x = size.x - p.x
+		if flip_v:
+			p.y = size.y - p.y
+		out[i] = p
+	return out

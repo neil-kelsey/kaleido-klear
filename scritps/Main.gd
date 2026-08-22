@@ -309,11 +309,28 @@ func _apply_goal_borders(config: LevelConfig) -> void:
 		var bottom_state := board.get_goal_display_state(Board.GoalEdge.BOTTOM)
 		bottom_state["base_color"] = Block.get_color(config.goal_bottom_color)
 		goal_border_bottom.apply_state(bottom_state)
+	_sync_goal_miters()
 	_sync_safe_hud()
 
 
 func _refresh_goal_border(goal_edge: int, border: GoalBorder) -> void:
 	border.apply_state(board.get_goal_display_state(goal_edge))
+
+
+func _sync_goal_miters() -> void:
+	## Adjacent live bars share a 45° corner; a lone bar keeps the full square.
+	if goal_border_left == null or goal_border_top == null:
+		return
+	if goal_border_right == null or goal_border_bottom == null:
+		return
+	var left_on := goal_border_left.visible
+	var top_on := goal_border_top.visible
+	var right_on := goal_border_right.visible
+	var bottom_on := goal_border_bottom.visible
+	goal_border_left.set_miters(top_on, bottom_on)
+	goal_border_right.set_miters(top_on, bottom_on)
+	goal_border_top.set_miters(left_on, right_on)
+	goal_border_bottom.set_miters(left_on, right_on)
 
 
 func _on_goal_state_changed(goal_edge: int, state: Dictionary) -> void:
@@ -326,6 +343,7 @@ func _on_goal_state_changed(goal_edge: int, state: Dictionary) -> void:
 			goal_border_right.apply_state(state)
 		Board.GoalEdge.BOTTOM:
 			goal_border_bottom.apply_state(state)
+	_sync_goal_miters()
 	if goals_info_modal != null and goals_info_modal.visible:
 		goals_info_modal.refresh_overview(board.get_goals_overview())
 	if goal_edge == Board.GoalEdge.TOP:

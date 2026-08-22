@@ -600,7 +600,8 @@ class _AuditRow extends PanelContainer:
 		group_key = key
 		level_id = level.level_id
 		order_index = order
-		mouse_filter = Control.MOUSE_FILTER_STOP
+		## PASS so the list can scroll; drag starts only on the handle + number.
+		mouse_filter = Control.MOUSE_FILTER_PASS
 		custom_minimum_size.y = ROW_H
 		_build(level)
 
@@ -617,21 +618,11 @@ class _AuditRow extends PanelContainer:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 12)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(row)
 
-		var grip := _GripIcon.new()
-		grip.custom_minimum_size = Vector2(28, 28)
-		grip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(grip)
-
-		_order_label = Label.new()
-		_order_label.text = str(order_index)
-		_order_label.custom_minimum_size.x = LEVEL_W
-		_order_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
-		_order_label.add_theme_font_size_override("font_size", 28)
-		_order_label.add_theme_color_override("font_color", UiTheme.TEXT)
-		_order_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		row.add_child(_order_label)
+		var drag_zone := _DragZone.new(self)
+		row.add_child(drag_zone)
 
 		_name_label = Label.new()
 		_name_label.text = LevelCatalog.get_level_label(level)
@@ -642,12 +633,14 @@ class _AuditRow extends PanelContainer:
 		_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_name_label.clip_text = true
 		_name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(_name_label)
 
 		var actions := HBoxContainer.new()
 		actions.custom_minimum_size.x = ACTIONS_W
 		actions.alignment = BoxContainer.ALIGNMENT_CENTER
 		actions.add_theme_constant_override("separation", 10)
+		actions.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(actions)
 
 		var edit_btn := CircleIconButton.new()
@@ -666,14 +659,11 @@ class _AuditRow extends PanelContainer:
 		delete_btn.pressed.connect(func() -> void: audit._on_delete_pressed(level_id))
 		actions.add_child(delete_btn)
 
-	func _get_drag_data(_at_position: Vector2) -> Variant:
-		var preview := Label.new()
-		preview.text = _name_label.text if _name_label else level_id
-		preview.add_theme_font_size_override("font_size", 24)
-		preview.add_theme_color_override("font_color", UiTheme.TEXT)
-		set_drag_preview(preview)
-		modulate = Color(1, 1, 1, 0.45)
+	func _drag_payload() -> Dictionary:
 		return {"group_key": group_key, "from_index": order_index - 1, "level_id": level_id}
+
+	func _drag_preview_text() -> String:
+		return _name_label.text if _name_label else level_id
 
 	func _notification(what: int) -> void:
 		if what == NOTIFICATION_DRAG_END:
@@ -693,6 +683,40 @@ class _AuditRow extends PanelContainer:
 		if audit != null and audit.has_method("reorder_group"):
 			audit.reorder_group(group_key, from_index, to_index)
 
+
+class _DragZone extends HBoxContainer:
+	var _row: _AuditRow
+
+	func _init(row: _AuditRow) -> void:
+		_row = row
+		mouse_filter = Control.MOUSE_FILTER_STOP
+		add_theme_constant_override("separation", 12)
+		alignment = BoxContainer.ALIGNMENT_CENTER
+
+		var grip := _GripIcon.new()
+		grip.custom_minimum_size = Vector2(28, 28)
+		grip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(grip)
+
+		var order := Label.new()
+		order.text = str(row.order_index)
+		order.custom_minimum_size.x = _AuditRow.LEVEL_W
+		order.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+		order.add_theme_font_size_override("font_size", 28)
+		order.add_theme_color_override("font_color", UiTheme.TEXT)
+		order.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		order.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(order)
+		row._order_label = order
+
+	func _get_drag_data(_at_position: Vector2) -> Variant:
+		var preview := Label.new()
+		preview.text = _row._drag_preview_text()
+		preview.add_theme_font_size_override("font_size", 24)
+		preview.add_theme_color_override("font_color", UiTheme.TEXT)
+		set_drag_preview(preview)
+		_row.modulate = Color(1, 1, 1, 0.45)
+		return _row._drag_payload()
 
 
 class _GripIcon extends Control:

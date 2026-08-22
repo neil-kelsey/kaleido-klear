@@ -11,16 +11,23 @@ const STRIP_WORLD := Rect2(-420, -180, 840, 2800)
 const COLUMNS := 5
 const COL_SPACING := 132.0
 const ROW_SPACING := 128.0
-## Slightly tighter rows so a 30-level chapter (6 rows) stays playable on a page.
-const ROW_SPACING_PAGED := 116.0
 const LEVEL_DIAMOND_SIZE := 114.0
+## Campaign nodes read larger on a phone; Tutorial keeps the compact size.
+const LEVEL_DIAMOND_SIZE_PAGED := 122.0
 const GROUP_GAP_COMPACT := 168.0
+## Minimum world gap between a chapter's last row and the next title.
+const GROUP_GAP_PEEK_MIN := 56.0
+## How much of the next chapter's first diamond shows below the peek title.
+const PEEK_DIAMOND_SLICE := 0.32
 ## Fraction of viewport width reserved as empty space on each side of the diamond grid.
 const SIDE_MARGIN_RATIO := 0.18
+## Campaign uses more of the width so 5-wide diamonds read as tap targets.
+const SIDE_MARGIN_RATIO_PAGED := 0.15
 ## Screen Y of the title centre (and the chart vanishing pole). Push this down
 ## to add space above the badge; the star chart tracks the same point.
 const TITLE_POLE_SCREEN_Y := 248.0
-const SECTION_TOP_MARGIN_PX := 200.0
+## Screen pixels from the title-badge centre down to the first chapter header.
+const BELOW_BADGE_PX := 176.0
 const BOTTOM_PAD_PX := 168.0
 const GROUP_HEADER_FONT_SIZE := 44
 ## World gap from section title centre down to level-diamond centres.
@@ -150,7 +157,7 @@ func _rebuild_map() -> void:
 	var layout: Dictionary = LevelCatalog.build_grouped_level_layout(
 		_levels,
 		COLUMNS,
-		COL_SPACING,
+		_col_spacing(),
 		_row_spacing(),
 		_hub_gap_for_title(),
 		_group_gap,
@@ -167,14 +174,26 @@ func _rebuild_map() -> void:
 
 
 func _content_width() -> float:
-	return COL_SPACING * float(COLUMNS - 1) + LEVEL_DIAMOND_SIZE
+	return _col_spacing() * float(COLUMNS - 1) + _diamond_size()
+
+
+func _diamond_size() -> float:
+	return LEVEL_DIAMOND_SIZE_PAGED if _paging_enabled else LEVEL_DIAMOND_SIZE
+
+
+func _col_spacing() -> float:
+	return COL_SPACING
+
+
+func _side_margin_ratio() -> float:
+	return SIDE_MARGIN_RATIO_PAGED if _paging_enabled else SIDE_MARGIN_RATIO
 
 
 func _apply_page_zoom() -> void:
 	var vp := get_viewport_rect().size
 	if vp.x <= 1.0:
 		return
-	var usable := clampf(1.0 - 2.0 * SIDE_MARGIN_RATIO, 0.35, 0.9)
+	var usable := clampf(1.0 - 2.0 * _side_margin_ratio(), 0.35, 0.9)
 	var target_visible_w := _content_width() / usable
 	var z := vp.x / maxf(target_visible_w, 1.0)
 	camera.zoom = Vector2(z, z)
@@ -207,25 +226,22 @@ func _largest_group_size() -> int:
 
 
 func _row_spacing() -> float:
-	return ROW_SPACING_PAGED if _paging_enabled else ROW_SPACING
+	## Campaign: same world gap on both axes so diamonds don't kiss vertically.
+	return COL_SPACING if _paging_enabled else ROW_SPACING
 
 
 func _group_gap_for_paging() -> float:
-	var page_h := get_viewport_rect().size.y / maxf(camera.zoom.x, 0.001)
-	var rows := ceili(float(maxi(_largest_group_size(), 1)) / float(COLUMNS))
-	## Header + 6 diamond rows for a 30-level chapter. Slight in-page scroll is ok.
-	var section_body := (
-		HEADER_CLEARANCE
-		+ float(maxi(rows - 1, 0)) * _row_spacing()
-		+ LEVEL_DIAMOND_SIZE * 0.5
-	)
-	return maxf(page_h * 0.92 - section_body, 220.0)
-
-
-func _camera_y_to_frame_world_y(world_y: float, top_margin_px: float) -> float:
-	var vp := get_viewport_rect().size
+	## Keep the current 30 framed like page 1. Place the next chapter title plus
+	## a slice of its first diamond row at the bottom of the viewport.
 	var z := maxf(camera.zoom.x, 0.001)
-	return world_y - (top_margin_px - vp.y * 0.5) / z
+	var vp := get_viewport_rect().size
+	var world_at_bottom := (vp.y - _title_pole_screen_y()) / z
+	var rows := ceili(float(maxi(_largest_group_size(), 1)) / float(COLUMNS))
+	## After a full last row, layout has already advanced one row_spacing.
+	var next_row_after_section := _hub_gap_for_title() + float(rows) * _row_spacing()
+	var peek_cut_from_center := _diamond_size() * (PEEK_DIAMOND_SLICE - 0.5)
+	var desired_next_diamonds := world_at_bottom - peek_cut_from_center
+	return maxf(desired_next_diamonds - next_row_after_section, GROUP_GAP_PEEK_MIN)
 
 
 func _camera_y_to_place_world_at_screen_y(world_y: float, screen_y: float) -> float:
@@ -249,8 +265,15 @@ func _hub_gap_for_title() -> float:
 		LevelCatalog.get_dimension_title(_dimension_index),
 		TITLE_FONT_SIZE
 	)
-	var below_badge_px := 176.0
-	return (metrics.size.y * 0.5 + below_badge_px) / z + HEADER_CLEARANCE
+	return (metrics.size.y * 0.5 + BELOW_BADGE_PX) / z + HEADER_CLEARANCE
+
+
+func _page1_header_screen_y() -> float:
+	var metrics := DiamondTitleBadge.measure(
+		LevelCatalog.get_dimension_title(_dimension_index),
+		TITLE_FONT_SIZE
+	)
+	return _title_pole_screen_y() + BELOW_BADGE_PX + metrics.size.y * 0.5
 
 
 func _sync_title_to_chart_pole() -> void:
@@ -270,7 +293,7 @@ func _sync_title_to_chart_pole() -> void:
 func _content_bottom_y() -> float:
 	var bottom := 0.0
 	for pos in _level_positions:
-		bottom = maxf(bottom, pos.y + LEVEL_DIAMOND_SIZE * 0.5)
+		bottom = maxf(bottom, pos.y + _diamond_size() * 0.5)
 	for header in _group_headers:
 		bottom = maxf(bottom, float(header.position.y) + 24.0)
 	return bottom
@@ -297,9 +320,10 @@ func _rebuild_page_targets() -> void:
 	_page_ys.clear()
 	_page_ys.append(_chart_pole_camera_y())
 	if _paging_enabled:
+		var header_screen := _page1_header_screen_y()
 		for i in range(1, _group_headers.size()):
 			var header_y: float = _group_headers[i].position.y
-			_page_ys.append(_camera_y_to_frame_world_y(header_y, SECTION_TOP_MARGIN_PX))
+			_page_ys.append(_camera_y_to_place_world_at_screen_y(header_y, header_screen))
 	if _page_ys.is_empty():
 		_page_ys.append(0.0)
 	_page_index = clampi(_page_index, 0, _page_ys.size() - 1)
@@ -407,7 +431,7 @@ func _world_pos_to_screen(world: Vector2) -> Vector2:
 func _draw_award_stars_on(item: CanvasItem) -> void:
 	## Same draw calls as the dimension map, in screen pixels (no camera resampling).
 	var z := maxf(camera.zoom.x, 0.001)
-	var dsize := LEVEL_DIAMOND_SIZE * z
+	var dsize := _diamond_size() * z
 	var rim_w := 1.8 * MAP_DRAW_ZOOM
 	var count := mini(_levels.size(), _level_positions.size())
 	for i in count:
@@ -493,7 +517,7 @@ func _draw() -> void:
 
 func _draw_group_headers() -> void:
 	## Left edge of the leftmost level diamond in the grid.
-	var grid_left := -(float(COLUMNS - 1) * 0.5) * COL_SPACING - LEVEL_DIAMOND_SIZE * 0.5
+	var grid_left := -(float(COLUMNS - 1) * 0.5) * _col_spacing() - _diamond_size() * 0.5
 	for header in _group_headers:
 		var key := str(header.get("title_key", ""))
 		if key.is_empty():
@@ -618,11 +642,11 @@ func _end_pan() -> void:
 
 func _hit_level(world_pos: Vector2) -> int:
 	var best := -1
-	var best_d := LEVEL_DIAMOND_SIZE
+	var best_d := _diamond_size()
 	for i in _level_positions.size():
 		var local := world_pos - _level_positions[i]
 		var manhattan := absf(local.x) + absf(local.y)
-		if manhattan <= LEVEL_DIAMOND_SIZE * 0.55 and manhattan < best_d:
+		if manhattan <= _diamond_size() * 0.55 and manhattan < best_d:
 			best_d = manhattan
 			best = i
 	return best
