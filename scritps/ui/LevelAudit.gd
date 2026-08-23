@@ -26,11 +26,24 @@ var _open_sections: Dictionary = {}
 var _delete_modal: Control
 var _edit_modal: Control
 var _edit_section_option: OptionButton
+var _edit_subsection_box: VBoxContainer
+var _edit_subsection_option: OptionButton
 var _edit_daily_box: VBoxContainer
 var _edit_day_spin: SpinBox
 var _edit_month_option: OptionButton
 var _edit_year_spin: SpinBox
 var _edit_status_label: Label
+var _edit_name_edits: Dictionary = {}
+var _edit_section_label: Label
+var _edit_subsection_label: Label
+var _edit_names_label: Label
+var _catalog_modal: Control
+var _catalog_names_label: Label
+var _catalog_status_label: Label
+var _catalog_name_edits: Dictionary = {}
+var _catalog_kind: String = ""
+var _catalog_section_id: int = 0
+var _catalog_msgid: String = ""
 
 
 func _ready() -> void:
@@ -60,7 +73,18 @@ func _process(delta: float) -> void:
 		_nebula_mat.set_shader_parameter("brightness", pulse)
 	BrandRainbow.tick(delta)
 	UiTheme.sync_host_rainbow_border(_edit_section_option)
+	UiTheme.sync_host_rainbow_border(_edit_subsection_option)
 	UiTheme.sync_host_rainbow_border(_edit_month_option)
+	for pack in _edit_name_edits.values():
+		if pack is Dictionary:
+			var edit := (pack as Dictionary).get("edit") as Control
+			if edit != null:
+				UiTheme.sync_host_rainbow_border(edit)
+	for pack in _catalog_name_edits.values():
+		if pack is Dictionary:
+			var catalog_edit := (pack as Dictionary).get("edit") as Control
+			if catalog_edit != null:
+				UiTheme.sync_host_rainbow_border(catalog_edit)
 
 
 func _notification(what: int) -> void:
@@ -79,8 +103,17 @@ func _apply_translations() -> void:
 		title_badge.show_rim = false
 	empty_label.text = tr("UI_AUDIT_EMPTY")
 	_refresh_count_label()
+	if _edit_section_label != null:
+		_edit_section_label.text = tr("UI_CREATOR_SECTION")
+	if _edit_subsection_label != null:
+		_edit_subsection_label.text = tr("UI_CREATOR_SUBSECTION")
+	if _edit_names_label != null:
+		_edit_names_label.text = tr("UI_CREATOR_DISPLAY_NAME")
 	if _edit_section_option != null:
 		_rebuild_edit_section_items()
+	if _catalog_names_label != null:
+		_catalog_names_label.text = tr("UI_CREATOR_DISPLAY_NAME")
+	_refresh_catalog_name_labels()
 	_sync_title_badge()
 
 
@@ -144,20 +177,45 @@ func _setup_dialogs() -> void:
 	add_child(_edit_modal)
 	_edit_modal.confirmed.connect(_on_edit_confirmed)
 
+	var scroller := ScrollContainer.new()
+	scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	scroller.custom_minimum_size = Vector2(0, 420)
+	scroller.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_edit_modal.extra_slot.add_child(scroller)
+
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 12)
-	_edit_modal.extra_slot.add_child(body)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroller.add_child(body)
 
-	var section_label := Label.new()
-	section_label.text = tr("UI_CREATOR_SECTION")
-	UiTheme.style_settings_row_label(section_label)
-	body.add_child(section_label)
+	_edit_names_label = Label.new()
+	_edit_names_label.text = tr("UI_CREATOR_DISPLAY_NAME")
+	UiTheme.style_settings_row_label(_edit_names_label)
+	body.add_child(_edit_names_label)
+	_build_edit_name_fields(body)
+
+	_edit_section_label = Label.new()
+	_edit_section_label.text = tr("UI_CREATOR_SECTION")
+	UiTheme.style_settings_row_label(_edit_section_label)
+	body.add_child(_edit_section_label)
 
 	_edit_section_option = OptionButton.new()
 	_edit_section_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	UiTheme.style_light_option_field(_edit_section_option)
 	_edit_section_option.item_selected.connect(_on_edit_section_changed)
 	body.add_child(_edit_section_option)
+
+	_edit_subsection_box = VBoxContainer.new()
+	_edit_subsection_box.add_theme_constant_override("separation", 8)
+	body.add_child(_edit_subsection_box)
+	_edit_subsection_label = Label.new()
+	_edit_subsection_label.text = tr("UI_CREATOR_SUBSECTION")
+	UiTheme.style_settings_row_label(_edit_subsection_label)
+	_edit_subsection_box.add_child(_edit_subsection_label)
+	_edit_subsection_option = OptionButton.new()
+	_edit_subsection_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	UiTheme.style_light_option_field(_edit_subsection_option)
+	_edit_subsection_box.add_child(_edit_subsection_option)
 
 	_edit_daily_box = VBoxContainer.new()
 	_edit_daily_box.add_theme_constant_override("separation", 8)
@@ -203,6 +261,7 @@ func _setup_dialogs() -> void:
 	body.add_child(_edit_status_label)
 
 	_rebuild_edit_section_items()
+	_setup_catalog_dialog()
 
 
 func _rebuild_edit_section_items() -> void:
@@ -225,6 +284,244 @@ func _rebuild_edit_section_items() -> void:
 			_edit_month_option.add_item(tr("UI_MONTH_%d" % m), m)
 		var m_idx := _edit_month_option.get_item_index(month_id)
 		_edit_month_option.select(maxi(m_idx, 0))
+	_refresh_edit_subsection_options(_current_edit_subsection_key())
+
+
+func _build_edit_name_fields(parent: Control) -> void:
+	_edit_name_edits.clear()
+	for entry in GameSession.AVAILABLE_LOCALES:
+		var code := str(entry.get("code", ""))
+		var row := VBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		parent.add_child(row)
+		var lang_label := Label.new()
+		lang_label.set_meta("locale_code", code)
+		lang_label.text = GameSession.get_locale_display_name(code)
+		UiTheme.style_settings_row_label(lang_label)
+		row.add_child(lang_label)
+		var edit := LineEdit.new()
+		edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		edit.placeholder_text = GameSession.get_locale_display_name(code)
+		UiTheme.style_light_text_field(edit)
+		row.add_child(edit)
+		_edit_name_edits[code] = {"edit": edit, "label": lang_label}
+
+
+func _refresh_edit_name_labels() -> void:
+	for code in _edit_name_edits.keys():
+		var pack: Dictionary = _edit_name_edits[code]
+		var lang_label := pack.get("label") as Label
+		if lang_label != null:
+			lang_label.text = GameSession.get_locale_display_name(str(code))
+		var edit := pack.get("edit") as LineEdit
+		if edit != null:
+			edit.placeholder_text = GameSession.get_locale_display_name(str(code))
+
+
+func _fill_edit_name_fields(level: LevelConfig) -> void:
+	for code in _edit_name_edits.keys():
+		var pack: Dictionary = _edit_name_edits[code]
+		var edit := pack.get("edit") as LineEdit
+		if edit == null:
+			continue
+		edit.text = LevelCatalog.get_level_label_for_locale(level, str(code))
+
+
+func _apply_edit_names_to_level() -> bool:
+	if _editing_level == null:
+		return false
+	var names := {}
+	var fallback := ""
+	for entry in GameSession.AVAILABLE_LOCALES:
+		var code := str(entry.get("code", ""))
+		var pack: Dictionary = _edit_name_edits.get(code, {})
+		var edit := pack.get("edit") as LineEdit
+		var value := edit.text.strip_edges() if edit != null else ""
+		if value.is_empty():
+			continue
+		names[code] = value
+		if fallback.is_empty() or code == "en":
+			fallback = value
+	if fallback.is_empty():
+		return false
+	_editing_level.locale_display_names = names
+	_editing_level.display_name = fallback
+	return true
+
+
+func _setup_catalog_dialog() -> void:
+	_catalog_modal = EXIT_CONFIRM_SCENE.instantiate()
+	add_child(_catalog_modal)
+	_catalog_modal.confirmed.connect(_on_catalog_confirmed)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 12)
+	_catalog_modal.extra_slot.add_child(body)
+	_catalog_names_label = Label.new()
+	_catalog_names_label.text = tr("UI_CREATOR_DISPLAY_NAME")
+	UiTheme.style_settings_row_label(_catalog_names_label)
+	body.add_child(_catalog_names_label)
+	_catalog_name_edits.clear()
+	for entry in GameSession.AVAILABLE_LOCALES:
+		var code := str(entry.get("code", ""))
+		var row := VBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		body.add_child(row)
+		var lang_label := Label.new()
+		lang_label.text = GameSession.get_locale_display_name(code)
+		UiTheme.style_settings_row_label(lang_label)
+		row.add_child(lang_label)
+		var edit := LineEdit.new()
+		edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		edit.placeholder_text = GameSession.get_locale_display_name(code)
+		UiTheme.style_light_text_field(edit)
+		row.add_child(edit)
+		_catalog_name_edits[code] = {"edit": edit, "label": lang_label}
+	_catalog_status_label = Label.new()
+	_catalog_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	UiTheme.style_menu_hint(_catalog_status_label)
+	body.add_child(_catalog_status_label)
+
+
+func _refresh_catalog_name_labels() -> void:
+	for code in _catalog_name_edits.keys():
+		var pack: Dictionary = _catalog_name_edits[code]
+		var lang_label := pack.get("label") as Label
+		if lang_label != null:
+			lang_label.text = GameSession.get_locale_display_name(str(code))
+		var edit := pack.get("edit") as LineEdit
+		if edit != null:
+			edit.placeholder_text = GameSession.get_locale_display_name(str(code))
+
+
+func _fill_catalog_name_fields(msgid: String) -> void:
+	for code in _catalog_name_edits.keys():
+		var pack: Dictionary = _catalog_name_edits[code]
+		var edit := pack.get("edit") as LineEdit
+		if edit == null:
+			continue
+		if msgid.is_empty():
+			edit.text = ""
+		else:
+			edit.text = LocalePoStore.read_msgstr(str(code), msgid)
+
+
+func _read_catalog_names() -> Dictionary:
+	var names := {}
+	for entry in GameSession.AVAILABLE_LOCALES:
+		var code := str(entry.get("code", ""))
+		var pack: Dictionary = _catalog_name_edits.get(code, {})
+		var edit := pack.get("edit") as LineEdit
+		var value := edit.text.strip_edges() if edit != null else ""
+		if not value.is_empty():
+			names[code] = value
+	return names
+
+
+func _open_catalog_editor(kind: String, section_id: int, msgid: String) -> void:
+	_catalog_kind = kind
+	_catalog_section_id = section_id
+	_catalog_msgid = msgid
+	_catalog_status_label.text = ""
+	_fill_catalog_name_fields(msgid)
+	var title_key := "UI_AUDIT_EDIT_DIMENSION_TITLE"
+	if kind == "group":
+		title_key = "UI_AUDIT_EDIT_SECTION_TITLE"
+	elif kind == "add_group":
+		title_key = "UI_AUDIT_ADD_SECTION_TITLE"
+	_catalog_modal.show_modal(title_key, "", "UI_AUDIT_SAVE", "UI_CANCEL")
+
+
+func _on_catalog_confirmed() -> void:
+	var names := _read_catalog_names()
+	var english := str(names.get("en", "")).strip_edges()
+	if english.is_empty():
+		for value in names.values():
+			english = str(value).strip_edges()
+			if not english.is_empty():
+				break
+	if english.is_empty():
+		_catalog_status_label.text = tr("UI_AUDIT_ERROR_CATALOG_NAME")
+		call_deferred("_reopen_catalog_dialog")
+		return
+	for entry in GameSession.AVAILABLE_LOCALES:
+		var code := str(entry.get("code", ""))
+		if str(names.get(code, "")).strip_edges().is_empty():
+			names[code] = english
+	var msgid := _catalog_msgid
+	if _catalog_kind == "add_group":
+		msgid = LevelCatalog.make_group_title_key(english)
+		var reg_err := LevelCatalog.register_extra_group_key(_catalog_section_id, msgid)
+		if reg_err != OK:
+			_catalog_status_label.text = tr("UI_AUDIT_ERROR_CATALOG_SAVE")
+			call_deferred("_reopen_catalog_dialog")
+			return
+	var write_err := LocalePoStore.write_msgstrs(msgid, names)
+	if write_err != OK:
+		_catalog_status_label.text = tr("UI_AUDIT_ERROR_CATALOG_SAVE")
+		call_deferred("_reopen_catalog_dialog")
+		return
+	_catalog_kind = ""
+	_catalog_msgid = ""
+	_refresh()
+
+
+func _reopen_catalog_dialog() -> void:
+	if _catalog_modal == null:
+		return
+	var title_key := "UI_AUDIT_EDIT_DIMENSION_TITLE"
+	if _catalog_kind == "group":
+		title_key = "UI_AUDIT_EDIT_SECTION_TITLE"
+	elif _catalog_kind == "add_group":
+		title_key = "UI_AUDIT_ADD_SECTION_TITLE"
+	_catalog_modal.show_modal(title_key, "", "UI_AUDIT_SAVE", "UI_CANCEL")
+
+
+func _header_circle_button(icon: String, tooltip_key: String, accent: Color) -> CircleIconButton:
+	var button := CircleIconButton.new()
+	button.button_size = 48
+	button.fa_icon = icon
+	button.tooltip_key = tooltip_key
+	button.accent_color = accent
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.focus_mode = Control.FOCUS_ALL
+	return button
+
+
+func _refresh_edit_subsection_options(preferred_key: String) -> void:
+	if _edit_subsection_option == null or _edit_section_option == null:
+		return
+	var section_id := _edit_section_option.get_selected_id()
+	var show_sub := section_id != DailyCatalog.SECTION_DAILY
+	if _edit_subsection_box != null:
+		_edit_subsection_box.visible = show_sub
+	_edit_subsection_option.clear()
+	if not show_sub:
+		return
+	_edit_subsection_option.add_item(tr("UI_CREATOR_SUBSECTION_SELECT"))
+	_edit_subsection_option.set_item_metadata(0, "")
+	var keys := LevelCatalog.list_group_title_keys(section_id)
+	if not preferred_key.is_empty() and not keys.has(preferred_key):
+		keys.append(preferred_key)
+		keys.sort()
+	for key in keys:
+		var idx := _edit_subsection_option.item_count
+		_edit_subsection_option.add_item(tr(key))
+		_edit_subsection_option.set_item_metadata(idx, key)
+	var select_idx := 0
+	for i in _edit_subsection_option.item_count:
+		if str(_edit_subsection_option.get_item_metadata(i)) == preferred_key:
+			select_idx = i
+			break
+	_edit_subsection_option.select(select_idx)
+
+
+func _current_edit_subsection_key() -> String:
+	if _edit_subsection_option == null or _edit_subsection_option.item_count <= 0:
+		return ""
+	var idx := _edit_subsection_option.selected
+	if idx < 0:
+		return ""
+	return str(_edit_subsection_option.get_item_metadata(idx))
 
 
 func _refresh() -> void:
@@ -323,8 +620,6 @@ func _rebuild_sections() -> void:
 	var any := false
 	for i in LevelCatalog.get_dimension_map_order():
 		var levels := _dimension_levels(i)
-		if levels.is_empty():
-			continue
 		any = true
 		sections_container.add_child(_make_dimension_block(i, levels))
 	var by_date := _daily_levels_by_date()
@@ -369,27 +664,36 @@ func _make_dimension_block(section_id: int, levels: Array[LevelConfig]) -> Contr
 		LevelCatalog.get_dimension_title(section_id),
 		section_key,
 		body,
-		LevelCatalog.get_dimension_color(section_id)
+		LevelCatalog.get_dimension_color(section_id),
+		section_id
 	))
 	block.add_child(body)
 
 	var buckets := _group_buckets(levels)
+	var seen_keys: Dictionary = {}
 	var has_named_group := false
 	for bucket in buckets:
-		if not str(bucket["key"]).is_empty():
+		var bucket_key := str(bucket["key"])
+		seen_keys[bucket_key] = true
+		if not bucket_key.is_empty():
 			has_named_group = true
-			break
+	for extra_key in LevelCatalog.extra_group_keys_for(section_id):
+		if extra_key.is_empty() or seen_keys.has(extra_key):
+			continue
+		has_named_group = true
+		seen_keys[extra_key] = true
+		buckets.append({"key": extra_key, "levels": [] as Array[LevelConfig]})
 
 	if not has_named_group:
 		body.add_child(
-			_make_table("", _group_key_dimension(section_id, ""), levels, 28, false)
+			_make_table("", _group_key_dimension(section_id, ""), levels, 28, false, section_id, "")
 		)
 	else:
 		for bucket in buckets:
 			var key := str(bucket["key"])
 			var title := tr(key) if not key.is_empty() else tr("UI_AUDIT_UNGROUPED")
 			body.add_child(
-				_make_table(title, _group_key_dimension(section_id, key), bucket["levels"], 28)
+				_make_table(title, _group_key_dimension(section_id, key), bucket["levels"], 28, true, section_id, key)
 			)
 	body.visible = _is_section_open(section_key)
 	return block
@@ -406,16 +710,27 @@ func _is_section_open(section_key: String) -> bool:
 	return bool(_open_sections.get(section_key, false))
 
 
-func _make_fold_header(title: String, section_key: String, body: Control, accent: Color) -> Button:
+func _make_fold_header(
+	title: String,
+	section_key: String,
+	body: Control,
+	accent: Color,
+	section_id: int = -1
+) -> Control:
+	var bar := HBoxContainer.new()
+	bar.add_theme_constant_override("separation", 8)
+	bar.custom_minimum_size.y = 88
+
 	var header := Button.new()
 	header.flat = true
 	header.focus_mode = Control.FOCUS_NONE
 	header.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	header.custom_minimum_size.y = 88
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.clip_contents = false
 	var empty := StyleBoxEmpty.new()
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
 		header.add_theme_stylebox_override(state, empty)
+	bar.add_child(header)
 
 	var row := HBoxContainer.new()
 	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -428,7 +743,11 @@ func _make_fold_header(title: String, section_key: String, body: Control, accent
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	UiTheme.style_section_subtitle(label)
+	## Audit fold titles sit beside chevron / add / edit; the default subtitle size collides.
+	label.add_theme_font_size_override("font_size", 32)
 	row.add_child(label)
 
 	var chevron := FaIconView.new()
@@ -440,7 +759,16 @@ func _make_fold_header(title: String, section_key: String, body: Control, accent
 	row.add_child(chevron)
 
 	header.pressed.connect(_on_fold_header_pressed.bind(section_key, body, chevron))
-	return header
+
+	if section_id >= 0:
+		var add_btn := _header_circle_button("plus", "UI_AUDIT_ADD_SECTION", accent)
+		add_btn.pressed.connect(_open_catalog_editor.bind("add_group", section_id, ""))
+		bar.add_child(add_btn)
+		var edit_btn := _header_circle_button("pencil", "UI_AUDIT_EDIT", UiTheme.PRIMARY)
+		var title_key := str(LevelCatalog.SECTIONS[section_id].get("title_key", ""))
+		edit_btn.pressed.connect(_open_catalog_editor.bind("dimension", section_id, title_key))
+		bar.add_child(edit_btn)
+	return bar
 
 
 func _on_fold_header_pressed(section_key: String, body: Control, chevron: FaIconView) -> void:
@@ -463,19 +791,29 @@ func _make_table(
 	group_key: String,
 	levels: Array[LevelConfig],
 	title_size: int = 36,
-	show_title: bool = true
+	show_title: bool = true,
+	section_id: int = -1,
+	group_msgid: String = ""
 ) -> Control:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 12)
 	block.set_meta("group_key", group_key)
 
 	if show_title and not title.is_empty():
+		var title_row := HBoxContainer.new()
+		title_row.add_theme_constant_override("separation", 8)
 		var title_label := Label.new()
 		title_label.text = title
+		title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		title_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
 		title_label.add_theme_font_size_override("font_size", title_size)
 		title_label.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
-		block.add_child(title_label)
+		title_row.add_child(title_label)
+		if section_id >= 0 and not group_msgid.is_empty():
+			var edit_btn := _header_circle_button("pencil", "UI_AUDIT_EDIT", UiTheme.PRIMARY)
+			edit_btn.pressed.connect(_open_catalog_editor.bind("group", section_id, group_msgid))
+			title_row.add_child(edit_btn)
+		block.add_child(title_row)
 
 	block.add_child(_make_header_row())
 
@@ -586,7 +924,9 @@ func _on_edit_pressed(level_id: String) -> void:
 		_set_edit_date_from_key(level.daily_date)
 	else:
 		_set_edit_date_from_key(DailyCatalog.today_key())
+	_fill_edit_name_fields(level)
 	_refresh_edit_daily_visibility()
+	_refresh_edit_subsection_options(level.group_title_key.strip_edges())
 	_edit_modal.show_modal(
 		"UI_AUDIT_EDIT_TITLE",
 		"",
@@ -597,6 +937,7 @@ func _on_edit_pressed(level_id: String) -> void:
 
 func _on_edit_section_changed(_index: int = 0) -> void:
 	_refresh_edit_daily_visibility()
+	_refresh_edit_subsection_options("")
 
 
 func _refresh_edit_daily_visibility() -> void:
@@ -655,6 +996,10 @@ func _edit_date_key() -> String:
 func _on_edit_confirmed() -> void:
 	if _editing_level == null:
 		return
+	if not _apply_edit_names_to_level():
+		_edit_status_label.text = tr("UI_CREATOR_ERROR_DISPLAY_NAME")
+		call_deferred("_reopen_edit_dialog")
+		return
 	var section_id := _edit_section_option.get_selected_id()
 	if section_id == DailyCatalog.SECTION_DAILY:
 		var date_key := _edit_date_key()
@@ -664,9 +1009,16 @@ func _on_edit_confirmed() -> void:
 			return
 		_editing_level.section_index = DailyCatalog.SECTION_DAILY
 		_editing_level.daily_date = date_key
+		_editing_level.group_title_key = ""
 	else:
+		var group_key := _current_edit_subsection_key()
+		if group_key.is_empty():
+			_edit_status_label.text = tr("UI_CREATOR_ERROR_SUBSECTION")
+			call_deferred("_reopen_edit_dialog")
+			return
 		_editing_level.section_index = section_id
 		_editing_level.daily_date = ""
+		_editing_level.group_title_key = group_key
 	var err := CustomLevelStore.save_level(_editing_level)
 	_editing_level = null
 	if err != OK:
@@ -698,6 +1050,10 @@ func _on_back_button_pressed() -> void:
 
 
 func handle_back() -> void:
+	if _catalog_modal != null and _catalog_modal.visible:
+		_catalog_modal.hide_modal()
+		_catalog_kind = ""
+		return
 	if _edit_modal != null and _edit_modal.visible:
 		_edit_modal.hide_modal()
 		_editing_level = null

@@ -229,6 +229,12 @@ msgstr "Subsection"
 msgid "UI_CREATOR_SUBSECTION_NONE"
 msgstr "None"
 
+msgid "UI_CREATOR_SUBSECTION_SELECT"
+msgstr "Select a section"
+
+msgid "UI_CREATOR_ERROR_SUBSECTION"
+msgstr "Choose a section before saving. Levels cannot be left ungrouped."
+
 msgid "UI_CREATOR_LEVEL_DETAILS"
 msgstr "Level details"
 
@@ -322,6 +328,9 @@ msgstr "Create"
 msgid "UI_CREATOR_SHAPE_MODAL_SAVE"
 msgstr "Save"
 
+msgid "UI_CREATOR_BLOCK_DELETE"
+msgstr "Delete block"
+
 msgid "UI_CREATOR_SELECT_SHAPE"
 msgstr "Select"
 
@@ -400,6 +409,12 @@ msgstr "Save"
 msgid "UI_CREATOR_PLAYTEST"
 msgstr "Playtest"
 
+msgid "UI_CREATOR_UNDO"
+msgstr "Undo"
+
+msgid "UI_CREATOR_UNDONE"
+msgstr "Undone."
+
 msgid "UI_CREATOR_NEW"
 msgstr "New"
 
@@ -453,6 +468,18 @@ msgstr "Could not save level (error %s)."
 
 msgid "UI_CREATOR_SAVED"
 msgstr "Saved level: %s"
+
+msgid "UI_CREATOR_SAVED_TITLE"
+msgstr "Level saved"
+
+msgid "UI_CREATOR_SAVE_FAILED_TITLE"
+msgstr "Could not save"
+
+msgid "UI_CREATOR_SAVED_MODAL_PROJECT"
+msgstr "“%s” was saved to the project under %s.\n\nOpen Level audit, expand that dimension, and look in that group (Ungrouped if you left Subsection as None)."
+
+msgid "UI_CREATOR_SAVED_MODAL_DEVICE"
+msgstr "“%s” was saved on this device under %s.\n\nOpen Level audit on this device, expand that dimension, and look in that group (Ungrouped if you left Subsection as None)."
 
 msgid "UI_CREATOR_ERROR_LOAD"
 msgstr "Could not load that level."
@@ -629,7 +656,25 @@ msgid "UI_AUDIT_SAVE"
 msgstr "Save"
 
 msgid "UI_AUDIT_EDIT_TITLE"
-msgstr "Edit placement"
+msgstr "Edit level"
+
+msgid "UI_AUDIT_EDIT_DIMENSION_TITLE"
+msgstr "Edit dimension"
+
+msgid "UI_AUDIT_EDIT_SECTION_TITLE"
+msgstr "Edit section"
+
+msgid "UI_AUDIT_ADD_SECTION_TITLE"
+msgstr "Add section"
+
+msgid "UI_AUDIT_ADD_SECTION"
+msgstr "Add section"
+
+msgid "UI_AUDIT_ERROR_CATALOG_NAME"
+msgstr "Enter a name in at least one language."
+
+msgid "UI_AUDIT_ERROR_CATALOG_SAVE"
+msgstr "Could not save those names."
 
 msgid "UI_AUDIT_DELETE_TITLE"
 msgstr "Delete level"
@@ -708,6 +753,12 @@ msgstr "Preview where this goal will appear"
 
 msgid "UI_CREATOR_GOAL_ORDER_HINT"
 msgstr "Closest to the board →"
+
+msgid "UI_CREATOR_GOAL_MOVE_UP"
+msgstr "Move goal up"
+
+msgid "UI_CREATOR_GOAL_MOVE_DOWN"
+msgstr "Move goal down"
 
 msgid "UI_CREATOR_GOAL_DRAG_REORDER"
 msgstr "Drag to reorder"

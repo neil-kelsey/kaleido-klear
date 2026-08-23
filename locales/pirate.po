@@ -229,6 +229,12 @@ msgstr "Harbor"
 msgid "UI_CREATOR_SUBSECTION_NONE"
 msgstr "None"
 
+msgid "UI_CREATOR_SUBSECTION_SELECT"
+msgstr "Pick a harbor"
+
+msgid "UI_CREATOR_ERROR_SUBSECTION"
+msgstr "Pick a harbor afore stowing. Charts can’t sit ungrouped."
+
 msgid "UI_CREATOR_LEVEL_DETAILS"
 msgstr "Chart details"
 
@@ -322,6 +328,9 @@ msgstr "Forge"
 msgid "UI_CREATOR_SHAPE_MODAL_SAVE"
 msgstr "Stow"
 
+msgid "UI_CREATOR_BLOCK_DELETE"
+msgstr "Dump this block"
+
 msgid "UI_CREATOR_SELECT_SHAPE"
 msgstr "Select"
 
@@ -400,6 +409,12 @@ msgstr "Stow it"
 msgid "UI_CREATOR_PLAYTEST"
 msgstr "Sea trial"
 
+msgid "UI_CREATOR_UNDO"
+msgstr "Belay that"
+
+msgid "UI_CREATOR_UNDONE"
+msgstr "Belayed."
+
 msgid "UI_CREATOR_NEW"
 msgstr "New chart"
 
@@ -453,6 +468,18 @@ msgstr "Couldn’t stow the chart (error %s)."
 
 msgid "UI_CREATOR_SAVED"
 msgstr "Chart stowed: %s"
+
+msgid "UI_CREATOR_SAVED_TITLE"
+msgstr "Chart stowed"
+
+msgid "UI_CREATOR_SAVE_FAILED_TITLE"
+msgstr "Couldn’t stow"
+
+msgid "UI_CREATOR_SAVED_MODAL_PROJECT"
+msgstr "“%s” be filed in the project under %s.\n\nOpen Level audit, unfurl that dimension, and hunt that group (Ungrouped if Subsection were None)."
+
+msgid "UI_CREATOR_SAVED_MODAL_DEVICE"
+msgstr "“%s” be stowed on this vessel under %s.\n\nOpen Level audit on this vessel, unfurl that dimension, and hunt that group (Ungrouped if Subsection were None)."
 
 msgid "UI_CREATOR_ERROR_LOAD"
 msgstr "Couldn’t haul that chart aboard."
@@ -629,7 +656,25 @@ msgid "UI_AUDIT_SAVE"
 msgstr "Save"
 
 msgid "UI_AUDIT_EDIT_TITLE"
-msgstr "Edit placement"
+msgstr "Tweak this chart"
+
+msgid "UI_AUDIT_EDIT_DIMENSION_TITLE"
+msgstr "Tweak this dimension"
+
+msgid "UI_AUDIT_EDIT_SECTION_TITLE"
+msgstr "Tweak this harbor"
+
+msgid "UI_AUDIT_ADD_SECTION_TITLE"
+msgstr "Add a harbor"
+
+msgid "UI_AUDIT_ADD_SECTION"
+msgstr "Add a harbor"
+
+msgid "UI_AUDIT_ERROR_CATALOG_NAME"
+msgstr "Give it a name in at least one tongue."
+
+msgid "UI_AUDIT_ERROR_CATALOG_SAVE"
+msgstr "Couldn’t stow those names."
 
 msgid "UI_AUDIT_DELETE_TITLE"
 msgstr "Delete level"
@@ -708,6 +753,12 @@ msgstr "Spy where this goal will sit"
 
 msgid "UI_CREATOR_GOAL_ORDER_HINT"
 msgstr "Closest to the board →"
+
+msgid "UI_CREATOR_GOAL_MOVE_UP"
+msgstr "Hoist this goal"
+
+msgid "UI_CREATOR_GOAL_MOVE_DOWN"
+msgstr "Drop this goal"
 
 msgid "UI_CREATOR_GOAL_DRAG_REORDER"
 msgstr "Haul to reshuffle"

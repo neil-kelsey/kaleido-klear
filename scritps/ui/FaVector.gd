@@ -15,6 +15,8 @@ const FA_CHARS := {
 	"undo": "\uf0e2",
 	"bullseye": "\uf140",
 	"play": "\uf04b",
+	"floppy-disk": "\uf0c7",
+	"save": "\uf0c7",
 	"xmark": "\uf00d",
 	"gear": "\uf013",
 	"angles-right": "\uf101",
@@ -25,6 +27,7 @@ const FA_CHARS := {
 	"star": "\uf005",
 	"heart": "\uf004",
 	"pencil": "\uf040",
+	"plus": "\uf067",
 	"trash": "\uf1f8",
 	"bars": "\uf0c9",
 }

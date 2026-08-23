@@ -14,8 +14,12 @@ const CREATOR_HINT_FONT := 24
 const EDGE_KEYS := ["left", "top", "right", "bottom"]
 const GRID_MIN := 3
 const GRID_MAX := 64
+const UNDO_LIMIT := 3
 
 @onready var back_button: Button = %BackButton
+@onready var footer_undo_button: CircleIconButton = %FooterUndoButton
+@onready var footer_play_button: CircleIconButton = %FooterPlayButton
+@onready var footer_save_button: CircleIconButton = %FooterSaveButton
 @onready var save_button: Button = %SaveButton
 @onready var playtest_button: Button = %PlaytestButton
 @onready var clear_button: Button = %ClearButton
@@ -85,6 +89,8 @@ var _goal_modal_preview_label: Label
 var _goal_modal_confirm: MenuActionButton
 var _goal_modal_cancel: MenuActionButton
 var _goal_modal_delete: MenuActionButton
+var _goal_modal_move_up: MenuActionButton
+var _goal_modal_move_down: MenuActionButton
 var _refreshing_shape_list: bool = false
 var _passed_signature: String = ""
 var _baseline_signature: String = ""
@@ -94,6 +100,9 @@ var _shape_modal
 var _pending_shape_cell := Vector2i(-1, -1)
 var _shape_modal_edit_index: int = -1
 var _rainbow_hosts: Array[Control] = []
+var _undo_stack: Array[Dictionary] = []
+var _undo_restoring := false
+var _undo_stroke_open := false
 
 
 func _ready() -> void:
@@ -118,7 +127,11 @@ func _ready() -> void:
 	if restored_draft != null:
 		_draft = restored_draft
 		_apply_draft_to_ui()
-		_capture_baseline_signature()
+		var restored_baseline := GameSession.consume_playtest_baseline()
+		if restored_baseline.is_empty():
+			_capture_baseline_signature()
+		else:
+			_baseline_signature = restored_baseline
 		if restored_passed:
 			_passed_signature = _current_signature()
 			_set_status(tr("UI_CREATOR_PLAYTEST_PASSED"))
@@ -132,9 +145,15 @@ func _ready() -> void:
 
 	grid.cell_clicked.connect(_on_grid_cell_clicked)
 	grid.cell_edit_requested.connect(_on_grid_cell_edit_requested)
+	grid.paint_stroke_ended.connect(_on_paint_stroke_ended)
 	back_button.pressed.connect(_on_back_pressed)
 	save_button.pressed.connect(_on_save_pressed)
 	playtest_button.pressed.connect(_on_playtest_pressed)
+	footer_undo_button.pressed.connect(_on_undo_pressed)
+	footer_play_button.pressed.connect(_on_playtest_pressed)
+	footer_save_button.pressed.connect(_on_save_pressed)
+	_layout_footer_circle_buttons()
+	get_viewport().size_changed.connect(_layout_footer_circle_buttons)
 	clear_button.pressed.connect(_on_clear_pressed)
 	setup_tab_button.pressed.connect(_on_setup_tab_pressed)
 	blocks_tab_button.pressed.connect(_on_blocks_tab_pressed)
@@ -321,6 +340,10 @@ func _apply_translations() -> void:
 		_goal_modal_delete.set_label(tr("UI_CREATOR_GOAL_DELETE"))
 	if _goal_modal_cancel != null:
 		_goal_modal_cancel.set_label(tr("UI_CANCEL"))
+	if _goal_modal_move_up != null:
+		_goal_modal_move_up.set_label(tr("UI_CREATOR_GOAL_MOVE_UP"))
+	if _goal_modal_move_down != null:
+		_goal_modal_move_down.set_label(tr("UI_CREATOR_GOAL_MOVE_DOWN"))
 	if _shapes_header != null:
 		_refresh_shape_table_header()
 	if _level_details_label != null:
@@ -548,6 +571,7 @@ func _build_right_panel() -> void:
 	_goals_map.add_goal_requested.connect(_on_add_goal_requested)
 	_goals_map.edit_goal_requested.connect(_on_edit_goal_requested)
 	_goals_map.goals_changed.connect(_on_goals_map_changed)
+	_goals_map.goals_about_to_change.connect(_on_goals_about_to_change)
 
 
 func _build_goal_modal() -> void:
@@ -654,6 +678,14 @@ func _build_goal_modal() -> void:
 	_goal_modal_color.item_selected.connect(func(_i: int) -> void: _refresh_goal_placement_preview())
 	_goal_modal_count.item_selected.connect(func(_i: int) -> void: _refresh_goal_placement_preview())
 
+	_goal_modal_move_up = _make_cta(MenuActionButton.Kind.SECONDARY, tr("UI_CREATOR_GOAL_MOVE_UP"))
+	_goal_modal_move_up.pressed.connect(func() -> void: _nudge_selected_goal(-1))
+	vbox.add_child(_goal_modal_move_up)
+
+	_goal_modal_move_down = _make_cta(MenuActionButton.Kind.SECONDARY, tr("UI_CREATOR_GOAL_MOVE_DOWN"))
+	_goal_modal_move_down.pressed.connect(func() -> void: _nudge_selected_goal(1))
+	vbox.add_child(_goal_modal_move_down)
+
 	_goal_modal_confirm = _make_cta(MenuActionButton.Kind.PRIMARY, tr("UI_CREATOR_GOAL_ADD_CONFIRM"))
 	_goal_modal_confirm.pressed.connect(_on_confirm_goal_modal)
 	vbox.add_child(_goal_modal_confirm)
@@ -732,7 +764,8 @@ func _rebuild_goal_order_chips() -> void:
 	if _goal_modal_order_preview == null:
 		return
 	for child in _goal_modal_order_preview.get_children():
-		child.free()
+		_goal_modal_order_preview.remove_child(child)
+		child.queue_free()
 	if _goal_modal_edge.is_empty() or not _edge_panels.has(_goal_modal_edge):
 		return
 	var goals: Array = (_edge_panels[_goal_modal_edge]["goals"] as Array).duplicate(true)
@@ -801,6 +834,7 @@ func _open_goal_modal(edge_key: String, edit_index: int) -> void:
 	if not editing:
 		_goal_modal_place_front.button_pressed = true
 		_goal_modal_preview.button_pressed = true
+	_refresh_goal_nudge_buttons()
 	_goal_modal.visible = true
 	_refresh_goal_placement_preview()
 	_shrink_goal_modal()
@@ -833,6 +867,35 @@ func _select_option_by_id(option: OptionButton, id: int) -> void:
 		option.select(0)
 
 
+func _refresh_goal_nudge_buttons() -> void:
+	var editing := _goal_modal_edit_index >= 0
+	if _goal_modal_move_up != null:
+		_goal_modal_move_up.visible = editing
+	if _goal_modal_move_down != null:
+		_goal_modal_move_down.visible = editing
+	if not editing or _goal_modal_edge.is_empty() or not _edge_panels.has(_goal_modal_edge):
+		return
+	var n: int = (_edge_panels[_goal_modal_edge]["goals"] as Array).size()
+	var i := _goal_modal_edit_index
+	if _goal_modal_move_up != null:
+		_goal_modal_move_up.disabled = n <= 1 or i <= 0
+	if _goal_modal_move_down != null:
+		_goal_modal_move_down.disabled = n <= 1 or i >= n - 1
+
+
+func _nudge_selected_goal(delta: int) -> void:
+	if _goal_modal_edit_index < 0 or _goal_modal_edge.is_empty() or _goals_map == null:
+		return
+	var from := _goal_modal_edit_index
+	var to := from + delta
+	var n: int = (_edge_panels[_goal_modal_edge]["goals"] as Array).size()
+	if to < 0 or to >= n:
+		return
+	_goals_map.reorder_edge(_goal_modal_edge, from, to)
+	_goal_modal_edit_index = to
+	_refresh_goal_nudge_buttons()
+
+
 func _hide_goal_modal() -> void:
 	if _goals_map != null:
 		_goals_map.clear_placement_preview()
@@ -856,6 +919,7 @@ func _on_confirm_goal_modal() -> void:
 		_hide_goal_modal()
 		return
 	var goal := _read_goal_from_modal()
+	_push_undo()
 	var goals: Array = _edge_panels[_goal_modal_edge]["goals"]
 	if _goal_modal_edit_index >= 0:
 		if _goal_modal_edit_index >= goals.size():
@@ -879,6 +943,7 @@ func _on_delete_goal_modal() -> void:
 	if _goal_modal_edit_index >= goals.size():
 		_hide_goal_modal()
 		return
+	_push_undo()
 	goals.remove_at(_goal_modal_edit_index)
 	_goals_map.set_edge_goals(_goal_modal_edge, goals)
 	_hide_goal_modal()
@@ -891,7 +956,7 @@ func _on_goals_map_changed() -> void:
 	_refresh_save_button()
 
 
-func _new_level() -> void:
+func _new_level(keep_undo: bool = false) -> void:
 	_draft = LevelConfig.new()
 	var stamp := int(Time.get_unix_time_from_system())
 	_draft.level_id = "custom_level_%d" % stamp
@@ -925,6 +990,10 @@ func _new_level() -> void:
 	_apply_draft_to_ui()
 	_capture_baseline_signature()
 	_refresh_save_button()
+	if not keep_undo:
+		_undo_stack.clear()
+		_undo_stroke_open = false
+	_refresh_undo_button()
 	_set_status(tr("UI_CREATOR_NEW_LEVEL"))
 
 
@@ -1039,6 +1108,11 @@ func _on_apply_grid_pressed() -> void:
 	var requested_rows := _parse_grid_axis(_rows_field, 8)
 	var cols := clampi(requested_cols, GRID_MIN, GRID_MAX)
 	var rows := clampi(requested_rows, GRID_MIN, GRID_MAX)
+	if cols == _draft.columns and rows == _draft.rows:
+		_columns_field.text = str(cols)
+		_rows_field.text = str(rows)
+		return
+	_push_undo()
 	_columns_field.text = str(cols)
 	_rows_field.text = str(rows)
 	_draft.columns = cols
@@ -1079,7 +1153,7 @@ func _trim_shapes_to_grid() -> void:
 	_disabled_cells = kept_disabled
 
 
-func _on_grid_cell_clicked(cell: Vector2i, button_index: int) -> void:
+func _on_grid_cell_clicked(cell: Vector2i, button_index: int, is_drag: bool = false) -> void:
 	if button_index != MOUSE_BUTTON_LEFT:
 		return
 	_ensure_blocks_tab()
@@ -1090,6 +1164,8 @@ func _on_grid_cell_clicked(cell: Vector2i, button_index: int) -> void:
 	if hit != -1:
 		if _erase_mode:
 			_erase_cell_from_shape(hit, cell)
+			return
+		if is_drag:
 			return
 		if hit == _selected_shape_index:
 			## Second click carves that square out when the piece stays connected.
@@ -1114,10 +1190,13 @@ func _on_grid_cell_clicked(cell: Vector2i, button_index: int) -> void:
 			_shapes[_selected_shape_index]["cells"]
 		)
 		shape_cells.append(cell)
+		_push_undo(is_drag)
 		_shapes[_selected_shape_index]["cells"] = shape_cells
 		_sync_grid()
 		return
 
+	if is_drag:
+		return
 	_open_shape_modal_create(cell)
 
 
@@ -1133,6 +1212,7 @@ func _erase_cell_from_shape(shape_index: int, cell: Vector2i) -> void:
 	var cells: Array[Vector2i] = LevelCreatorShapes.as_cells(_shapes[shape_index]["cells"])
 	if not LevelCreatorShapes.can_remove_cell(cells, cell):
 		return
+	_push_undo(true)
 	cells.erase(cell)
 	_shapes[shape_index]["cells"] = cells
 	if cells.is_empty():
@@ -1187,6 +1267,7 @@ func _open_shape_modal_edit(index: int) -> void:
 
 
 func _on_shape_modal_confirmed(shape_name: String, kind: int, color: int) -> void:
+	_push_undo()
 	if _shape_modal_edit_index >= 0:
 		if _shape_modal_edit_index >= _shapes.size():
 			_shape_modal_edit_index = -1
@@ -1251,6 +1332,7 @@ func _on_shape_row_kind_changed(
 		return
 	if shape_index < 0 or shape_index >= _shapes.size():
 		return
+	_push_undo()
 	var kind: Block.BlockKind = kind_option.get_item_id(selected_index)
 	_shapes[shape_index]["kind"] = kind
 	color_option.disabled = Block.is_wall_kind(kind)
@@ -1273,6 +1355,7 @@ func _on_shape_row_color_changed(
 		return
 	if Block.is_wall_kind(_shapes[shape_index].get("kind", Block.BlockKind.STANDARD)):
 		return
+	_push_undo()
 	var color: Block.TileColor = color_option.get_item_id(selected_index)
 	_shapes[shape_index]["color"] = color
 	_style_shape_color_option(color_option, color)
@@ -1295,6 +1378,7 @@ func _on_shape_renamed(index: int, new_name: String) -> void:
 func _on_delete_shape(index: int) -> void:
 	if index < 0 or index >= _shapes.size():
 		return
+	_push_undo()
 	_shapes.remove_at(index)
 	if _selected_shape_index == index:
 		_selected_shape_index = mini(index, _shapes.size() - 1)
@@ -1507,17 +1591,19 @@ func _sync_grid() -> void:
 func _on_color_selected(color: Block.TileColor, _button: Button) -> void:
 	if _selected_kind == Block.BlockKind.WALL:
 		return
-	_selected_color = color
 	if _selected_shape_index >= 0 and _selected_shape_index < _shapes.size():
+		_push_undo()
 		_shapes[_selected_shape_index]["color"] = color
+	_selected_color = color
 	_update_shape_list_row_widgets()
 	_sync_grid()
 
 
 func _on_kind_selected(kind: Block.BlockKind, _button: Button) -> void:
-	_selected_kind = kind
 	if _selected_shape_index >= 0 and _selected_shape_index < _shapes.size():
+		_push_undo()
 		_shapes[_selected_shape_index]["kind"] = kind
+	_selected_kind = kind
 	_sync_color_picker_for_kind()
 	_sync_toolbar_kind_buttons()
 	_update_shape_list_row_widgets()
@@ -1591,15 +1677,22 @@ func _on_save_pressed() -> void:
 			_draft.level_id = "daily_%s_%d" % [_draft.daily_date, stamp]
 		else:
 			_draft.level_id = "custom_level_%d" % stamp
-		_draft.sort_index = stamp
-	elif _draft.sort_index <= 0:
-		_draft.sort_index = int(Time.get_unix_time_from_system())
+		_draft.sort_index = CustomLevelStore.next_sort_index(
+			_draft.section_index, _draft.group_title_key
+		)
+	elif _draft.sort_index <= 0 or _draft.sort_index >= 1_000_000_000:
+		_draft.sort_index = CustomLevelStore.next_sort_index(
+			_draft.section_index, _draft.group_title_key
+		)
 	## Keep daily ids aligned with their date when reassigned.
 	if not _draft.daily_date.is_empty() and not _draft.level_id.begins_with("daily_%s_" % _draft.daily_date):
 		var stamp2 := int(Time.get_unix_time_from_system())
 		_draft.level_id = "daily_%s_%d" % [_draft.daily_date, stamp2]
 	if _draft.section_index == DailyCatalog.SECTION_DAILY and _draft.daily_date.is_empty():
 		_set_status(tr("UI_CREATOR_ERROR_DAILY_DATE"))
+		return
+	if _draft.section_index != DailyCatalog.SECTION_DAILY and _draft.group_title_key.strip_edges().is_empty():
+		_set_status(tr("UI_CREATOR_ERROR_SUBSECTION"))
 		return
 	if not _has_valid_blocks():
 		_set_status(tr("UI_CREATOR_ERROR_BLOCKS"))
@@ -1608,13 +1701,51 @@ func _on_save_pressed() -> void:
 	var error := CustomLevelStore.save_level(_draft)
 	if error != OK:
 		_set_status(tr("UI_CREATOR_ERROR_SAVE") % str(error))
+		_show_creator_notice(
+			"UI_CREATOR_SAVE_FAILED_TITLE",
+			"UI_CREATOR_ERROR_SAVE",
+			[str(error)]
+		)
 		return
 
-	if CustomLevelStore.saves_to_project():
-		_set_status("%s (project)" % (tr("UI_CREATOR_SAVED") % _draft.display_name))
-	else:
-		_set_status(tr("UI_CREATOR_SAVED") % _draft.display_name)
 	_capture_baseline_signature()
+	_show_save_success_modal()
+
+
+func _save_location_label() -> String:
+	if _draft.section_index == DailyCatalog.SECTION_DAILY:
+		var date := _draft.daily_date.strip_edges()
+		if date.is_empty():
+			return tr("UI_DAILY_PUZZLES")
+		return "%s — %s" % [tr("UI_DAILY_PUZZLES"), date]
+	var dimension := LevelCatalog.get_dimension_title(_draft.section_index)
+	var group_key := _draft.group_title_key.strip_edges()
+	var group := tr(group_key) if not group_key.is_empty() else tr("UI_AUDIT_UNGROUPED")
+	if dimension.is_empty():
+		return group
+	return "%s — %s" % [dimension, group]
+
+
+func _show_save_success_modal() -> void:
+	var name := _draft.display_name.strip_edges()
+	if name.is_empty():
+		name = _draft.level_id
+	var place := _save_location_label()
+	_set_status(tr("UI_CREATOR_SAVED") % name)
+	var message_key := (
+		"UI_CREATOR_SAVED_MODAL_PROJECT"
+		if CustomLevelStore.saves_to_project()
+		else "UI_CREATOR_SAVED_MODAL_DEVICE"
+	)
+	_show_creator_notice("UI_CREATOR_SAVED_TITLE", message_key, [name, place])
+
+
+func _show_creator_notice(title_key: String, message_key: String, message_args: Array = []) -> void:
+	_confirm_action = "notice"
+	if _confirm_modal == null or not _confirm_modal.has_method("show_modal"):
+		return
+	_confirm_modal.move_to_front()
+	_confirm_modal.show_modal(title_key, message_key, "UI_OK", "", message_args)
 
 
 func _capture_baseline_signature() -> void:
@@ -1631,7 +1762,7 @@ func _on_playtest_pressed() -> void:
 		_set_status(tr("UI_CREATOR_ERROR_BLOCKS"))
 		return
 	var test_level := _draft.duplicate(true) as LevelConfig
-	GameSession.start_playtest(test_level)
+	GameSession.start_playtest(test_level, _baseline_signature)
 	get_tree().change_scene_to_file(GAME_SCENE)
 
 
@@ -1690,7 +1821,7 @@ func _refresh_subsection_options(preferred_key: String) -> void:
 	_subsection_option.clear()
 	if not show_sub:
 		return
-	_subsection_option.add_item(tr("UI_CREATOR_SUBSECTION_NONE"))
+	_subsection_option.add_item(tr("UI_CREATOR_SUBSECTION_SELECT"))
 	_subsection_option.set_item_metadata(0, "")
 	var keys := LevelCatalog.list_group_title_keys(section_id)
 	if not preferred_key.is_empty() and not keys.has(preferred_key):
@@ -1779,11 +1910,109 @@ func _is_playtest_passed() -> bool:
 
 func _refresh_save_button() -> void:
 	_refresh_action_button_styles()
+	_refresh_undo_button()
+
+
+func _capture_undo_snapshot() -> Dictionary:
+	_collect_draft_from_ui()
+	return {
+		"draft": _draft.duplicate(true),
+		"selected": _selected_shape_index,
+		"erase": _erase_mode,
+		"kind": _selected_kind,
+		"color": _selected_color,
+	}
+
+
+func _push_undo(group_stroke: bool = false) -> void:
+	if _undo_restoring:
+		return
+	if group_stroke and _undo_stroke_open:
+		return
+	_undo_stroke_open = group_stroke
+	_undo_stack.append(_capture_undo_snapshot())
+	while _undo_stack.size() > UNDO_LIMIT:
+		_undo_stack.pop_front()
+	_refresh_undo_button()
+
+
+func _on_paint_stroke_ended() -> void:
+	_undo_stroke_open = false
+
+
+func _on_goals_about_to_change() -> void:
+	_push_undo()
+
+
+func _on_undo_pressed() -> void:
+	if _undo_stack.is_empty():
+		return
+	_undo_restoring = true
+	_undo_stroke_open = false
+	var snap: Dictionary = _undo_stack.pop_back()
+	var restored := snap.get("draft") as LevelConfig
+	if restored != null:
+		_draft = restored.duplicate(true)
+	_erase_mode = bool(snap.get("erase", false))
+	_selected_kind = snap.get("kind", Block.BlockKind.STANDARD)
+	_selected_color = snap.get("color", Block.TileColor.RED)
+	var selected := int(snap.get("selected", -1))
+	_apply_draft_to_ui()
+	if selected >= 0 and selected < _shapes.size():
+		_on_select_shape(selected)
+	_undo_restoring = false
+	_refresh_save_button()
+	_set_status(tr("UI_CREATOR_UNDONE"))
+
+
+func _refresh_undo_button() -> void:
+	if footer_undo_button == null:
+		return
+	footer_undo_button.disabled = _undo_stack.is_empty()
+	footer_undo_button.queue_redraw()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey) or not event.pressed or event.echo:
+		return
+	var key := event as InputEventKey
+	if key.ctrl_pressed and key.keycode == KEY_Z:
+		_on_undo_pressed()
+		get_viewport().set_input_as_handled()
+
+
+func _layout_footer_circle_buttons() -> void:
+	var s := float(UiTheme.CIRCLE_BUTTON_SIZE)
+	var insets := UiTheme.viewport_safe_insets(get_viewport())
+	var inset := maxf(float(UiTheme.CIRCLE_BUTTON_EDGE_INSET), insets.w + 12.0)
+	var gap := float(UiTheme.CIRCLE_BUTTON_CLUSTER_GAP)
+	var total := 3.0 * s + 2.0 * gap
+	var x0 := -total * 0.5
+	footer_undo_button.button_size = UiTheme.CIRCLE_BUTTON_SIZE
+	footer_play_button.button_size = UiTheme.CIRCLE_BUTTON_SIZE
+	footer_save_button.button_size = UiTheme.CIRCLE_BUTTON_SIZE
+	footer_undo_button.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	footer_undo_button.offset_left = x0
+	footer_undo_button.offset_right = x0 + s
+	footer_undo_button.offset_bottom = -inset
+	footer_undo_button.offset_top = -inset - s
+	footer_play_button.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	footer_play_button.offset_left = x0 + s + gap
+	footer_play_button.offset_right = x0 + 2.0 * s + gap
+	footer_play_button.offset_bottom = -inset
+	footer_play_button.offset_top = -inset - s
+	footer_save_button.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	footer_save_button.offset_left = x0 + 2.0 * (s + gap)
+	footer_save_button.offset_right = x0 + 3.0 * s + 2.0 * gap
+	footer_save_button.offset_bottom = -inset
+	footer_save_button.offset_top = -inset - s
 
 
 func _refresh_action_button_styles() -> void:
 	var can_save := _is_playtest_passed()
 	save_button.disabled = not can_save
+	footer_save_button.disabled = not can_save
+	footer_save_button.queue_redraw()
 	if save_button is MenuActionButton:
 		(save_button as MenuActionButton).apply_kind(
 			MenuActionButton.Kind.PRIMARY if can_save else MenuActionButton.Kind.SECONDARY
@@ -1882,7 +2111,8 @@ func _on_confirm_modal_confirmed() -> void:
 
 
 func _on_clear_confirmed() -> void:
-	_new_level()
+	_push_undo()
+	_new_level(true)
 
 
 func _on_back_pressed() -> void:
@@ -1895,7 +2125,9 @@ func _on_back_pressed() -> void:
 			"UI_CREATOR_CONFIRM_TITLE",
 			"UI_CREATOR_BACK_CONFIRM",
 			"UI_BACK",
-			"UI_CANCEL"
+			"UI_CANCEL",
+			[],
+			true
 		)
 
 

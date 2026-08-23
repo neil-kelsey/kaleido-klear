@@ -120,14 +120,40 @@ func list_all_levels() -> Array[LevelConfig]:
 
 func list_project_level_paths() -> PackedStringArray:
 	## Packed registry works in Android APKs (DirAccess cannot list res:// there).
+	## In the editor, always scan disk: LevelRegistry.LEVEL_PATHS is a compiled
+	## constant, so a save that rewrites the script would otherwise be invisible
+	## until Godot reloads the class (catalog and audit miss the new level).
+	if OS.has_feature("editor"):
+		var scanned := _scan_project_level_paths()
+		if not scanned.is_empty():
+			return scanned
 	var paths: PackedStringArray = []
 	for path in LevelRegistry.LEVEL_PATHS:
 		if ResourceLoader.exists(path):
 			paths.append(path)
 	if not paths.is_empty():
 		return paths
-	## Editor fallback if the registry is empty/out of date.
 	return _scan_project_level_paths()
+
+
+func next_sort_index(section_index: int, group_key: String) -> int:
+	## Campaign chapters use 10, 20, … 300. Unix-time stamps from older saves
+	## are ignored so a new custom sits at the end of the chapter, not in 1e9.
+	var key := group_key.strip_edges()
+	var max_idx := 0
+	for level in list_all_levels():
+		if level == null:
+			continue
+		if DailyCatalog.is_daily_level(level) or level.section_index == DailyCatalog.SECTION_DAILY:
+			continue
+		if level.section_index != section_index:
+			continue
+		if level.group_title_key.strip_edges() != key:
+			continue
+		if level.sort_index <= 0 or level.sort_index >= 1_000_000_000:
+			continue
+		max_idx = maxi(max_idx, level.sort_index)
+	return max_idx + 10
 
 
 func rewrite_project_manifest() -> Error:

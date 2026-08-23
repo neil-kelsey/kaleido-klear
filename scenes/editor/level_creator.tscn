@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://kaleido_level_creator"]
+[gd_scene load_steps=6 format=3 uid="uid://kaleido_level_creator"]
 
 [ext_resource type="Script" path="res://scritps/editor/LevelCreator.gd" id="1"]
 [ext_resource type="Script" path="res://scritps/editor/LevelCreatorGrid.gd" id="2"]
 [ext_resource type="PackedScene" uid="uid://kaleido_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="3_back"]
 [ext_resource type="Script" path="res://scritps/ui/MenuActionButton.gd" id="4_cta"]
+[ext_resource type="PackedScene" uid="uid://kaleido_circle_icon_button" path="res://scenes/ui/circle_icon_button.tscn" id="5_icon"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.14, 0.14, 0.18, 1)
@@ -249,3 +250,51 @@ layout_mode = 2
 
 [node name="BackButton" parent="." instance=ExtResource("3_back")]
 unique_name_in_owner = true
+
+[node name="FooterUndoButton" parent="." instance=ExtResource("5_icon")]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -52.0
+offset_right = 20.0
+offset_bottom = -52.0
+grow_horizontal = 2
+grow_vertical = 0
+fa_icon = "undo"
+tooltip_key = "UI_CREATOR_UNDO"
+
+[node name="FooterPlayButton" parent="." instance=ExtResource("5_icon")]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -52.0
+offset_right = 20.0
+offset_bottom = -52.0
+grow_horizontal = 2
+grow_vertical = 0
+fa_icon = "play"
+tooltip_key = "UI_CREATOR_PLAYTEST"
+
+[node name="FooterSaveButton" parent="." instance=ExtResource("5_icon")]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -52.0
+offset_right = 20.0
+offset_bottom = -52.0
+grow_horizontal = 2
+grow_vertical = 0
+fa_icon = "floppy-disk"
+tooltip_key = "UI_CREATOR_SAVE"

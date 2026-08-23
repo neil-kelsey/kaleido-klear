@@ -4,6 +4,8 @@ class_name LevelConfig
 @export var level_id: String = "standard_demo"
 @export var level_name_key: String = "UI_DEMO_LEVEL_STANDARD"
 @export var display_name: String = ""
+## Per-locale titles (en / fr / pirate). Falls back to display_name, then level_name_key.
+@export var locale_display_names: Dictionary = {}
 @export var section_index: int = 0
 ## YYYY-MM-DD when this level is a daily puzzle. Empty = campaign dimension level.
 @export var daily_date: String = ""

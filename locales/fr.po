@@ -229,6 +229,12 @@ msgstr "Sous-section"
 msgid "UI_CREATOR_SUBSECTION_NONE"
 msgstr "Aucune"
 
+msgid "UI_CREATOR_SUBSECTION_SELECT"
+msgstr "Choisir une section"
+
+msgid "UI_CREATOR_ERROR_SUBSECTION"
+msgstr "Choisissez une section avant d’enregistrer. Les niveaux ne peuvent pas rester non groupés."
+
 msgid "UI_CREATOR_LEVEL_DETAILS"
 msgstr "Détails du niveau"
 
@@ -322,6 +328,9 @@ msgstr "Créer"
 msgid "UI_CREATOR_SHAPE_MODAL_SAVE"
 msgstr "Enregistrer"
 
+msgid "UI_CREATOR_BLOCK_DELETE"
+msgstr "Supprimer le bloc"
+
 msgid "UI_CREATOR_SELECT_SHAPE"
 msgstr "Sélectionner"
 
@@ -400,6 +409,12 @@ msgstr "Enregistrer"
 msgid "UI_CREATOR_PLAYTEST"
 msgstr "Tester"
 
+msgid "UI_CREATOR_UNDO"
+msgstr "Annuler"
+
+msgid "UI_CREATOR_UNDONE"
+msgstr "Annulé."
+
 msgid "UI_CREATOR_NEW"
 msgstr "Nouveau"
 
@@ -453,6 +468,18 @@ msgstr "Impossible d’enregistrer le niveau (erreur %s)."
 
 msgid "UI_CREATOR_SAVED"
 msgstr "Niveau enregistré : %s"
+
+msgid "UI_CREATOR_SAVED_TITLE"
+msgstr "Niveau enregistré"
+
+msgid "UI_CREATOR_SAVE_FAILED_TITLE"
+msgstr "Enregistrement impossible"
+
+msgid "UI_CREATOR_SAVED_MODAL_PROJECT"
+msgstr "« %s » a été enregistré dans le projet sous %s.\n\nOuvrez l’audit des niveaux, dépliez cette dimension, et cherchez dans ce groupe (Non groupé si le sous-ensemble était Aucun)."
+
+msgid "UI_CREATOR_SAVED_MODAL_DEVICE"
+msgstr "« %s » a été enregistré sur cet appareil sous %s.\n\nOuvrez l’audit des niveaux sur cet appareil, dépliez cette dimension, et cherchez dans ce groupe (Non groupé si le sous-ensemble était Aucun)."
 
 msgid "UI_CREATOR_ERROR_LOAD"
 msgstr "Impossible de charger ce niveau."
@@ -629,7 +656,25 @@ msgid "UI_AUDIT_SAVE"
 msgstr "Save"
 
 msgid "UI_AUDIT_EDIT_TITLE"
-msgstr "Edit placement"
+msgstr "Modifier le niveau"
+
+msgid "UI_AUDIT_EDIT_DIMENSION_TITLE"
+msgstr "Modifier la dimension"
+
+msgid "UI_AUDIT_EDIT_SECTION_TITLE"
+msgstr "Modifier la section"
+
+msgid "UI_AUDIT_ADD_SECTION_TITLE"
+msgstr "Ajouter une section"
+
+msgid "UI_AUDIT_ADD_SECTION"
+msgstr "Ajouter une section"
+
+msgid "UI_AUDIT_ERROR_CATALOG_NAME"
+msgstr "Saisissez un nom dans au moins une langue."
+
+msgid "UI_AUDIT_ERROR_CATALOG_SAVE"
+msgstr "Impossible d’enregistrer ces noms."
 
 msgid "UI_AUDIT_DELETE_TITLE"
 msgstr "Delete level"
@@ -708,6 +753,12 @@ msgstr "Aperçu de l’emplacement"
 
 msgid "UI_CREATOR_GOAL_ORDER_HINT"
 msgstr "Le plus près du plateau →"
+
+msgid "UI_CREATOR_GOAL_MOVE_UP"
+msgstr "Monter l’objectif"
+
+msgid "UI_CREATOR_GOAL_MOVE_DOWN"
+msgstr "Descendre l’objectif"
 
 msgid "UI_CREATOR_GOAL_DRAG_REORDER"
 msgstr "Glisser pour réordonner"

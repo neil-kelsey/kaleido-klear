@@ -81,9 +81,13 @@ const SECTIONS: Array[Dictionary] = [
 
 ## Cached project levels grouped by dimension index.
 var _project_levels_by_section: Array = []
+const EXTRA_GROUPS_PATH := "res://resources/catalog/dimension_groups.json"
+## section_index (as string) -> Array of group_title_key strings created in audit.
+var _extra_group_keys: Dictionary = {}
 
 
 func _ready() -> void:
+	_load_extra_group_keys()
 	reload_levels()
 
 
@@ -238,12 +242,30 @@ func get_section_background(section_index: int) -> String:
 
 
 func get_level_label(level: LevelConfig) -> String:
+	return get_level_label_for_locale(level, GameSession.locale)
+
+
+func get_level_label_for_locale(level: LevelConfig, locale_code: String) -> String:
 	if level == null:
 		return ""
+	var code := locale_code.strip_edges()
+	if code.is_empty():
+		code = GameSession.locale
+	var localized := ""
+	if level.locale_display_names.has(code):
+		localized = str(level.locale_display_names[code]).strip_edges()
+	if not localized.is_empty():
+		return localized
 	if not level.display_name.strip_edges().is_empty():
-		return level.display_name
-	if not level.level_name_key.strip_edges().is_empty():
-		return tr(level.level_name_key)
+		return level.display_name.strip_edges()
+	var key := level.level_name_key.strip_edges()
+	if not key.is_empty():
+		var translation := TranslationServer.get_translation_object(code)
+		if translation != null:
+			var msg := str(translation.get_message(key)).strip_edges()
+			if not msg.is_empty() and msg != key:
+				return msg
+		return tr(key)
 	return level.level_id
 
 
@@ -258,8 +280,106 @@ func list_group_title_keys(section_index: int) -> Array[String]:
 			continue
 		seen[key] = true
 		keys.append(key)
+	for extra in extra_group_keys_for(section_index):
+		if extra.is_empty() or seen.has(extra):
+			continue
+		seen[extra] = true
+		keys.append(extra)
 	keys.sort()
 	return keys
+
+
+func extra_group_keys_for(section_index: int) -> PackedStringArray:
+	var packed: PackedStringArray = PackedStringArray()
+	var raw: Variant = _extra_group_keys.get(str(section_index), [])
+	if raw is PackedStringArray:
+		return raw
+	if raw is Array:
+		for item in raw:
+			packed.append(str(item).strip_edges())
+	return packed
+
+
+func register_extra_group_key(section_index: int, group_key: String) -> Error:
+	var key := group_key.strip_edges()
+	if key.is_empty() or section_index < 0 or section_index >= SECTIONS.size():
+		return ERR_INVALID_PARAMETER
+	var bucket: PackedStringArray = extra_group_keys_for(section_index)
+	if bucket.has(key):
+		return OK
+	bucket.append(key)
+	_extra_group_keys[str(section_index)] = bucket
+	return _save_extra_group_keys()
+
+
+func make_group_title_key(english_name: String) -> String:
+	var slug := ""
+	var upper := english_name.strip_edges().to_upper()
+	for i in upper.length():
+		var ch := upper.substr(i, 1)
+		var code := ch.unicode_at(0)
+		if (code >= 65 and code <= 90) or (code >= 48 and code <= 57):
+			slug += ch
+		elif ch == " " or ch == "-" or ch == "_":
+			if not slug.ends_with("_"):
+				slug += "_"
+	slug = slug.trim_prefix("_").trim_suffix("_")
+	if slug.is_empty():
+		slug = "SECTION"
+	var base := "UI_GROUP_%s" % slug
+	var candidate := base
+	var n := 2
+	while _group_key_taken(candidate):
+		candidate = "%s_%d" % [base, n]
+		n += 1
+	return candidate
+
+
+func _group_key_taken(key: String) -> bool:
+	for i in SECTIONS.size():
+		if extra_group_keys_for(i).has(key):
+			return true
+		for level in get_section_levels(i):
+			if level != null and level.group_title_key.strip_edges() == key:
+				return true
+	return false
+
+
+func _load_extra_group_keys() -> void:
+	_extra_group_keys.clear()
+	if not FileAccess.file_exists(EXTRA_GROUPS_PATH):
+		return
+	var file := FileAccess.open(EXTRA_GROUPS_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return
+	var groups: Variant = (parsed as Dictionary).get("groups", {})
+	if groups is Dictionary:
+		_extra_group_keys = (groups as Dictionary).duplicate(true)
+
+
+func _save_extra_group_keys() -> Error:
+	var groups := {}
+	for key in _extra_group_keys.keys():
+		var values: Array = []
+		for item in extra_group_keys_for(int(str(key))):
+			values.append(str(item))
+		groups[str(key)] = values
+	var payload := {"groups": groups}
+	var text := JSON.stringify(payload, "\t")
+	var abs_path := ProjectSettings.globalize_path(EXTRA_GROUPS_PATH)
+	DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
+	var file := FileAccess.open(abs_path, FileAccess.WRITE)
+	if file == null:
+		file = FileAccess.open(EXTRA_GROUPS_PATH, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	file.store_string(text)
+	file.close()
+	return OK
 
 
 func get_section_levels(section_index: int) -> Array[LevelConfig]:

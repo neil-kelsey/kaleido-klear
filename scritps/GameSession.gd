@@ -21,6 +21,8 @@ var develop_mode: bool = false
 var playtest_mode: bool = false
 var playtest_level_draft: LevelConfig = null
 var playtest_passed: bool = false
+## Creator dirty-check snapshot so Back still warns after returning from playtest.
+var playtest_baseline_signature: String = ""
 ## Last / current dimension on the star map (section index).
 var current_dimension_index: int = 0
 ## When true, DimensionMap plays a zoom-out from the current diamond (back from levels).
@@ -176,10 +178,11 @@ func restart_level(level: LevelConfig) -> void:
 		set_level(level)
 
 
-func start_playtest(level: LevelConfig) -> void:
+func start_playtest(level: LevelConfig, baseline_signature: String = "") -> void:
 	playtest_mode = true
 	playtest_passed = false
 	playtest_level_draft = level.duplicate(true) as LevelConfig
+	playtest_baseline_signature = baseline_signature
 	selected_level = level.duplicate(true) as LevelConfig
 
 
@@ -202,6 +205,12 @@ func consume_playtest_passed() -> bool:
 	var passed := playtest_passed
 	playtest_passed = false
 	return passed
+
+
+func consume_playtest_baseline() -> String:
+	var signature := playtest_baseline_signature
+	playtest_baseline_signature = ""
+	return signature
 
 
 func consume_level() -> LevelConfig:
@@ -264,7 +273,7 @@ func is_level_unlocked(level: LevelConfig) -> bool:
 		return level != null
 	if level == null:
 		return false
-	if CustomLevelStore.has_level(level.level_id):
+	if CustomLevelStore.has_level(level.level_id) or CustomLevelStore.has_project_level(level.level_id):
 		return true
 	var context: Dictionary = LevelCatalog.find_level_context(level.level_id)
 	if context.is_empty():

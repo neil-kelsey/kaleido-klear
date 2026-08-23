@@ -38,6 +38,8 @@ const MAP_DRAW_ZOOM := 2.35
 ## Page-snap only above this count. Tutorial (25) must stay compact free-scroll.
 ## Twinkle Drift (150) is above; keep this above 25 and at/under 150.
 const PAGE_LEVEL_THRESHOLD := 48
+## Campaign chapters are 30 levels (6 rows of 5). Extra creator levels need more pages.
+const CHAPTER_PAGE_SIZE := 30
 
 const PAGE_SNAP_DURATION := 0.42
 const SNAP_VELOCITY := 220.0
@@ -326,12 +328,44 @@ func _rebuild_page_targets() -> void:
 	_page_ys.append(_chart_pole_camera_y())
 	if _paging_enabled:
 		var header_screen := _page1_header_screen_y()
-		for i in range(1, _group_headers.size()):
-			var header_y: float = _group_headers[i].position.y
-			_page_ys.append(_camera_y_to_place_world_at_screen_y(header_y, header_screen))
+		var diamond_screen := header_screen + HEADER_CLEARANCE * maxf(camera.zoom.x, 0.001)
+		if not _level_positions.is_empty():
+			diamond_screen = _screen_y_for_world_at_camera(
+				_level_positions[0].y, _chart_pole_camera_y()
+			)
+		var i := 0
+		var group_i := 0
+		while i < _levels.size():
+			var key := ""
+			if _levels[i] != null:
+				key = _levels[i].group_title_key.strip_edges()
+			var start := i
+			while i < _levels.size():
+				var next_key := ""
+				if _levels[i] != null:
+					next_key = _levels[i].group_title_key.strip_edges()
+				if next_key != key:
+					break
+				i += 1
+			if group_i > 0 and group_i < _group_headers.size():
+				var header_y: float = _group_headers[group_i].position.y
+				_page_ys.append(_camera_y_to_place_world_at_screen_y(header_y, header_screen))
+			var extra := 1
+			var count := i - start
+			while extra * CHAPTER_PAGE_SIZE < count and start + extra * CHAPTER_PAGE_SIZE < _level_positions.size():
+				var pos: Vector2 = _level_positions[start + extra * CHAPTER_PAGE_SIZE]
+				_page_ys.append(_camera_y_to_place_world_at_screen_y(pos.y, diamond_screen))
+				extra += 1
+			group_i += 1
 	if _page_ys.is_empty():
 		_page_ys.append(0.0)
 	_page_index = clampi(_page_index, 0, _page_ys.size() - 1)
+
+
+func _screen_y_for_world_at_camera(world_y: float, cam_y: float) -> float:
+	var vp := get_viewport_rect().size
+	var z := maxf(camera.zoom.x, 0.001)
+	return (world_y - cam_y) * z + vp.y * 0.5
 
 
 func _clamp_camera_to_pages() -> void:

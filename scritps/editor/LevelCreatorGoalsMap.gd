@@ -5,6 +5,7 @@ class_name LevelCreatorGoalsMap
 ## stacked coloured strips with count / ∞ badges (first phase closest to the board).
 
 signal goals_changed
+signal goals_about_to_change
 signal add_goal_requested(edge_key: String)
 signal edit_goal_requested(edge_key: String, index: int)
 
@@ -70,10 +71,14 @@ func set_placement_preview(edge_key: String, goal: Dictionary, insert_index: int
 
 
 func clear_placement_preview() -> void:
+	var was_previewing := _preview_enabled
 	_preview_enabled = false
 	_preview_edge = ""
 	_preview_goal = {}
-	refresh()
+	## Skip rebuild if nothing was showing — opening Edit otherwise frees the
+	## strip that just received the tap (locked object).
+	if was_previewing:
+		refresh()
 
 
 func reorder_edge(edge_key: String, from_index: int, to_index: int) -> void:
@@ -85,11 +90,13 @@ func reorder_edge(edge_key: String, from_index: int, to_index: int) -> void:
 	var dest := clampi(to_index, 0, goals.size() - 1)
 	if dest == from_index:
 		return
+	goals_about_to_change.emit()
 	var item: Variant = goals[from_index]
 	goals.remove_at(from_index)
 	goals.insert(dest, item)
-	refresh()
 	goals_changed.emit()
+	## Rebuild next idle frame so the drop source isn't freed mid-signal.
+	call_deferred("refresh")
 
 
 func refresh() -> void:
@@ -196,8 +203,7 @@ func _update_map_size() -> void:
 
 
 func _rebuild_edge_strips(edge_key: String, host: Container) -> void:
-	for child in host.get_children():
-		child.free()
+	_clear_container_children(host)
 	var goals: Array = _goals[edge_key]
 	var show_preview := _preview_enabled and _preview_edge == edge_key
 	var preview_at := clampi(_preview_index, 0, goals.size()) if show_preview else -1
@@ -327,7 +333,18 @@ func _on_strip_pressed(edge_key: String, index: int) -> void:
 	var goals: Array = _goals[edge_key]
 	if index < 0 or index >= goals.size():
 		return
+	## Defer so the tap finishes before the edit modal (and any rebuild) runs.
+	call_deferred("_emit_edit_goal", edge_key, index)
+
+
+func _emit_edit_goal(edge_key: String, index: int) -> void:
 	edit_goal_requested.emit(edge_key, index)
+
+
+func _clear_container_children(host: Node) -> void:
+	for child in host.get_children():
+		host.remove_child(child)
+		child.queue_free()
 
 
 func apply_translations() -> void:

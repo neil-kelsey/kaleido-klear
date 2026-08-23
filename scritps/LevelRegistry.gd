@@ -4,6 +4,10 @@ class_name LevelRegistry
 ## Auto-updated when the level creator saves into the project.
 ## Do not hand-edit unless you know why — CustomLevelStore.rewrite_project_manifest() owns this file.
 const LEVEL_PATHS: PackedStringArray = [
+	"res://resources/levels/custom_level_1787484813.tres",
+	"res://resources/levels/custom_level_1787490163.tres",
+	"res://resources/levels/custom_level_1787493949.tres",
+	"res://resources/levels/custom_level_1787494919.tres",
 	"res://resources/levels/multi_goal_demo_1.tres",
 	"res://resources/levels/test_5x5_colour_mix_1.tres",
 	"res://resources/levels/test_5x5_colour_mix_2.tres",

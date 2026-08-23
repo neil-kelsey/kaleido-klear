@@ -1,15 +1,15 @@
 extends Control
 class_name LevelCreatorGrid
 
-signal cell_clicked(cell: Vector2i, button_index: int)
+signal cell_clicked(cell: Vector2i, button_index: int, is_drag: bool)
 signal cell_edit_requested(cell: Vector2i)
+signal paint_stroke_ended
 
 ## High-contrast editor grid (playfield colors are too close to see seams).
 const GRID_FILL := Color(0.26, 0.28, 0.34, 1.0)
 const GRID_BORDER := Color(0.08, 0.09, 0.12, 1.0)
 const GRID_HOLE := Color(0.12, 0.12, 0.14, 1.0)
 const LONG_PRESS_SEC := 0.45
-const LONG_PRESS_MOVE_PX := 20.0
 const ZOOM_MIN := 0.5
 const ZOOM_MAX := 12.0
 const WHEEL_ZOOM_STEP := 0.14
@@ -33,6 +33,8 @@ var _press_cell := Vector2i(-1, -1)
 var _press_pos := Vector2.ZERO
 var _press_held := false
 var _long_fired := false
+var _paint_drag := false
+var _last_paint_cell := Vector2i(-1, -1)
 var _long_timer: Timer
 var _view_zoom := 1.0
 var _pan_offset := Vector2.ZERO
@@ -183,8 +185,7 @@ func _gui_input(event: InputEvent) -> void:
 		_update_hover_preview()
 		queue_redraw()
 		if _press_held and not _long_fired:
-			if motion.position.distance_to(_press_pos) > LONG_PRESS_MOVE_PX:
-				_cancel_press()
+			_try_paint_drag(_hover_cell)
 		return
 
 	if event is InputEventMouseButton:
@@ -203,14 +204,18 @@ func _gui_input(event: InputEvent) -> void:
 			_press_pos = event.position
 			_press_held = true
 			_long_fired = false
+			_paint_drag = false
+			_last_paint_cell = Vector2i(-1, -1)
 			_long_timer.start()
 			accept_event()
 		else:
 			var emit_cell := _press_cell
 			var fired := _long_fired
+			var painted := _paint_drag
 			_cancel_press()
-			if not fired and emit_cell.x >= 0:
-				cell_clicked.emit(emit_cell, MOUSE_BUTTON_LEFT)
+			if not fired and not painted and emit_cell.x >= 0:
+				cell_clicked.emit(emit_cell, MOUSE_BUTTON_LEFT, false)
+			paint_stroke_ended.emit()
 			accept_event()
 
 
@@ -278,15 +283,61 @@ func _update_pinch() -> void:
 
 
 func _on_long_press_timeout() -> void:
-	if not _press_held or _press_cell.x < 0:
+	if not _press_held or _press_cell.x < 0 or _paint_drag:
 		return
 	_long_fired = true
 	cell_edit_requested.emit(_press_cell)
 
 
+func _try_paint_drag(cell: Vector2i) -> void:
+	if cell.x < 0:
+		return
+	if not _paint_drag:
+		if cell == _press_cell:
+			return
+		_paint_drag = true
+		if _long_timer != null:
+			_long_timer.stop()
+		if _press_cell.x >= 0:
+			cell_clicked.emit(_press_cell, MOUSE_BUTTON_LEFT, true)
+			_last_paint_cell = _press_cell
+	if cell == _last_paint_cell:
+		return
+	for step in _cells_on_line(_last_paint_cell, cell):
+		if step == _last_paint_cell:
+			continue
+		_last_paint_cell = step
+		cell_clicked.emit(step, MOUSE_BUTTON_LEFT, true)
+
+
+func _cells_on_line(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	var dx := absi(to_cell.x - from_cell.x)
+	var dy := -absi(to_cell.y - from_cell.y)
+	var sx := 1 if from_cell.x < to_cell.x else -1
+	var sy := 1 if from_cell.y < to_cell.y else -1
+	var err := dx + dy
+	var x := from_cell.x
+	var y := from_cell.y
+	while true:
+		cells.append(Vector2i(x, y))
+		if x == to_cell.x and y == to_cell.y:
+			break
+		var e2 := 2 * err
+		if e2 >= dy:
+			err += dy
+			x += sx
+		if e2 <= dx:
+			err += dx
+			y += sy
+	return cells
+
+
 func _cancel_press() -> void:
 	_press_held = false
 	_press_cell = Vector2i(-1, -1)
+	_paint_drag = false
+	_last_paint_cell = Vector2i(-1, -1)
 	if _long_timer != null:
 		_long_timer.stop()
 

@@ -70,7 +70,7 @@ func show_edit(shape_name: String, kind: Block.BlockKind, color: Block.TileColor
 	title_label.text = tr("UI_CREATOR_SHAPE_MODAL_EDIT")
 	confirm_button.set_label(tr("UI_CREATOR_SHAPE_MODAL_SAVE"))
 	delete_button.visible = true
-	delete_button.set_label(tr("UI_CREATOR_GOAL_DELETE"))
+	delete_button.set_label(tr("UI_CREATOR_BLOCK_DELETE"))
 	_fill_fields(shape_name, kind, color)
 	visible = true
 	_shrink_panel()
