@@ -38,6 +38,8 @@ const FOCUS_DURATION := 0.45
 const DIVE_DURATION := 1.05
 const DIVE_ZOOM_MULT := 5.5
 const DIVE_WHITE_HOLD := 0.14
+## Ignore a second click that arrives in the same press (mouse + emulated touch).
+const CLICK_DEBOUNCE_MS := 120
 
 const NEBULA_BRIGHT_SELECTED := 1.0
 const NEBULA_BRIGHT_WASHED := 1.22
@@ -73,6 +75,7 @@ var _dive_progress := 0.0
 var _dive_index := -1
 var _white_fade: ColorRect
 var _path_hint: Label
+var _last_select_msec := 0
 
 
 func _ready() -> void:
@@ -245,6 +248,16 @@ func _play_intro() -> void:
 	_intro_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_intro_tween.tween_method(_set_intro_zoom, INTRO_ZOOM_START, INTRO_ZOOM_END, INTRO_ZOOM_DURATION)
 	_intro_tween.tween_callback(func(): _intro_playing = false)
+
+
+func _interrupt_intro() -> void:
+	## Entry zoom is cosmetic — don't eat taps while it finishes.
+	if not _intro_playing or _navigating:
+		return
+	_intro_playing = false
+	if _intro_tween:
+		_intro_tween.kill()
+		_intro_tween = null
 
 
 func _play_exit_zoom_out() -> void:
@@ -563,14 +576,16 @@ func _draw_dashed_line(from_p: Vector2, to_p: Vector2, color: Color, width: floa
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _intro_playing or _navigating or _dive_progress > 0.0:
+	if _navigating or _dive_progress > 0.0:
 		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
+			_interrupt_intro()
 			_zoom_at_screen_point(mb.position, camera.zoom.x + WHEEL_ZOOM_STEP)
 			_mark_input_handled()
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
+			_interrupt_intro()
 			_zoom_at_screen_point(mb.position, camera.zoom.x - WHEEL_ZOOM_STEP)
 			_mark_input_handled()
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
@@ -643,6 +658,7 @@ func _handle_pinch_drag(event: InputEventScreenDrag) -> bool:
 
 
 func _begin_pan(pointer_id: int) -> void:
+	_interrupt_intro()
 	_panning = true
 	_pan_pointer_id = pointer_id
 	_pan_velocity = Vector2.ZERO
@@ -660,6 +676,7 @@ func _begin_pinch() -> void:
 		return
 	if _focus_tween:
 		_focus_tween.kill()
+	_interrupt_intro()
 	_pinch_active = true
 	_pan_velocity = Vector2.ZERO
 	set_process(false)
@@ -728,18 +745,42 @@ func _hit_dimension(world_pos: Vector2) -> int:
 
 
 func _on_dimension_clicked(index: int) -> void:
-	## First tap focuses (centres) a dimension. Second tap on the centred one dives in.
+	## First tap focuses a different dimension (centres it, shows the name).
+	## Second tap on that focused diamond dives in — even while it is still sliding.
 	if _navigating or _dive_progress > 0.0:
 		return
-	if index == _selected_index and _is_dimension_centered(index):
-		if LevelCatalog.is_dimension_unlocked(index):
+	_interrupt_intro()
+	if index == _selected_index:
+		if _is_duplicate_click():
+			return
+		if LevelCatalog.is_dimension_unlocked(index) and _can_enter_focused(index):
 			_play_enter_dive(index)
+			return
+		_center_on_dimension(index)
 		return
 	_selected_index = index
+	_last_select_msec = Time.get_ticks_msec()
 	_sync_nebulas()
 	_sync_path_hint()
 	queue_redraw()
 	_center_on_dimension(index)
+
+
+func _is_duplicate_click() -> bool:
+	return Time.get_ticks_msec() - _last_select_msec < CLICK_DEBOUNCE_MS
+
+
+func _can_enter_focused(index: int) -> bool:
+	## Don't wait for the centre animation to finish — a second tap means enter.
+	if _focus_tween != null and _focus_tween.is_running():
+		return true
+	return _is_dimension_centered(index)
+
+
+func _is_dimension_centered(index: int) -> bool:
+	if index < 0 or index >= _positions.size():
+		return false
+	return camera.position.distance_to(_camera_pos_to_frame_dimension(index)) <= 18.0
 
 
 func _world_to_screen(world_pos: Vector2, cam_pos: Vector2, zoom: float) -> Vector2:
@@ -818,14 +859,6 @@ func _finish_enter_dive() -> void:
 		_white_fade.color = Color(0, 0, 0, 1)
 	GameSession.set_scene_wipe(Color(0, 0, 0, 1))
 	GameSession.change_scene(DIMENSION_LEVELS_SCENE)
-
-
-func _is_dimension_centered(index: int) -> bool:
-	if index < 0 or index >= _positions.size():
-		return false
-	if _focus_tween != null and _focus_tween.is_running():
-		return false
-	return camera.position.distance_to(_camera_pos_to_frame_dimension(index)) <= 18.0
 
 
 func _center_on_dimension(index: int) -> void:

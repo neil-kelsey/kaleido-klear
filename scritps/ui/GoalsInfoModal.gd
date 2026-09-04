@@ -44,6 +44,9 @@ func show_overview(goals_by_edge: Dictionary) -> void:
 		_map.set_overview(goals_by_edge)
 	_apply_translations()
 	visible = true
+	await get_tree().process_frame
+	if _map != null:
+		_map.fit_in_view()
 
 
 func refresh_overview(goals_by_edge: Dictionary) -> void:

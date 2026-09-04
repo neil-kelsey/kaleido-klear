@@ -9,7 +9,7 @@ const ZOOM_MIN := 0.55
 const ZOOM_MAX := 2.75
 const WHEEL_ZOOM_STEP := 0.12
 const PINCH_ZOOM_SENSITIVITY := 1.0
-const PLAY_ZOOM := 0.86
+const PLAY_ZOOM := 0.96
 const INTRO_ZOOM_START := 0.70
 const INTRO_ZOOM_DURATION := 0.9
 ## Logo sting, then the result card — not gated on confetti falling off-screen.

@@ -566,8 +566,14 @@ func _ensure_glyph_overlay() -> void:
 	_glyph_overlay.name = "AwardStarOverlay"
 	_glyph_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_glyph_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_glyph_overlay.z_index = 20
+	## Sit behind the dimension title so scrolling diamonds tuck under the badge.
+	_glyph_overlay.z_index = 0
 	hud.add_child(_glyph_overlay)
+	hud.move_child(_glyph_overlay, 0)
+	if title_badge != null:
+		title_badge.z_index = 40
+	if back_button != null:
+		back_button.z_index = 50
 
 
 func _ensure_page_dots() -> void:
