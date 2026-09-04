@@ -39,6 +39,7 @@ var _fx_time := 0.0
 var _glyph_overlay: Control
 var _overlay_cam_y := INF
 var _overlay_cam_z := 0.0
+var _last_vp_size := Vector2.ZERO
 var _navigating := false
 
 
@@ -57,17 +58,18 @@ func _ready() -> void:
 	_ensure_chart_sprite()
 	camera.make_current()
 	_ensure_glyph_overlay()
-	GameSession.fade_scene_wipe_out(0.32)
 	back_button.pressed.connect(_on_back_pressed)
 	_apply_secondary_title_style(date_label)
 	_apply_secondary_title_style(empty_label)
 	_apply_translations()
-	get_viewport().size_changed.connect(_on_viewport_resized)
-	_rebuild_map()
-	await get_tree().process_frame
+	var viewport := get_viewport()
+	if viewport and not viewport.size_changed.is_connected(_on_viewport_resized):
+		viewport.size_changed.connect(_on_viewport_resized)
+	await _await_valid_viewport()
 	_rebuild_map()
 	_sync_title_to_chart_pole()
 	_sync_secondary_titles()
+	GameSession.fade_scene_wipe_out(0.32)
 
 
 func _process(delta: float) -> void:
@@ -81,12 +83,31 @@ func _process(delta: float) -> void:
 
 
 func _notification(what: int) -> void:
+	if what == NOTIFICATION_EXIT_TREE:
+		var viewport := get_viewport()
+		if viewport and viewport.size_changed.is_connected(_on_viewport_resized):
+			viewport.size_changed.disconnect(_on_viewport_resized)
+		return
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
 		if not is_node_ready():
 			return
 		_apply_translations()
 		queue_redraw()
 		_invalidate_glyph_overlay()
+
+
+func _viewport_is_ready() -> bool:
+	if not is_inside_tree() or camera == null:
+		return false
+	var vp := get_viewport_rect().size
+	return vp.x > 1.0 and vp.y > 1.0
+
+
+func _await_valid_viewport() -> void:
+	var frames := 0
+	while not _viewport_is_ready() and frames < 60:
+		await get_tree().process_frame
+		frames += 1
 
 
 func _apply_secondary_title_style(label: Label) -> void:
@@ -107,6 +128,12 @@ func _apply_translations() -> void:
 
 
 func _on_viewport_resized() -> void:
+	if not _viewport_is_ready():
+		return
+	var vp := get_viewport_rect().size
+	if vp.distance_to(_last_vp_size) < 1.0:
+		return
+	_last_vp_size = vp
 	_rebuild_map()
 	_sync_title_to_chart_pole()
 	_sync_secondary_titles()
@@ -148,6 +175,8 @@ func _sync_secondary_titles() -> void:
 
 
 func _rebuild_map() -> void:
+	if not _viewport_is_ready():
+		return
 	_level_positions.clear()
 	if _levels.is_empty():
 		camera.position = Vector2(0, _camera_y_for_pole())

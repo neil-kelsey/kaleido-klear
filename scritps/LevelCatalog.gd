@@ -19,6 +19,8 @@ const SECTIONS: Array[Dictionary] = [
 		"color": Color(0.12, 0.62, 0.48, 1.0),
 		"background": "",
 		"parent": 0,
+		## Phone drafts live here while testing so Twinkle Drift stays at 5×30.
+		"starts_unlocked": true,
 	},
 	{
 		"title_key": "UI_DIMENSION_3",

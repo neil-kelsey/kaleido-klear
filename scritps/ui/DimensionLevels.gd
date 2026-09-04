@@ -82,9 +82,16 @@ var _glyph_overlay: Control
 var _page_dots: Control
 var _overlay_cam_y := INF
 var _overlay_cam_z := 0.0
+var _last_vp_size := Vector2.ZERO
+var _fps_label: Label
+var _fps_accum := 0.0
+var _fps_frames := 0
+var _ready_msec := 0
+var _resize_rebuilds := 0
 
 
 func _ready() -> void:
+	_ready_msec = Time.get_ticks_msec()
 	_map_font = MAP_FONT
 	_dimension_index = clampi(GameSession.current_dimension_index, 0, LevelCatalog.get_dimension_count() - 1)
 	_theme_color = LevelCatalog.get_dimension_color(_dimension_index)
@@ -92,11 +99,17 @@ func _ready() -> void:
 		back_button.accent_color = _theme_color
 	_levels = LevelCatalog.get_section_levels(_dimension_index)
 	_paging_enabled = _should_enable_paging()
+	print(
+		"[DimensionLevels] start dim=%s levels=%s paging=%s" % [
+			_dimension_index, _levels.size(), _paging_enabled
+		]
+	)
 	_star_chart_tex = load(STAR_CHART_PATH) as Texture2D
 	if _star_chart_tex == null:
 		push_warning("Missing baked level star chart at %s — run bake_level_star_chart.gd" % STAR_CHART_PATH)
 
 	_nebula_mat = NebulaEffect.apply_backdrop(nebula_bg)
+	print("[DimensionLevels] backdrop +%sms" % _elapsed_ms())
 	set_process(true)
 	_ensure_chart_sprite()
 
@@ -104,7 +117,7 @@ func _ready() -> void:
 	_ensure_white_fade()
 	_ensure_glyph_overlay()
 	_ensure_page_dots()
-	GameSession.fade_scene_wipe_out(0.32)
+	_ensure_fps_overlay()
 	back_button.pressed.connect(_on_back_pressed)
 	_apply_translations()
 	hint_label.visible = false
@@ -112,24 +125,55 @@ func _ready() -> void:
 	empty_label.visible = _levels.is_empty()
 	empty_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.88))
 
-	get_viewport().size_changed.connect(_on_viewport_resized)
-	## Layout must exist before the first draw — an await here left positions empty and crashed.
-	_rebuild_map()
-	_go_to_page(0, false)
-	await get_tree().process_frame
-	## Re-measure once the viewport size is final (esp. mobile / windowed).
+	var viewport := get_viewport()
+	if viewport and not viewport.size_changed.is_connected(_on_viewport_resized):
+		viewport.size_changed.connect(_on_viewport_resized)
+	## Linux/XWayland can report a 0x0 viewport on the first frames. Laying out
+	## against that parks the camera in empty space (near-black sky). Wait, then
+	## never rebuild from a degenerate size so a later 0-size event cannot wipe
+	## a good layout.
+	var waited := await _await_valid_viewport()
+	print("[DimensionLevels] viewport ready after %s frames +%sms size=%s" % [
+		waited, _elapsed_ms(), get_viewport_rect().size
+	])
 	_rebuild_map()
 	_go_to_page(0, false)
 	_sync_title_to_chart_pole()
+	GameSession.fade_scene_wipe_out(0.32)
+	print("[DimensionLevels] first layout +%sms" % _elapsed_ms())
 
 
 func _notification(what: int) -> void:
+	if what == NOTIFICATION_EXIT_TREE:
+		var viewport := get_viewport()
+		if viewport and viewport.size_changed.is_connected(_on_viewport_resized):
+			viewport.size_changed.disconnect(_on_viewport_resized)
+		return
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
 		if not is_node_ready():
 			return
 		_apply_translations()
 		queue_redraw()
 		_invalidate_glyph_overlay()
+
+
+func _viewport_is_ready() -> bool:
+	if not is_inside_tree() or camera == null:
+		return false
+	var vp := get_viewport_rect().size
+	return vp.x > 1.0 and vp.y > 1.0
+
+
+func _await_valid_viewport() -> int:
+	var frames := 0
+	while not _viewport_is_ready() and frames < 60:
+		await get_tree().process_frame
+		frames += 1
+	return frames
+
+
+func _elapsed_ms() -> int:
+	return Time.get_ticks_msec() - _ready_msec
 
 
 func _process(delta: float) -> void:
@@ -140,6 +184,7 @@ func _process(delta: float) -> void:
 		var pulse := 0.99 + 0.01 * sin(_fx_time * 0.25)
 		_nebula_mat.set_shader_parameter("brightness", pulse)
 	_sync_glyph_overlay_to_camera()
+	_update_fps_overlay(delta)
 
 
 func _apply_translations() -> void:
@@ -151,12 +196,27 @@ func _apply_translations() -> void:
 
 
 func _on_viewport_resized() -> void:
+	if not _viewport_is_ready():
+		return
+	var vp := get_viewport_rect().size
+	## The Linux Game/DEBUG window can spam size_changed with the same size.
+	## Rebuilding the map every time freezes paging at a couple of frames/sec.
+	if vp.distance_to(_last_vp_size) < 1.0:
+		return
+	_resize_rebuilds += 1
+	print("[DimensionLevels] resize #%s %s -> %s +%sms" % [
+		_resize_rebuilds, _last_vp_size, vp, _elapsed_ms()
+	])
+	_last_vp_size = vp
 	var keep := _page_index
 	_rebuild_map()
 	_go_to_page(keep, false)
 
 
 func _rebuild_map() -> void:
+	if not _viewport_is_ready():
+		return
+	_last_vp_size = get_viewport_rect().size
 	_paging_enabled = _should_enable_paging()
 	_apply_page_zoom()
 	_group_gap = _group_gap_for_paging() if _paging_enabled else GROUP_GAP_COMPACT
@@ -451,6 +511,45 @@ func _nudge_scroll(world_dy: float) -> void:
 	camera.position.y += world_dy
 	camera.position.x = 0.0
 	_clamp_camera_to_pages()
+
+
+func _ensure_fps_overlay() -> void:
+	if not OS.has_feature("editor"):
+		return
+	if _fps_label != null and is_instance_valid(_fps_label):
+		return
+	var hud := get_node_or_null("UI/Root") as Control
+	if hud == null:
+		return
+	_fps_label = Label.new()
+	_fps_label.name = "PerfLabel"
+	_fps_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fps_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_fps_label.anchor_left = 1.0
+	_fps_label.anchor_right = 1.0
+	_fps_label.offset_left = -280.0
+	_fps_label.offset_top = 16.0
+	_fps_label.offset_right = -16.0
+	_fps_label.offset_bottom = 64.0
+	_fps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_fps_label.add_theme_font_size_override("font_size", 18)
+	_fps_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.35, 0.95))
+	_fps_label.text = "…"
+	hud.add_child(_fps_label)
+
+
+func _update_fps_overlay(delta: float) -> void:
+	if _fps_label == null:
+		return
+	_fps_accum += delta
+	_fps_frames += 1
+	if _fps_accum < 0.4:
+		return
+	var avg_ms := (_fps_accum / float(_fps_frames)) * 1000.0
+	var fps := 0.0 if avg_ms <= 0.0 else 1000.0 / avg_ms
+	_fps_label.text = "%.0f ms  %.0f fps  rz %s" % [avg_ms, fps, _resize_rebuilds]
+	_fps_accum = 0.0
+	_fps_frames = 0
 
 
 func _ensure_glyph_overlay() -> void:

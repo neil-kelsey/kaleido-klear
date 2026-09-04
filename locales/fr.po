@@ -837,3 +837,6 @@ msgstr "Nova de peinture"
 
 msgid "UI_GROUP_RIFT_GEOMETRY"
 msgstr "Géométrie de faille"
+
+msgid "UI_GROUP_CUSTOM_LEVELS"
+msgstr "Niveaux personnalisés"

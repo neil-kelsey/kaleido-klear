@@ -837,3 +837,6 @@ msgstr "Paint Nova"
 
 msgid "UI_GROUP_RIFT_GEOMETRY"
 msgstr "Rift Geometry"
+
+msgid "UI_GROUP_CUSTOM_LEVELS"
+msgstr "Custom Levels"

@@ -837,3 +837,6 @@ msgstr "Paintin' Nova"
 
 msgid "UI_GROUP_RIFT_GEOMETRY"
 msgstr "Rift Riggin'"
+
+msgid "UI_GROUP_CUSTOM_LEVELS"
+msgstr "Homemade Charts"
