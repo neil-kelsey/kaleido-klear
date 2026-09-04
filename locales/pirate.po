@@ -154,6 +154,12 @@ msgstr "The log"
 msgid "UI_LEVEL_COMPLETE"
 msgstr "Voyage complete!"
 
+msgid "UI_KLEARED_PRIMARY"
+msgstr "Voyage"
+
+msgid "UI_KLEARED_SECONDARY"
+msgstr "Kleared"
+
 msgid "UI_SECTION_COMPLETE"
 msgstr "Sea conquered!"
 

@@ -3,6 +3,7 @@ extends Node2D
 const GAME_SCENE := "res://scenes/main.tscn"
 const LEVEL_SELECT_SCENE := "res://scenes/ui/dimension_map.tscn"
 const LEVEL_CREATOR_SCENE := "res://scenes/editor/level_creator.tscn"
+const LevelKlearedOverlay := preload("res://scritps/ui/LevelKlearedOverlay.gd")
 
 const ZOOM_MIN := 0.55
 const ZOOM_MAX := 2.75
@@ -11,6 +12,8 @@ const PINCH_ZOOM_SENSITIVITY := 1.0
 const PLAY_ZOOM := 0.86
 const INTRO_ZOOM_START := 0.70
 const INTRO_ZOOM_DURATION := 0.9
+## Logo sting, then the result card — not gated on confetti falling off-screen.
+const KLEARED_MODAL_DELAY := 4.0
 
 @onready var board: Board = $Board
 @onready var camera: Camera2D = $Camera2D
@@ -24,7 +27,8 @@ const INTRO_ZOOM_DURATION := 0.9
 @onready var goal_border_top: GoalBorder = $UI/GoalBorderTop
 @onready var goal_border_right: GoalBorder = $UI/GoalBorderRight
 @onready var goal_border_bottom: GoalBorder = $UI/GoalBorderBottom
-@onready var level_complete_modal: Control = $UI/LevelCompleteModal
+@onready var level_complete_modal: Control = %LevelCompleteModal
+@onready var kleared_overlay: LevelKlearedOverlay = %LevelKlearedOverlay
 @onready var game_over_modal: Control = $UI/GameOverModal
 @onready var goals_info_modal: GoalsInfoModal = %GoalsInfoModal
 
@@ -45,6 +49,9 @@ var _tile_pointer_ids: Dictionary = {}
 var _intro_playing := false
 var _won_level := false
 var _intro_tween: Tween = null
+var _pending_stars := 0
+var _pending_section_complete := false
+var _pending_has_next_section := false
 
 
 func _ready() -> void:
@@ -77,6 +84,8 @@ func _ready() -> void:
 	level_complete_modal.share_pressed.connect(_on_share_pressed)
 	if level_complete_modal.has_signal("closed"):
 		level_complete_modal.closed.connect(_on_level_complete_closed)
+	if kleared_overlay != null:
+		kleared_overlay.brand_finished.connect(_on_kleared_brand_finished)
 	game_over_modal.replay_level_pressed.connect(_on_replay_level_pressed)
 	game_over_modal.level_select_pressed.connect(_on_game_over_level_select_pressed)
 	if goals_info_modal.has_signal("closed"):
@@ -363,6 +372,11 @@ func _input(event: InputEvent) -> void:
 			goals_info_modal.hide_modal()
 			get_viewport().set_input_as_handled()
 		return
+	if kleared_overlay != null and kleared_overlay.is_blocking():
+		if event.is_action_pressed("ui_cancel"):
+			kleared_overlay.skip_brand()
+			get_viewport().set_input_as_handled()
+		return
 	if _is_modal_open():
 		return
 	if event.is_action_pressed("ui_cancel"):
@@ -563,6 +577,7 @@ func _is_modal_open() -> bool:
 		level_complete_modal.visible
 		or game_over_modal.visible
 		or (goals_info_modal != null and goals_info_modal.visible)
+		or (kleared_overlay != null and kleared_overlay.is_blocking())
 		or _is_tutorial_open()
 	)
 
@@ -640,6 +655,9 @@ func handle_back() -> void:
 	if _is_tutorial_open():
 		_tutorial.dismiss()
 		return
+	if kleared_overlay != null and kleared_overlay.is_blocking():
+		kleared_overlay.skip_brand()
+		return
 	if goals_info_modal != null and goals_info_modal.visible:
 		goals_info_modal.hide_modal()
 		return
@@ -692,6 +710,7 @@ func _update_undo_button() -> void:
 		or _is_tutorial_open()
 		or level_complete_modal.visible
 		or game_over_modal.visible
+		or (kleared_overlay != null and kleared_overlay.is_blocking())
 	)
 	var goals_open := goals_info_modal != null and goals_info_modal.visible
 	undo_button.disabled = hard_block or goals_open or not board.can_undo_move()
@@ -727,7 +746,39 @@ func _on_level_cleared(remaining_lives: int) -> void:
 	else:
 		section_complete = LevelCatalog.is_last_level_in_section(_current_level)
 		has_next_section = LevelCatalog.has_next_section(_current_level)
-	level_complete_modal.show_result(stars, section_complete, has_next_section)
+	_pending_stars = stars
+	_pending_section_complete = section_complete
+	_pending_has_next_section = has_next_section
+	if kleared_overlay != null:
+		kleared_overlay.play()
+		_update_undo_button()
+		_reveal_complete_modal_later()
+		return
+	_reveal_complete_modal()
+
+
+func _reveal_complete_modal_later() -> void:
+	await get_tree().create_timer(KLEARED_MODAL_DELAY, true, true, true).timeout
+	_reveal_complete_modal()
+
+
+func _reveal_complete_modal() -> void:
+	if not is_inside_tree() or not _won_level:
+		return
+	if level_complete_modal != null and level_complete_modal.visible:
+		return
+	if kleared_overlay != null and kleared_overlay.has_method("hide_brand"):
+		kleared_overlay.hide_brand()
+	level_complete_modal.show_result(
+		_pending_stars,
+		_pending_section_complete,
+		_pending_has_next_section
+	)
+	_update_undo_button()
+
+
+func _on_kleared_brand_finished() -> void:
+	_reveal_complete_modal()
 
 
 func _on_life_lost(remaining_lives: int) -> void:

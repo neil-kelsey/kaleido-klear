@@ -1,8 +1,9 @@
-[gd_scene load_steps=9 format=3 uid="uid://d17j508vck7jl"]
+[gd_scene load_steps=10 format=3 uid="uid://d17j508vck7jl"]
 
 [ext_resource type="PackedScene" uid="uid://qwpopfwnvd7c" path="res://scenes/board.tscn" id="1_board"]
 [ext_resource type="Script" path="res://scritps/Main.gd" id="2_main"]
 [ext_resource type="PackedScene" uid="uid://kaleido_level_complete_modal" path="res://scenes/ui/level_complete_modal.tscn" id="3_modal"]
+[ext_resource type="PackedScene" uid="uid://kaleido_level_kleared_overlay" path="res://scenes/ui/level_kleared_overlay.tscn" id="3_kleared"]
 [ext_resource type="PackedScene" uid="uid://kaleido_game_over_modal" path="res://scenes/ui/game_over_modal.tscn" id="4_game_over_modal"]
 [ext_resource type="PackedScene" path="res://scenes/ui/goal_border.tscn" id="5_goal_border"]
 [ext_resource type="PackedScene" uid="uid://kaleido_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="6_back"]
@@ -19,6 +20,7 @@ position = Vector2(640, 360)
 [node name="Board" parent="." instance=ExtResource("1_board")]
 
 [node name="UI" type="CanvasLayer" parent="."]
+layer = 1
 
 [node name="BackButton" parent="UI" instance=ExtResource("6_back")]
 unique_name_in_owner = true
@@ -141,7 +143,17 @@ grow_horizontal = 2
 mouse_filter = 2
 script = ExtResource("9_lives")
 
-[node name="LevelCompleteModal" parent="UI" instance=ExtResource("3_modal")]
+[node name="KlearedLayer" type="CanvasLayer" parent="."]
+layer = 8
+
+[node name="LevelKlearedOverlay" parent="KlearedLayer" instance=ExtResource("3_kleared")]
+unique_name_in_owner = true
+
+[node name="CompleteLayer" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="LevelCompleteModal" parent="CompleteLayer" instance=ExtResource("3_modal")]
+unique_name_in_owner = true
 
 [node name="GameOverModal" parent="UI" instance=ExtResource("4_game_over_modal")]
 

@@ -1,0 +1,92 @@
+[gd_scene load_steps=5 format=3 uid="uid://kaleido_level_kleared_overlay"]
+
+[ext_resource type="Script" path="res://scritps/ui/LevelKlearedOverlay.gd" id="1"]
+[ext_resource type="Script" path="res://scritps/ui/BrandTitleLine.gd" id="2_brand"]
+[ext_resource type="Texture2D" path="res://assets/branding/kaleido_klear_icon_512.png" id="3_icon"]
+[ext_resource type="Script" path="res://scritps/ui/LevelKlearedParticles.gd" id="4_particles"]
+
+[node name="LevelKlearedOverlay" type="Control"]
+visible = false
+z_index = 10
+z_as_relative = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1")
+
+[node name="Blocker" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="ParticleLayer" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_particles")
+
+[node name="BrandRoot" type="CenterContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TitleBlock" type="VBoxContainer" parent="BrandRoot"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="HeroTitle" type="Control" parent="BrandRoot/TitleBlock"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 92)
+layout_mode = 2
+size_flags_horizontal = 4
+script = ExtResource("2_brand")
+title_text = "Level"
+style = 0
+font_size = 122
+scroll_speed = 0.035
+glow_strength = 0.7
+effect_radius = 20.0
+
+[node name="BrandIcon" type="TextureRect" parent="BrandRoot/TitleBlock"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(210, 210)
+layout_mode = 2
+size_flags_horizontal = 4
+texture = ExtResource("3_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SubtitleTitle" type="Control" parent="BrandRoot/TitleBlock"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+script = ExtResource("2_brand")
+title_text = "Kleared"
+style = 1
+font_size = 84
+scroll_speed = 0.035
+glow_strength = 0.85
+effect_radius = 24.0

@@ -40,6 +40,7 @@ var _glyph_overlay: Control
 var _overlay_cam_y := INF
 var _overlay_cam_z := 0.0
 var _last_vp_size := Vector2.ZERO
+var _hover_index := -1
 var _navigating := false
 
 
@@ -87,6 +88,7 @@ func _notification(what: int) -> void:
 		var viewport := get_viewport()
 		if viewport and viewport.size_changed.is_connected(_on_viewport_resized):
 			viewport.size_changed.disconnect(_on_viewport_resized)
+		Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 		return
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
 		if not is_node_ready():
@@ -278,6 +280,7 @@ func _sync_glyph_overlay_to_camera() -> void:
 	_overlay_cam_y = y
 	_overlay_cam_z = z
 	_glyph_overlay.queue_redraw()
+	_set_hover_index(_hoverable_index_at(_screen_to_world(get_viewport().get_mouse_position())))
 
 
 func _screen_to_world(screen_pos: Vector2) -> Vector2:
@@ -301,8 +304,12 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 		var unlocked := DailyCatalog.is_level_unlocked(_levels, level)
 		var stars := GameSession.get_level_stars(level.level_id)
 		var completed := unlocked and stars > 0
+		var hovered := unlocked and i == _hover_index
+		if hovered:
+			NebulaEffect.draw_selection_glow(item, center, dsize, _theme_color)
 		if completed:
-			item.draw_colored_polygon(pts, _theme_color.lightened(0.08))
+			var fill := _theme_color.lightened(0.20 if hovered else 0.08)
+			item.draw_colored_polygon(pts, fill)
 			if GameSession.is_perfect_clear(level.level_id):
 				FaVector.draw_star(
 					item,
@@ -315,7 +322,12 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 			else:
 				FaVector.draw_check(item, center, dsize * 0.30)
 		elif unlocked:
-			item.draw_polyline(outline, _theme_color, rim_w * 1.4, true)
+			if hovered:
+				var wash := _theme_color.lightened(0.12)
+				wash.a = 0.55
+				item.draw_colored_polygon(pts, wash)
+			var rim := _theme_color.lightened(0.18) if hovered else _theme_color
+			item.draw_polyline(outline, rim, rim_w * (1.8 if hovered else 1.4), true)
 			var number := str(i + 1)
 			var font_size := 32 if i < 99 else 26
 			var text_size := _map_font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
@@ -339,12 +351,48 @@ func _diamond_points(center: Vector2, size: float) -> PackedVector2Array:
 	])
 
 
+func _gui_blocks_hover() -> bool:
+	var viewport := get_viewport()
+	if viewport == null:
+		return false
+	var ctrl := viewport.gui_get_hovered_control()
+	return ctrl != null and ctrl.mouse_filter != Control.MOUSE_FILTER_IGNORE
+
+
+func _hoverable_index_at(world: Vector2) -> int:
+	if _gui_blocks_hover():
+		return -1
+	var hit := _hit_level(world)
+	if hit < 0 or hit >= _levels.size():
+		return -1
+	var level: LevelConfig = _levels[hit]
+	if level == null or not DailyCatalog.is_level_unlocked(_levels, level):
+		return -1
+	return hit
+
+
+func _set_hover_index(index: int) -> void:
+	if _hover_index == index:
+		return
+	_hover_index = index
+	Input.set_default_cursor_shape(
+		Input.CURSOR_POINTING_HAND if index >= 0 else Input.CURSOR_ARROW
+	)
+	if _glyph_overlay != null:
+		_glyph_overlay.queue_redraw()
+
+
 func _hit_level(world: Vector2) -> int:
 	var half := LEVEL_DIAMOND_SIZE * 0.55
 	for i in _level_positions.size():
 		if world.distance_to(_level_positions[i]) <= half:
 			return i
 	return -1
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		_set_hover_index(_hoverable_index_at(_screen_to_world(get_viewport().get_mouse_position())))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -357,6 +405,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 	elif event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
+		_set_hover_index(-1)
 		if touch.pressed:
 			var hit := _hit_level(_screen_to_world(touch.position))
 			if hit >= 0:

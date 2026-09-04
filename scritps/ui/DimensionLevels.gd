@@ -82,6 +82,7 @@ var _glyph_overlay: Control
 var _page_dots: Control
 var _overlay_cam_y := INF
 var _overlay_cam_z := 0.0
+var _hover_index := -1
 var _last_vp_size := Vector2.ZERO
 var _fps_label: Label
 var _fps_accum := 0.0
@@ -148,6 +149,7 @@ func _notification(what: int) -> void:
 		var viewport := get_viewport()
 		if viewport and viewport.size_changed.is_connected(_on_viewport_resized):
 			viewport.size_changed.disconnect(_on_viewport_resized)
+		Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 		return
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
 		if not is_node_ready():
@@ -623,6 +625,8 @@ func _sync_glyph_overlay_to_camera() -> void:
 	_glyph_overlay.queue_redraw()
 	if _page_dots != null:
 		_page_dots.queue_redraw()
+	if not _panning:
+		_set_hover_index(_hoverable_index_at(_world_mouse()))
 
 
 func _draw_award_stars_on(item: CanvasItem) -> void:
@@ -643,8 +647,12 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 		var unlocked := GameSession.is_level_unlocked(level)
 		var stars := GameSession.get_level_stars(level.level_id)
 		var completed := unlocked and stars > 0
+		var hovered := unlocked and i == _hover_index
+		if hovered:
+			NebulaEffect.draw_selection_glow(item, center, dsize, _theme_color)
 		if completed:
-			item.draw_colored_polygon(pts, _theme_color.lightened(0.08))
+			var fill := _theme_color.lightened(0.20 if hovered else 0.08)
+			item.draw_colored_polygon(pts, fill)
 			if GameSession.is_perfect_clear(level.level_id):
 				FaVector.draw_star(
 					item,
@@ -657,7 +665,12 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 			else:
 				FaVector.draw_check(item, center, dsize * 0.30)
 		elif unlocked:
-			item.draw_polyline(outline, _theme_color, rim_w * 1.4, true)
+			if hovered:
+				var wash := _theme_color.lightened(0.12)
+				wash.a = 0.55
+				item.draw_colored_polygon(pts, wash)
+			var rim := _theme_color.lightened(0.18) if hovered else _theme_color
+			item.draw_polyline(outline, rim, rim_w * (1.8 if hovered else 1.4), true)
 			var number := str(i + 1)
 			var font_size := 32 if i < 99 else 26
 			var text_size := _map_font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
@@ -750,6 +763,11 @@ func _diamond_points(center: Vector2, size: float) -> PackedVector2Array:
 	])
 
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and not _panning:
+		_update_hover_from_screen((event as InputEventMouseMotion).position)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
@@ -776,10 +794,11 @@ func _unhandled_input(event: InputEvent) -> void:
 					_begin_pan(-1)
 			else:
 				_end_pan()
-	elif event is InputEventMouseMotion and _panning:
-		var motion := event as InputEventMouseMotion
-		_apply_pan_delta(motion.relative)
-		_mark_input_handled()
+	elif event is InputEventMouseMotion:
+		if _panning:
+			var motion := event as InputEventMouseMotion
+			_apply_pan_delta(motion.relative)
+			_mark_input_handled()
 	elif event is InputEventScreenTouch:
 		_handle_touch(event as InputEventScreenTouch)
 	elif event is InputEventScreenDrag:
@@ -793,6 +812,7 @@ func _mark_input_handled() -> void:
 
 
 func _handle_touch(event: InputEventScreenTouch) -> void:
+	_set_hover_index(-1)
 	if event.pressed:
 		_pan_velocity_y = 0.0
 		var world := _screen_to_world(event.position)
@@ -820,6 +840,7 @@ func _handle_drag(event: InputEventScreenDrag) -> void:
 
 
 func _begin_pan(pointer_id: int) -> void:
+	_set_hover_index(-1)
 	if _snap_tween:
 		_snap_tween.kill()
 		_snap_tween = null
@@ -839,6 +860,42 @@ func _end_pan() -> void:
 	else:
 		_clamp_camera_to_pages()
 	_pan_velocity_y = 0.0
+	_set_hover_index(_hoverable_index_at(_world_mouse()))
+
+
+func _gui_blocks_hover() -> bool:
+	var viewport := get_viewport()
+	if viewport == null:
+		return false
+	var ctrl := viewport.gui_get_hovered_control()
+	return ctrl != null and ctrl.mouse_filter != Control.MOUSE_FILTER_IGNORE
+
+
+func _hoverable_index_at(world_pos: Vector2) -> int:
+	if _panning or _gui_blocks_hover():
+		return -1
+	var hit := _hit_level(world_pos)
+	if hit < 0 or hit >= _levels.size():
+		return -1
+	var level: LevelConfig = _levels[hit]
+	if level == null or not GameSession.is_level_unlocked(level):
+		return -1
+	return hit
+
+
+func _update_hover_from_screen(_screen: Vector2) -> void:
+	_set_hover_index(_hoverable_index_at(_world_mouse()))
+
+
+func _set_hover_index(index: int) -> void:
+	if _hover_index == index:
+		return
+	_hover_index = index
+	Input.set_default_cursor_shape(
+		Input.CURSOR_POINTING_HAND if index >= 0 else Input.CURSOR_ARROW
+	)
+	if _glyph_overlay != null:
+		_glyph_overlay.queue_redraw()
 
 
 func _hit_level(world_pos: Vector2) -> int:

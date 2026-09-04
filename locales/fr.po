@@ -154,6 +154,12 @@ msgstr "Données"
 msgid "UI_LEVEL_COMPLETE"
 msgstr "Niveau terminé"
 
+msgid "UI_KLEARED_PRIMARY"
+msgstr "Niveau"
+
+msgid "UI_KLEARED_SECONDARY"
+msgstr "Kleared"
+
 msgid "UI_SECTION_COMPLETE"
 msgstr "Section terminée !"
 
