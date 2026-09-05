@@ -209,6 +209,9 @@ func _face_style(bg: Color, with_shadow: bool) -> StyleBoxFlat:
 
 
 func _build() -> void:
+	_rainbow_border = null
+	_nebula = null
+	_nebula_mat = null
 	for child in get_children():
 		child.queue_free()
 
@@ -278,6 +281,13 @@ func _build() -> void:
 			_nebula_mat.set_shader_parameter("tint_amount", 0.88)
 		_face.add_child(_nebula)
 		_face.move_child(_nebula, 0)
+		if kind == Kind.PRIMARY:
+			## Same rainbow ring as cream CTAs, so nebula buttons still read on a nebula board.
+			_rainbow_border = UiTheme.attach_rainbow_border(
+				_face,
+				float(UiTheme.BUTTON_CORNER_RADIUS),
+				float(UiTheme.BUTTON_BORDER_WIDTH) + 1.0
+			)
 		margin.move_to_front()
 	else:
 		## Shared BrandRainbow stroke (same palette/phase as Klear title).

@@ -1,6 +1,6 @@
 extends Control
 
-## Draws the diamond burst for LevelKlearedOverlay (behind the brand, over the modal).
+## Draws the diamond burst for LevelKlearedOverlay (behind the brand).
 
 func _draw() -> void:
 	var host := get_parent()
