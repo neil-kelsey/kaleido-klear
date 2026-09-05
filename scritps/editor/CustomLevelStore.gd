@@ -6,6 +6,11 @@ const USER_LEVELS_DIR := "user://custom_levels/"
 const PROJECT_LEVELS_DIR := "res://resources/levels/"
 const REGISTRY_PATH := "res://scritps/LevelRegistry.gd"
 
+## level_id → PackedStringArray of res:// paths. Built once; loading every
+## .tres on each lookup (CACHE_MODE_IGNORE) is what froze Android level select.
+var _project_path_index_cache: Dictionary = {}
+var _project_path_index_valid := false
+
 
 func ensure_directory() -> void:
 	DirAccess.make_dir_recursive_absolute(USER_LEVELS_DIR)
@@ -16,11 +21,24 @@ func saves_to_project() -> bool:
 	return OS.has_feature("editor")
 
 
+func invalidate_project_index() -> void:
+	_project_path_index_valid = false
+	_project_path_index_cache.clear()
+
+
 func has_level(level_id: String) -> bool:
 	## True for on-device drafts only (used to unlock creator drafts freely).
 	if level_id.strip_edges().is_empty():
 		return false
 	return ResourceLoader.exists(_user_level_path(level_id))
+
+
+func user_draft_ids() -> Dictionary:
+	var ids: Dictionary = {}
+	for level in list_levels():
+		if level != null and not level.level_id.strip_edges().is_empty():
+			ids[level.level_id] = true
+	return ids
 
 
 func has_project_level(level_id: String) -> bool:
@@ -202,6 +220,7 @@ func delete_level(level_id: String) -> Error:
 				if last_err != OK:
 					return last_err
 		rewrite_project_manifest()
+		invalidate_project_index()
 		if LevelCatalog != null:
 			LevelCatalog.reload_levels()
 		return last_err
@@ -236,6 +255,7 @@ func _save_project_levels(levels: Array[LevelConfig]) -> Error:
 			wrote = true
 	if wrote:
 		rewrite_project_manifest()
+		invalidate_project_index()
 		if LevelCatalog != null:
 			LevelCatalog.reload_levels()
 	return last_err
@@ -243,9 +263,11 @@ func _save_project_levels(levels: Array[LevelConfig]) -> Error:
 
 func _project_path_index() -> Dictionary:
 	## level_id -> PackedStringArray of on-disk paths (legacy filenames included).
+	if _project_path_index_valid:
+		return _project_path_index_cache
 	var index: Dictionary = {}
 	for path in list_project_level_paths():
-		var level := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
+		var level := ResourceLoader.load(path) as LevelConfig
 		if level == null:
 			continue
 		var id := level.level_id.strip_edges()
@@ -254,6 +276,8 @@ func _project_path_index() -> Dictionary:
 		var bucket: PackedStringArray = index.get(id, PackedStringArray())
 		bucket.append(path)
 		index[id] = bucket
+	_project_path_index_cache = index
+	_project_path_index_valid = true
 	return index
 
 

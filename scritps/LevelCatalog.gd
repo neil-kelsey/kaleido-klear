@@ -94,6 +94,8 @@ func _ready() -> void:
 
 
 func reload_levels() -> void:
+	if CustomLevelStore != null and CustomLevelStore.has_method("invalidate_project_index"):
+		CustomLevelStore.invalidate_project_index()
 	_project_levels_by_section.clear()
 	_project_levels_by_section.resize(SECTIONS.size())
 	for i in SECTIONS.size():

@@ -36,9 +36,6 @@ var _map_font: Font
 var _chart_sprite: Sprite2D
 var _nebula_mat: ShaderMaterial
 var _fx_time := 0.0
-var _glyph_overlay: Control
-var _overlay_cam_y := INF
-var _overlay_cam_z := 0.0
 var _last_vp_size := Vector2.ZERO
 var _hover_index := -1
 var _navigating := false
@@ -58,7 +55,10 @@ func _ready() -> void:
 	set_process(true)
 	_ensure_chart_sprite()
 	camera.make_current()
-	_ensure_glyph_overlay()
+	if title_badge != null:
+		title_badge.z_index = 40
+	if back_button != null:
+		back_button.z_index = 50
 	back_button.pressed.connect(_on_back_pressed)
 	_apply_secondary_title_style(date_label)
 	_apply_secondary_title_style(empty_label)
@@ -80,7 +80,6 @@ func _process(delta: float) -> void:
 		_nebula_mat.set_shader_parameter("rect_size", nebula_bg.size)
 		var pulse := 0.99 + 0.01 * sin(_fx_time * 0.25)
 		_nebula_mat.set_shader_parameter("brightness", pulse)
-	_sync_glyph_overlay_to_camera()
 
 
 func _notification(what: int) -> void:
@@ -95,7 +94,6 @@ func _notification(what: int) -> void:
 			return
 		_apply_translations()
 		queue_redraw()
-		_invalidate_glyph_overlay()
 
 
 func _viewport_is_ready() -> bool:
@@ -107,7 +105,8 @@ func _viewport_is_ready() -> bool:
 
 func _await_valid_viewport() -> void:
 	var frames := 0
-	while not _viewport_is_ready() and frames < 60:
+	var max_frames := 4 if OS.has_feature("mobile") else 60
+	while not _viewport_is_ready() and frames < max_frames:
 		await get_tree().process_frame
 		frames += 1
 
@@ -184,7 +183,6 @@ func _rebuild_map() -> void:
 		camera.position = Vector2(0, _camera_y_for_pole())
 		_sync_chart_sprite()
 		queue_redraw()
-		_invalidate_glyph_overlay()
 		return
 	var start_y := HEADER_CLEARANCE
 	var cols := mini(COLUMNS, _levels.size())
@@ -197,7 +195,6 @@ func _rebuild_map() -> void:
 	camera.position = Vector2(0, _camera_y_for_pole())
 	_sync_chart_sprite()
 	queue_redraw()
-	_invalidate_glyph_overlay()
 
 
 func _camera_y_for_pole() -> float:
@@ -245,48 +242,8 @@ func _sync_chart_sprite() -> void:
 	_chart_sprite.modulate = Color(1.0, 0.88, 0.50, 0.32)
 
 
-func _ensure_glyph_overlay() -> void:
-	if _glyph_overlay != null and is_instance_valid(_glyph_overlay):
-		return
-	var hud := get_node_or_null("UI/Root") as Control
-	if hud == null:
-		return
-	_glyph_overlay = _AwardStarOverlay.new()
-	_glyph_overlay.host = self
-	_glyph_overlay.name = "AwardStarOverlay"
-	_glyph_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_glyph_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	## Sit behind the title badge so diamonds tuck under it.
-	_glyph_overlay.z_index = 0
-	hud.add_child(_glyph_overlay)
-	hud.move_child(_glyph_overlay, 0)
-	if title_badge != null:
-		title_badge.z_index = 40
-	if back_button != null:
-		back_button.z_index = 50
-
-
-func _world_pos_to_screen(world: Vector2) -> Vector2:
-	return get_viewport().get_canvas_transform() * world
-
-
-func _invalidate_glyph_overlay() -> void:
-	_overlay_cam_y = INF
-	if _glyph_overlay != null:
-		_glyph_overlay.queue_redraw()
-
-
-func _sync_glyph_overlay_to_camera() -> void:
-	if _glyph_overlay == null or camera == null:
-		return
-	var y := camera.position.y
-	var z := camera.zoom.x
-	if is_equal_approx(y, _overlay_cam_y) and is_equal_approx(z, _overlay_cam_z):
-		return
-	_overlay_cam_y = y
-	_overlay_cam_z = z
-	_glyph_overlay.queue_redraw()
-	_set_hover_index(_hoverable_index_at(_screen_to_world(get_viewport().get_mouse_position())))
+func _draw() -> void:
+	_draw_award_stars_on(self)
 
 
 func _screen_to_world(screen_pos: Vector2) -> Vector2:
@@ -295,15 +252,12 @@ func _screen_to_world(screen_pos: Vector2) -> Vector2:
 
 func _draw_award_stars_on(item: CanvasItem) -> void:
 	var z := maxf(camera.zoom.x, 0.001)
-	var dsize := LEVEL_DIAMOND_SIZE * z
-	var rim_w := 1.8 * MAP_DRAW_ZOOM
-	var vp := get_viewport_rect().size
-	var pad := dsize
+	var world_px := 1.0 / z
+	var dsize := LEVEL_DIAMOND_SIZE
+	var rim_w := 1.8 * MAP_DRAW_ZOOM * world_px
 	var count := mini(_levels.size(), _level_positions.size())
 	for i in count:
-		var center := _world_pos_to_screen(_level_positions[i])
-		if center.x < -pad or center.x > vp.x + pad or center.y < -pad or center.y > vp.y + pad:
-			continue
+		var center: Vector2 = _level_positions[i]
 		var level: LevelConfig = _levels[i]
 		var pts := _diamond_points(center, dsize)
 		var outline := pts + PackedVector2Array([pts[0]])
@@ -322,8 +276,8 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 					center,
 					dsize * 0.42,
 					Color(0.95, 0.78, 0.2, 1.0),
-					2.0 * MAP_DRAW_ZOOM,
-					1.0 * MAP_DRAW_ZOOM
+					2.0 * MAP_DRAW_ZOOM * world_px,
+					1.0 * MAP_DRAW_ZOOM * world_px
 				)
 			else:
 				FaVector.draw_check(item, center, dsize * 0.30)
@@ -335,7 +289,8 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 			var rim := _theme_color.lightened(0.18) if hovered else _theme_color
 			item.draw_polyline(outline, rim, rim_w * (1.8 if hovered else 1.4), true)
 			var number := str(i + 1)
-			var font_size := 32 if i < 99 else 26
+			var font_px := 32.0 if i < 99 else 26.0
+			var font_size := maxi(10, int(round(font_px * world_px)))
 			var text_size := _map_font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 			var text_pos := Vector2(
 				center.x - text_size.x * 0.5,
@@ -357,6 +312,10 @@ func _diamond_points(center: Vector2, size: float) -> PackedVector2Array:
 	])
 
 
+func _desktop_pointer() -> bool:
+	return not OS.has_feature("mobile")
+
+
 func _gui_blocks_hover() -> bool:
 	var viewport := get_viewport()
 	if viewport == null:
@@ -366,7 +325,7 @@ func _gui_blocks_hover() -> bool:
 
 
 func _hoverable_index_at(world: Vector2) -> int:
-	if _gui_blocks_hover():
+	if not _desktop_pointer() or _gui_blocks_hover():
 		return -1
 	var hit := _hit_level(world)
 	if hit < 0 or hit >= _levels.size():
@@ -384,8 +343,7 @@ func _set_hover_index(index: int) -> void:
 	Input.set_default_cursor_shape(
 		Input.CURSOR_POINTING_HAND if index >= 0 else Input.CURSOR_ARROW
 	)
-	if _glyph_overlay != null:
-		_glyph_overlay.queue_redraw()
+	queue_redraw()
 
 
 func _hit_level(world: Vector2) -> int:
@@ -397,11 +355,15 @@ func _hit_level(world: Vector2) -> int:
 
 
 func _input(event: InputEvent) -> void:
+	if not _desktop_pointer():
+		return
 	if event is InputEventMouseMotion:
 		_set_hover_index(_hoverable_index_at(_screen_to_world(get_viewport().get_mouse_position())))
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if OS.has_feature("mobile") and event is InputEventMouseButton:
+		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
@@ -438,11 +400,3 @@ func _on_back_pressed() -> void:
 
 func handle_back() -> void:
 	_on_back_pressed()
-
-
-class _AwardStarOverlay extends Control:
-	var host: Node = null
-
-	func _draw() -> void:
-		if host != null and host.has_method("_draw_award_stars_on"):
-			host._draw_award_stars_on(self)

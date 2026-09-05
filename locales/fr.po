@@ -775,6 +775,9 @@ msgstr "Suivant"
 msgid "UI_TUTORIAL_GOT_IT"
 msgstr "Compris"
 
+msgid "UI_TUTORIAL_HELP"
+msgstr "Comment jouer"
+
 msgid "UI_TUTORIAL_BASIC_SWIPE"
 msgstr "Glissez chaque bloc vers le but de la même couleur autour de la grille.\n\nLa partie est gagnée lorsque la grille est dégagée."
 

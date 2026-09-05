@@ -61,6 +61,20 @@ grow_vertical = 0
 fa_icon = "bullseye"
 tooltip_key = "UI_GOALS"
 
+[node name="TutorialHelpButton" parent="UI" instance=ExtResource("7_icon")]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -116.0
+offset_top = 52.0
+offset_right = -20.0
+offset_bottom = 148.0
+grow_horizontal = 0
+fa_icon = "question-circle"
+tooltip_key = "UI_TUTORIAL_HELP"
+
 [node name="UndoButton" parent="UI" instance=ExtResource("7_icon")]
 unique_name_in_owner = true
 anchors_preset = 7
@@ -158,3 +172,4 @@ unique_name_in_owner = true
 [connection signal="pressed" from="UI/RestartButton" to="." method="_on_restart_button_pressed"]
 [connection signal="pressed" from="UI/UndoButton" to="." method="_on_undo_button_pressed"]
 [connection signal="pressed" from="UI/GoalsButton" to="." method="_on_goals_button_pressed"]
+[connection signal="pressed" from="UI/TutorialHelpButton" to="." method="_on_tutorial_help_pressed"]

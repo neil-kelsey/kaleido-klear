@@ -78,10 +78,8 @@ var _white_fade: ColorRect
 var _exit_tween: Tween
 var _nebula_mat: ShaderMaterial
 var _fx_time := 0.0
-var _glyph_overlay: Control
 var _page_dots: Control
-var _overlay_cam_y := INF
-var _overlay_cam_z := 0.0
+var _dots_drawn_index := -1
 var _hover_index := -1
 var _last_vp_size := Vector2.ZERO
 var _fps_label: Label
@@ -89,6 +87,12 @@ var _fps_accum := 0.0
 var _fps_frames := 0
 var _ready_msec := 0
 var _resize_rebuilds := 0
+var _first_draw_logged := false
+## Snapshot at rebuild so _draw never walks the catalog (find_level_context
+## recopies and sorts every section on each call).
+var _level_unlocked: Array[bool] = []
+var _level_stars: PackedInt32Array = PackedInt32Array()
+var _level_perfect: Array[bool] = []
 
 
 func _ready() -> void:
@@ -116,9 +120,12 @@ func _ready() -> void:
 
 	camera.make_current()
 	_ensure_white_fade()
-	_ensure_glyph_overlay()
 	_ensure_page_dots()
 	_ensure_fps_overlay()
+	if title_badge != null:
+		title_badge.z_index = 40
+	if back_button != null:
+		back_button.z_index = 50
 	back_button.pressed.connect(_on_back_pressed)
 	_apply_translations()
 	hint_label.visible = false
@@ -132,7 +139,8 @@ func _ready() -> void:
 	## Linux/XWayland can report a 0x0 viewport on the first frames. Laying out
 	## against that parks the camera in empty space (near-black sky). Wait, then
 	## never rebuild from a degenerate size so a later 0-size event cannot wipe
-	## a good layout.
+	## a good layout. On Android the size is already valid — a long wait is a
+	## black screen.
 	var waited := await _await_valid_viewport()
 	print("[DimensionLevels] viewport ready after %s frames +%sms size=%s" % [
 		waited, _elapsed_ms(), get_viewport_rect().size
@@ -156,7 +164,6 @@ func _notification(what: int) -> void:
 			return
 		_apply_translations()
 		queue_redraw()
-		_invalidate_glyph_overlay()
 
 
 func _viewport_is_ready() -> bool:
@@ -168,7 +175,8 @@ func _viewport_is_ready() -> bool:
 
 func _await_valid_viewport() -> int:
 	var frames := 0
-	while not _viewport_is_ready() and frames < 60:
+	var max_frames := 4 if OS.has_feature("mobile") else 60
+	while not _viewport_is_ready() and frames < max_frames:
 		await get_tree().process_frame
 		frames += 1
 	return frames
@@ -185,7 +193,7 @@ func _process(delta: float) -> void:
 		_nebula_mat.set_shader_parameter("rect_size", nebula_bg.size)
 		var pulse := 0.99 + 0.01 * sin(_fx_time * 0.25)
 		_nebula_mat.set_shader_parameter("brightness", pulse)
-	_sync_glyph_overlay_to_camera()
+	_sync_page_dots_to_camera()
 	_update_fps_overlay(delta)
 
 
@@ -238,8 +246,39 @@ func _rebuild_map() -> void:
 	_apply_translations()
 	_sync_chart_sprite()
 	_sync_title_to_chart_pole()
+	_cache_level_progress()
+	print("[DimensionLevels] rebuild +%sms levels=%s" % [_elapsed_ms(), _levels.size()])
 	queue_redraw()
-	_invalidate_glyph_overlay()
+
+
+func _cache_level_progress() -> void:
+	## Sequential campaign unlock. Never call has_project_level per diamond —
+	## that reloaded every level .tres (200+) for each of the 150 nodes.
+	var n := _levels.size()
+	_level_unlocked.resize(n)
+	_level_stars.resize(n)
+	_level_perfect.resize(n)
+	var dim_unlocked := LevelCatalog.is_dimension_unlocked(_dimension_index)
+	var draft_ids: Dictionary = CustomLevelStore.user_draft_ids()
+	for i in n:
+		var level: LevelConfig = _levels[i]
+		var stars := 0
+		var perfect := false
+		if level != null:
+			stars = GameSession.get_level_stars(level.level_id)
+			perfect = GameSession.is_perfect_clear(level.level_id)
+		_level_stars[i] = stars
+		_level_perfect[i] = perfect
+		if GameSession.develop_mode:
+			_level_unlocked[i] = level != null
+			continue
+		if level != null and draft_ids.has(level.level_id):
+			_level_unlocked[i] = true
+			continue
+		if not dim_unlocked or level == null:
+			_level_unlocked[i] = false
+			continue
+		_level_unlocked[i] = true if i <= 0 else _level_stars[i - 1] > 0
 
 
 func _content_width() -> float:
@@ -450,15 +489,13 @@ func _go_to_page(index: int, animate: bool) -> void:
 	if not animate:
 		camera.position = target
 		_clamp_camera_to_pages()
-		if _page_dots != null:
-			_page_dots.queue_redraw()
+		_sync_page_dots_to_camera()
 		return
 	_snap_tween = create_tween()
 	_snap_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_snap_tween.tween_property(camera, "position", target, PAGE_SNAP_DURATION)
 	_snap_tween.finished.connect(func() -> void:
-		if _page_dots != null:
-			_page_dots.queue_redraw()
+		_sync_page_dots_to_camera()
 	)
 
 
@@ -554,28 +591,6 @@ func _update_fps_overlay(delta: float) -> void:
 	_fps_frames = 0
 
 
-func _ensure_glyph_overlay() -> void:
-	## Parent to the HUD canvas so the camera never scales these pixels.
-	if _glyph_overlay != null and is_instance_valid(_glyph_overlay):
-		return
-	var hud := get_node_or_null("UI/Root") as Control
-	if hud == null:
-		return
-	_glyph_overlay = _AwardStarOverlay.new()
-	_glyph_overlay.host = self
-	_glyph_overlay.name = "AwardStarOverlay"
-	_glyph_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_glyph_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	## Sit behind the dimension title so scrolling diamonds tuck under the badge.
-	_glyph_overlay.z_index = 0
-	hud.add_child(_glyph_overlay)
-	hud.move_child(_glyph_overlay, 0)
-	if title_badge != null:
-		title_badge.z_index = 40
-	if back_button != null:
-		back_button.z_index = 50
-
-
 func _ensure_page_dots() -> void:
 	if _page_dots != null and is_instance_valid(_page_dots):
 		return
@@ -607,51 +622,44 @@ func _page_dot_index() -> int:
 	return _page_index
 
 
-func _world_pos_to_screen(world: Vector2) -> Vector2:
-	return get_viewport().get_canvas_transform() * world
-
-
-func _invalidate_glyph_overlay() -> void:
-	_overlay_cam_y = INF
-	if _glyph_overlay != null:
-		_glyph_overlay.queue_redraw()
-	if _page_dots != null:
-		_page_dots.queue_redraw()
-
-
-func _sync_glyph_overlay_to_camera() -> void:
-	if _glyph_overlay == null or camera == null:
+func _sync_page_dots_to_camera() -> void:
+	if _page_dots == null:
 		return
-	var y := camera.position.y
-	var z := camera.zoom.x
-	if is_equal_approx(y, _overlay_cam_y) and is_equal_approx(z, _overlay_cam_z):
+	var idx := _page_dot_index()
+	if idx == _dots_drawn_index:
 		return
-	_overlay_cam_y = y
-	_overlay_cam_z = z
-	_glyph_overlay.queue_redraw()
-	if _page_dots != null:
-		_page_dots.queue_redraw()
-	if not _panning:
-		_set_hover_index(_hoverable_index_at(_world_mouse()))
+	_dots_drawn_index = idx
+	_page_dots.queue_redraw()
+
+
+func _camera_view_rect(pad: float) -> Rect2:
+	var z := maxf(camera.zoom.x, 0.001)
+	var vp := get_viewport_rect().size
+	var size := vp / z
+	var origin := camera.position - size * 0.5
+	return Rect2(origin, size).grow(pad)
 
 
 func _draw_award_stars_on(item: CanvasItem) -> void:
-	## Same draw calls as the dimension map, in screen pixels (no camera resampling).
+	## World space — the camera pans these for free. A HUD overlay had to
+	## rebuild every diamond on every swipe frame, and each diamond called
+	## GameSession.is_level_unlocked (catalog copy + sort per section).
+	var dsize := _diamond_size()
 	var z := maxf(camera.zoom.x, 0.001)
-	var dsize := _diamond_size() * z
-	var rim_w := 1.8 * MAP_DRAW_ZOOM
-	var vp := get_viewport_rect().size
-	var pad := dsize
+	var world_px := 1.0 / z
+	var rim_w := 1.8 * MAP_DRAW_ZOOM * world_px
+	var view := _camera_view_rect(dsize)
 	var count := mini(_levels.size(), _level_positions.size())
+	var drawn := 0
 	for i in count:
-		var center := _world_pos_to_screen(_level_positions[i])
-		if center.x < -pad or center.x > vp.x + pad or center.y < -pad or center.y > vp.y + pad:
+		var center: Vector2 = _level_positions[i]
+		if not view.has_point(center):
 			continue
-		var level: LevelConfig = _levels[i]
+		drawn += 1
 		var pts := _diamond_points(center, dsize)
 		var outline := pts + PackedVector2Array([pts[0]])
-		var unlocked := GameSession.is_level_unlocked(level)
-		var stars := GameSession.get_level_stars(level.level_id)
+		var unlocked := i < _level_unlocked.size() and _level_unlocked[i]
+		var stars := _level_stars[i] if i < _level_stars.size() else 0
 		var completed := unlocked and stars > 0
 		var hovered := unlocked and i == _hover_index
 		if hovered:
@@ -659,14 +667,14 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 		if completed:
 			var fill := _theme_color.lightened(0.20 if hovered else 0.08)
 			item.draw_colored_polygon(pts, fill)
-			if GameSession.is_perfect_clear(level.level_id):
+			if i < _level_perfect.size() and _level_perfect[i]:
 				FaVector.draw_star(
 					item,
 					center,
 					dsize * 0.42,
 					Color(0.95, 0.78, 0.2, 1.0),
-					2.0 * MAP_DRAW_ZOOM,
-					1.0 * MAP_DRAW_ZOOM
+					2.0 * MAP_DRAW_ZOOM * world_px,
+					1.0 * MAP_DRAW_ZOOM * world_px
 				)
 			else:
 				FaVector.draw_check(item, center, dsize * 0.30)
@@ -678,7 +686,8 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 			var rim := _theme_color.lightened(0.18) if hovered else _theme_color
 			item.draw_polyline(outline, rim, rim_w * (1.8 if hovered else 1.4), true)
 			var number := str(i + 1)
-			var font_size := 32 if i < 99 else 26
+			var font_px := 32.0 if i < 99 else 26.0
+			var font_size := maxi(10, int(round(font_px * world_px)))
 			var text_size := _map_font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 			var text_pos := Vector2(
 				center.x - text_size.x * 0.5,
@@ -688,6 +697,11 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 		else:
 			item.draw_polyline(outline, LOCKED_GREY, rim_w * 1.2, true)
 			FaVector.draw_lock(item, center, dsize * 0.34)
+	if not _first_draw_logged:
+		_first_draw_logged = true
+		print("[DimensionLevels] first diamonds draw +%sms visible=%s / %s" % [
+			_elapsed_ms(), drawn, count
+		])
 
 
 func _ensure_chart_sprite() -> void:
@@ -733,6 +747,7 @@ func _sync_chart_sprite() -> void:
 
 func _draw() -> void:
 	_draw_group_headers()
+	_draw_award_stars_on(self)
 
 
 func _draw_group_headers() -> void:
@@ -770,11 +785,19 @@ func _diamond_points(center: Vector2, size: float) -> PackedVector2Array:
 
 
 func _input(event: InputEvent) -> void:
+	if not _desktop_pointer():
+		return
 	if event is InputEventMouseMotion and not _panning:
 		_update_hover_from_screen((event as InputEventMouseMotion).position)
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if OS.has_feature("mobile") and (
+		event is InputEventMouseButton or event is InputEventMouseMotion
+	):
+		## Touch already arrives as ScreenTouch/ScreenDrag. The emulated mouse
+		## copy would double-pan and re-run hover hit-tests on every swipe.
+		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
@@ -866,7 +889,12 @@ func _end_pan() -> void:
 	else:
 		_clamp_camera_to_pages()
 	_pan_velocity_y = 0.0
-	_set_hover_index(_hoverable_index_at(_world_mouse()))
+	if _desktop_pointer():
+		_set_hover_index(_hoverable_index_at(_world_mouse()))
+
+
+func _desktop_pointer() -> bool:
+	return not OS.has_feature("mobile")
 
 
 func _gui_blocks_hover() -> bool:
@@ -878,13 +906,12 @@ func _gui_blocks_hover() -> bool:
 
 
 func _hoverable_index_at(world_pos: Vector2) -> int:
-	if _panning or _gui_blocks_hover():
+	if not _desktop_pointer() or _panning or _gui_blocks_hover():
 		return -1
 	var hit := _hit_level(world_pos)
 	if hit < 0 or hit >= _levels.size():
 		return -1
-	var level: LevelConfig = _levels[hit]
-	if level == null or not GameSession.is_level_unlocked(level):
+	if hit >= _level_unlocked.size() or not _level_unlocked[hit]:
 		return -1
 	return hit
 
@@ -900,8 +927,7 @@ func _set_hover_index(index: int) -> void:
 	Input.set_default_cursor_shape(
 		Input.CURSOR_POINTING_HAND if index >= 0 else Input.CURSOR_ARROW
 	)
-	if _glyph_overlay != null:
-		_glyph_overlay.queue_redraw()
+	queue_redraw()
 
 
 func _hit_level(world_pos: Vector2) -> int:
@@ -922,7 +948,7 @@ func _on_level_clicked(index: int) -> void:
 	if index < 0 or index >= _levels.size():
 		return
 	var level: LevelConfig = _levels[index]
-	if not GameSession.is_level_unlocked(level):
+	if index >= _level_unlocked.size() or not _level_unlocked[index]:
 		return
 	_navigating = true
 	GameSession.clear_level_playlist()
@@ -960,14 +986,6 @@ func _on_back_pressed() -> void:
 
 func handle_back() -> void:
 	_on_back_pressed()
-
-
-class _AwardStarOverlay extends Control:
-	var host: Node
-
-	func _draw() -> void:
-		if host != null and host.has_method("_draw_award_stars_on"):
-			host._draw_award_stars_on(self)
 
 
 class _PageDots extends Control:

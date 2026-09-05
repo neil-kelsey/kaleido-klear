@@ -20,6 +20,7 @@ const INTRO_ZOOM_DURATION := 0.9
 @onready var undo_button: CircleIconButton = %UndoButton
 @onready var restart_button: CircleIconButton = %RestartButton
 @onready var goals_button: CircleIconButton = %GoalsButton
+@onready var tutorial_help_button: CircleIconButton = %TutorialHelpButton
 @onready var lives_hud: LivesHearts = %LivesHearts
 @onready var goal_border_left: GoalBorder = $UI/GoalBorderLeft
 @onready var goal_border_top: GoalBorder = $UI/GoalBorderTop
@@ -86,6 +87,7 @@ func _ready() -> void:
 	_update_lives_hud(board.get_lives())
 	_layout_hud_circle_buttons()
 	get_viewport().size_changed.connect(_layout_hud_circle_buttons)
+	_sync_tutorial_help_button()
 	_update_undo_button()
 	_play_level_intro()
 
@@ -139,6 +141,24 @@ func _layout_hud_circle_buttons() -> void:
 	undo_button.offset_right = g * 0.5 + gap + s
 	undo_button.offset_bottom = -inset
 	undo_button.offset_top = -inset - s
+	_layout_tutorial_help_button()
+
+
+func _layout_tutorial_help_button() -> void:
+	if tutorial_help_button == null:
+		return
+	var s := float(UiTheme.CIRCLE_BUTTON_SIZE)
+	var insets := UiTheme.viewport_safe_insets(get_viewport())
+	var inset := maxf(
+		float(UiTheme.CIRCLE_BUTTON_EDGE_INSET),
+		maxf(insets.z, insets.y) + 12.0
+	)
+	tutorial_help_button.button_size = UiTheme.CIRCLE_BUTTON_SIZE
+	tutorial_help_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	tutorial_help_button.offset_right = -inset
+	tutorial_help_button.offset_left = -inset - s
+	tutorial_help_button.offset_top = inset
+	tutorial_help_button.offset_bottom = inset + s
 
 
 
@@ -223,6 +243,8 @@ func _apply_section_theme() -> void:
 		restart_button.accent_color = theme
 	if goals_button != null:
 		goals_button.accent_color = theme
+	if tutorial_help_button != null:
+		tutorial_help_button.accent_color = theme
 	if next_level_hud_button != null:
 		next_level_hud_button.accent_color = theme
 
@@ -283,6 +305,8 @@ func _set_play_controls_enabled(enabled: bool) -> void:
 		next_level_hud_button.disabled = not enabled
 	if goals_button != null:
 		goals_button.disabled = not enabled
+	if tutorial_help_button != null:
+		tutorial_help_button.disabled = not enabled
 	if enabled:
 		_update_undo_button()
 	else:
@@ -578,7 +602,11 @@ func _is_tutorial_open() -> bool:
 
 
 func _try_start_tutorial() -> bool:
-	var script := TutorialWalkthrough.script_for(_current_level)
+	return _open_tutorial(false)
+
+
+func _open_tutorial(replay: bool) -> bool:
+	var script := TutorialWalkthrough.script_for(_current_level, replay)
 	if script.is_empty():
 		return false
 	if _tutorial == null or not is_instance_valid(_tutorial):
@@ -589,6 +617,12 @@ func _try_start_tutorial() -> bool:
 		_tutorial.finished.connect(_on_tutorial_finished)
 	_tutorial.begin(script, self)
 	return true
+
+
+func _sync_tutorial_help_button() -> void:
+	if tutorial_help_button == null:
+		return
+	tutorial_help_button.visible = not TutorialWalkthrough.script_for_group(_current_level).is_empty()
 
 
 func _on_tutorial_finished() -> void:
@@ -678,6 +712,13 @@ func _on_goals_button_pressed() -> void:
 	_update_undo_button()
 
 
+func _on_tutorial_help_pressed() -> void:
+	if _intro_playing or _is_modal_open():
+		return
+	if _open_tutorial(true):
+		_set_play_controls_enabled(false)
+
+
 func _on_undo_available_changed(_available: bool) -> void:
 	_update_undo_button()
 
@@ -701,6 +742,8 @@ func _update_undo_button() -> void:
 	restart_button.disabled = hard_block or goals_open
 	if goals_button != null:
 		goals_button.disabled = hard_block
+	if tutorial_help_button != null:
+		tutorial_help_button.disabled = hard_block
 	if next_level_hud_button != null and next_level_hud_button.visible:
 		next_level_hud_button.disabled = hard_block or goals_open
 

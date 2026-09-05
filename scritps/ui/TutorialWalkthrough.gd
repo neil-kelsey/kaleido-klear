@@ -8,8 +8,14 @@ signal finished
 const DIM := Color(0, 0, 0, 0.62)
 const GOLD := Color(0.82, 0.68, 0.28, 0.95)
 const HOLE_PAD := 10.0
-const CARD_MARGIN := 28.0
+const CARD_MARGIN := 20.0
 const CARD_GAP := 20.0
+const CARD_MAX_WIDTH := 820.0
+const CARD_PAD_X := 56.0
+const CARD_PAD_Y := 48.0
+const TITLE_FONT_SIZE := 58
+const BODY_FONT_SIZE := 40
+const BODY_LINE_SPACING := 14
 
 const SCRIPTS := {
 	"UI_GROUP_BASIC_TRAINING": {
@@ -70,22 +76,35 @@ var _body: Label
 var _next_button: MenuActionButton
 
 
-static func script_for(level: LevelConfig) -> Dictionary:
+static func script_for_group(level: LevelConfig) -> Dictionary:
 	if level == null or GameSession.playtest_mode:
 		return {}
-	if not LevelCatalog.is_tutorial_dimension(level.section_index):
-		var context := LevelCatalog.find_level_context(level.level_id)
-		if context.is_empty() or not LevelCatalog.is_tutorial_dimension(int(context.section_index)):
-			return {}
-	if not LevelCatalog.is_first_level_of_group(level):
+	if not _is_tutorial_level(level):
 		return {}
 	var group := level.group_title_key.strip_edges()
 	if not SCRIPTS.has(group):
 		return {}
-	var script: Dictionary = SCRIPTS[group]
-	if GameSession.has_seen_tutorial(str(script.get("id", group))):
+	return (SCRIPTS[group] as Dictionary).duplicate(true)
+
+
+static func script_for(level: LevelConfig, replay: bool = false) -> Dictionary:
+	var script := script_for_group(level)
+	if script.is_empty():
 		return {}
-	return script.duplicate(true)
+	if replay:
+		return script
+	if not LevelCatalog.is_first_level_of_group(level):
+		return {}
+	if GameSession.has_seen_tutorial(str(script.get("id", ""))):
+		return {}
+	return script
+
+
+static func _is_tutorial_level(level: LevelConfig) -> bool:
+	if LevelCatalog.is_tutorial_dimension(level.section_index):
+		return true
+	var context := LevelCatalog.find_level_context(level.level_id)
+	return not context.is_empty() and LevelCatalog.is_tutorial_dimension(int(context.section_index))
 
 
 func _ready() -> void:
@@ -156,32 +175,37 @@ func _build() -> void:
 	var card_style := StyleBoxFlat.new()
 	card_style.bg_color = Color(0.97, 0.97, 0.985, 1.0)
 	card_style.set_corner_radius_all(28)
-	card_style.content_margin_left = 32
-	card_style.content_margin_top = 28
-	card_style.content_margin_right = 32
-	card_style.content_margin_bottom = 28
+	card_style.content_margin_left = CARD_PAD_X
+	card_style.content_margin_top = CARD_PAD_Y
+	card_style.content_margin_right = CARD_PAD_X
+	card_style.content_margin_bottom = CARD_PAD_Y
 	card_style.border_color = Color(0.82, 0.68, 0.28, 0.7)
 	card_style.set_border_width_all(3)
 	card_style.shadow_color = Color(0, 0, 0, 0.32)
 	card_style.shadow_size = 14
 	card_style.shadow_offset = Vector2(0, 6)
 	_card.add_theme_stylebox_override("panel", card_style)
+	## Extra content height must grow upward so the bottom gap stays put.
+	_card.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	add_child(_card)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 20)
+	vbox.add_theme_constant_override("separation", 28)
 	_card.add_child(vbox)
 
 	_title = Label.new()
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	UiTheme.style_chart_modal_copy(_title)
+	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	vbox.add_child(_title)
 
 	_body = Label.new()
 	_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	UiTheme.style_chart_modal_copy(null, _body)
+	_body.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
+	_body.add_theme_constant_override("line_spacing", BODY_LINE_SPACING)
 	vbox.add_child(_body)
 
 	_next_button = MenuActionButton.new()
@@ -189,7 +213,7 @@ func _build() -> void:
 	_next_button.compact = true
 	_next_button.show_trailing_icon = false
 	_next_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_next_button.custom_minimum_size = Vector2(0, 112)
+	_next_button.custom_minimum_size = Vector2(0, 128)
 	_next_button.pressed.connect(_on_next_pressed)
 	vbox.add_child(_next_button)
 
@@ -263,29 +287,43 @@ func _layout_step() -> void:
 
 
 func _place_card(hole: Rect2, vp: Vector2) -> void:
-	var max_w := minf(640.0, vp.x - CARD_MARGIN * 2.0)
+	var insets := UiTheme.viewport_safe_insets(get_viewport())
+	var max_w := minf(CARD_MAX_WIDTH, vp.x - CARD_MARGIN * 2.0)
+	var side := maxf((vp.x - max_w) * 0.5, CARD_MARGIN)
+	var bottom_pad := maxf(side, insets.w)
+	var top_pad := maxf(side, insets.y)
+	var inner_w := maxf(max_w - CARD_PAD_X * 2.0, 1.0)
+	_title.custom_minimum_size.x = inner_w
+	_body.custom_minimum_size.x = inner_w
 	_card.custom_minimum_size.x = max_w
 	_card.reset_size()
-	var card_size := _card.get_combined_minimum_size()
-	card_size.x = max_w
-	var x := clampf((vp.x - card_size.x) * 0.5, CARD_MARGIN, vp.x - card_size.x - CARD_MARGIN)
-	var y := (vp.y - card_size.y) * 0.5
+	var h := _card.get_combined_minimum_size().y
+	h = maxf(h, _card.size.y)
+
+	## Default: sit on the bottom inset (same gap as the sides). Grow-up anchors
+	## keep that edge if the NEXT button later adds height.
+	var top := vp.y - bottom_pad - h
 	if hole.size.y > 0.0:
 		var below := hole.end.y + CARD_GAP
-		var above := hole.position.y - CARD_GAP - card_size.y
-		if below + card_size.y + CARD_MARGIN <= vp.y:
-			y = below
-		elif above >= CARD_MARGIN:
-			y = above
+		if below + h <= vp.y - bottom_pad:
+			top = below
 		else:
-			var space_above := hole.position.y
-			var space_below := vp.y - hole.end.y
-			if space_below >= space_above:
-				y = clampf(vp.y - card_size.y - CARD_MARGIN, CARD_MARGIN, vp.y - card_size.y)
-			else:
-				y = CARD_MARGIN
-	_card.position = Vector2(x, y)
-	_card.size = Vector2(max_w, card_size.y)
+			var above := hole.position.y - CARD_GAP - h
+			if above >= top_pad:
+				top = above
+	if top + h > vp.y - bottom_pad:
+		top = vp.y - bottom_pad - h
+	top = minf(top, vp.y - bottom_pad - h)
+
+	_card.anchor_left = 0.5
+	_card.anchor_right = 0.5
+	_card.anchor_top = 1.0
+	_card.anchor_bottom = 1.0
+	_card.offset_left = -max_w * 0.5
+	_card.offset_right = max_w * 0.5
+	_card.offset_bottom = -(vp.y - (top + h))
+	_card.offset_top = _card.offset_bottom - h
+	_card.size = Vector2(max_w, h)
 
 
 func _spotlight_rect() -> Rect2:

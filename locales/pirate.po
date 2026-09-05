@@ -775,6 +775,9 @@ msgstr "Onward"
 msgid "UI_TUTORIAL_GOT_IT"
 msgstr "Aye"
 
+msgid "UI_TUTORIAL_HELP"
+msgstr "How to play"
+
 msgid "UI_TUTORIAL_BASIC_SWIPE"
 msgstr "Shove each block into the matching colour mark around the board.\n\nYe’ve won when the board’s cleared."
 

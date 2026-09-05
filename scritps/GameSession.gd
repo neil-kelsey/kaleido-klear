@@ -273,7 +273,9 @@ func is_level_unlocked(level: LevelConfig) -> bool:
 		return level != null
 	if level == null:
 		return false
-	if CustomLevelStore.has_level(level.level_id) or CustomLevelStore.has_project_level(level.level_id):
+	## Device drafts only. has_project_level is true for every official .tres, and
+	## used to reload the whole library on each call — that is not an unlock gate.
+	if CustomLevelStore.has_level(level.level_id):
 		return true
 	var context: Dictionary = LevelCatalog.find_level_context(level.level_id)
 	if context.is_empty():

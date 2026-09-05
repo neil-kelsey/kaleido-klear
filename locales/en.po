@@ -775,6 +775,9 @@ msgstr "Next"
 msgid "UI_TUTORIAL_GOT_IT"
 msgstr "Got it"
 
+msgid "UI_TUTORIAL_HELP"
+msgstr "How to play"
+
 msgid "UI_TUTORIAL_BASIC_SWIPE"
 msgstr "Swipe each block into the matching colour goal around the board.\n\nThe game is complete when the board is cleared."
 
