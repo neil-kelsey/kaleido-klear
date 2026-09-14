@@ -849,3 +849,36 @@ msgstr "Rift Riggin'"
 
 msgid "UI_GROUP_CUSTOM_LEVELS"
 msgstr "Homemade Charts"
+
+msgid "UI_GROUP_COMPUTER_GENERATED"
+msgstr "Clockwork Charts"
+
+msgid "UI_DIFFICULTY_EASY"
+msgstr "Easy plunder"
+
+msgid "UI_DIFFICULTY_MEDIUM"
+msgstr "Choppy"
+
+msgid "UI_DIFFICULTY_HARD"
+msgstr "Hard tack"
+
+msgid "UI_DIFFICULTY_VERY_HARD"
+msgstr "Mighty hard"
+
+msgid "UI_DIFFICULTY_EXTREME"
+msgstr "Extreme"
+
+msgid "UI_LEVEL_STAT_PAR"
+msgstr "Fair course"
+
+msgid "UI_LEVEL_STAT_BEST_MOVES"
+msgstr "Fewest swipes"
+
+msgid "UI_LEVEL_STAT_BEST_TIME"
+msgstr "Fastest run"
+
+msgid "UI_LEVEL_STAT_DASH"
+msgstr "—"
+
+msgid "UI_PLAY_LEVEL"
+msgstr "Set sail"

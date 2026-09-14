@@ -152,7 +152,18 @@ layout_mode = 2
 size_flags_vertical = 3
 mouse_filter = 2
 
-[node name="NextLevelButton" type="Button" parent="Content/Column"]
+[node name="ActionPad" type="MarginContainer" parent="Content/Column"]
+layout_mode = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="ActionColumn" type="VBoxContainer" parent="Content/Column/ActionPad"]
+layout_mode = 2
+theme_override_constants/separation = 28
+
+[node name="NextLevelButton" type="Button" parent="Content/Column/ActionPad/ActionColumn"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 128)
 layout_mode = 2
@@ -162,7 +173,7 @@ compact = true
 show_trailing_icon = false
 label_text = "Next level"
 
-[node name="RemoveAdsButton" type="Button" parent="Content/Column"]
+[node name="RemoveAdsButton" type="Button" parent="Content/Column/ActionPad/ActionColumn"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
@@ -172,7 +183,7 @@ compact = true
 show_trailing_icon = false
 label_text = "Remove ads"
 
-[node name="ShareButton" type="Button" parent="Content/Column"]
+[node name="ShareButton" type="Button" parent="Content/Column/ActionPad/ActionColumn"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
@@ -183,6 +194,6 @@ show_trailing_icon = false
 label_text = "Share"
 
 [connection signal="gui_input" from="Blocker" to="." method="_on_blocker_gui_input"]
-[connection signal="pressed" from="Content/Column/NextLevelButton" to="." method="_on_next_level_button_pressed"]
-[connection signal="pressed" from="Content/Column/RemoveAdsButton" to="." method="_on_remove_ads_button_pressed"]
-[connection signal="pressed" from="Content/Column/ShareButton" to="." method="_on_share_button_pressed"]
+[connection signal="pressed" from="Content/Column/ActionPad/ActionColumn/NextLevelButton" to="." method="_on_next_level_button_pressed"]
+[connection signal="pressed" from="Content/Column/ActionPad/ActionColumn/RemoveAdsButton" to="." method="_on_remove_ads_button_pressed"]
+[connection signal="pressed" from="Content/Column/ActionPad/ActionColumn/ShareButton" to="." method="_on_share_button_pressed"]

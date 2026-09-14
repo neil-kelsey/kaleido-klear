@@ -50,6 +50,7 @@ var drag_samples: Array[Dictionary] = []
 var _multi_goal_states: Array[MultiGoalEdgeState] = []
 var _undo_snapshot: Dictionary = {}
 var _used_undo: bool = false
+var _move_count: int = 0
 
 const DRAG_THRESHOLD := 20.0
 const MAX_DRAG_PULL_RATIO := 0.5
@@ -101,6 +102,10 @@ func used_undo() -> bool:
 	return _used_undo
 
 
+func get_move_count() -> int:
+	return _move_count
+
+
 func undo_last_move() -> bool:
 	if not can_undo_move():
 		return false
@@ -132,6 +137,7 @@ func _rebuild_board() -> void:
 	placed_blocks.clear()
 	_undo_snapshot.clear()
 	_used_undo = false
+	_move_count = 0
 	_clear_merge_previews()
 	_init_goal_states()
 	_layout_grid()
@@ -286,6 +292,7 @@ func _capture_snapshot() -> Dictionary:
 		"lives": lives,
 		"blocks": blocks_data,
 		"multi_goal_states": goals_data,
+		"move_count": _move_count,
 	}
 
 
@@ -298,6 +305,7 @@ func _restore_snapshot(snapshot: Dictionary) -> void:
 		block.queue_free()
 
 	lives = snapshot["lives"]
+	_move_count = int(snapshot.get("move_count", 0))
 	game_ended = false
 
 	for data in snapshot["blocks"]:
@@ -1170,6 +1178,7 @@ func _merge_blocks_animated(
 	from_visual: Vector2
 ) -> void:
 	_push_undo_snapshot()
+	_move_count += 1
 	Sfx.play_swoosh()
 	is_busy = true
 	moving.position = from_visual
@@ -1285,6 +1294,7 @@ func _move_block_animated(
 	from_visual: Vector2
 ) -> void:
 	_push_undo_snapshot()
+	_move_count += 1
 	Sfx.play_swoosh()
 	is_busy = true
 	block.position = from_visual
@@ -1373,6 +1383,7 @@ func _score_block_animated(
 	from_visual: Vector2
 ) -> void:
 	_push_undo_snapshot()
+	_move_count += 1
 	Sfx.play_swoosh()
 	is_busy = true
 	_remove_block(block)

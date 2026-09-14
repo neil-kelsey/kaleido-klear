@@ -3,26 +3,25 @@
 [ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_ayox8"]
 [ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_bco2w"]
 
-[sub_resource type="Resource" id="Resource_yesjh"]
-script = ExtResource("1_ayox8")
-color = 2
-count = 4
-
 [sub_resource type="Resource" id="Resource_hjbmx"]
 script = ExtResource("1_ayox8")
+color = 0
+count = 1
 
 [sub_resource type="Resource" id="Resource_r0240"]
 script = ExtResource("1_ayox8")
 color = 2
-count = 4
+count = 2
 
 [sub_resource type="Resource" id="Resource_8ljr4"]
 script = ExtResource("1_ayox8")
 color = 3
 count = 6
 
-[sub_resource type="Resource" id="Resource_uyxx8"]
+[sub_resource type="Resource" id="Resource_yesjh"]
 script = ExtResource("1_ayox8")
+color = 2
+count = 2
 
 [resource]
 script = ExtResource("2_bco2w")
@@ -35,7 +34,7 @@ goal_right_color = 2
 goal_bottom_color = 2
 multi_goal_mode = true
 goal_left_phases = Array[ExtResource("1_ayox8")]([SubResource("Resource_hjbmx")])
-goal_top_phases = Array[ExtResource("1_ayox8")]([SubResource("Resource_8ljr4"), SubResource("Resource_uyxx8")])
+goal_top_phases = Array[ExtResource("1_ayox8")]([SubResource("Resource_8ljr4")])
 goal_right_phases = Array[ExtResource("1_ayox8")]([SubResource("Resource_r0240")])
 goal_bottom_phases = Array[ExtResource("1_ayox8")]([SubResource("Resource_yesjh")])
 goal_bottom_enabled = true

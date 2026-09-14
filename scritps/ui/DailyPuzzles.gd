@@ -5,6 +5,7 @@ extends Node2D
 const MAIN_MENU_SCENE := "res://scenes/ui/main_menu.tscn"
 const GAME_SCENE := "res://scenes/main.tscn"
 const STAR_CHART_PATH := "res://assets/backgrounds/level_star_chart.png"
+const LevelDetailsModalScript := preload("res://scritps/ui/LevelDetailsModal.gd")
 const STRIP_WORLD := Rect2(-420, -180, 840, 2800)
 
 const COLUMNS := 5
@@ -27,6 +28,7 @@ const MAP_FONT := preload("res://assets/fonts/Quicksand-Medium.ttf")
 @onready var date_label: Label = %DateLabel
 @onready var empty_label: Label = %EmptyLabel
 @onready var nebula_bg: TextureRect = %NebulaBg
+@onready var details_modal: LevelDetailsModalScript = %LevelDetailsModal
 
 var _levels: Array[LevelConfig] = []
 var _level_positions: Array[Vector2] = []
@@ -39,6 +41,13 @@ var _fx_time := 0.0
 var _last_vp_size := Vector2.ZERO
 var _hover_index := -1
 var _navigating := false
+const HOLD_DELAY := 0.5
+const DRAG_CANCEL_PX := 16.0
+var _hold_timer: Timer
+var _hold_index := -1
+var _hold_from := Vector2.ZERO
+var _hold_fired := false
+var _press_on_diamond := false
 
 
 func _ready() -> void:
@@ -60,6 +69,9 @@ func _ready() -> void:
 	if back_button != null:
 		back_button.z_index = 50
 	back_button.pressed.connect(_on_back_pressed)
+	_ensure_hold_timer()
+	if details_modal != null:
+		details_modal.play_pressed.connect(_on_details_play_pressed)
 	_apply_secondary_title_style(date_label)
 	_apply_secondary_title_style(empty_label)
 	_apply_translations()
@@ -362,23 +374,38 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if OS.has_feature("mobile") and event is InputEventMouseButton:
+	if details_modal != null and details_modal.visible:
+		return
+	if OS.has_feature("mobile") and (
+		event is InputEventMouseButton or event is InputEventMouseMotion
+	):
 		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
-			var hit := _hit_level(_screen_to_world(get_viewport().get_mouse_position()))
-			if hit >= 0:
-				_on_level_clicked(hit)
-				get_viewport().set_input_as_handled()
+		if mb.button_index != MOUSE_BUTTON_LEFT:
+			return
+		if mb.pressed:
+			_pointer_down(_screen_to_world(mb.position), mb.position)
+		else:
+			_pointer_up()
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion:
+		if _press_on_diamond:
+			var motion := event as InputEventMouseMotion
+			_pointer_drag(motion.position)
+			get_viewport().set_input_as_handled()
 	elif event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		_set_hover_index(-1)
 		if touch.pressed:
-			var hit := _hit_level(_screen_to_world(touch.position))
-			if hit >= 0:
-				_on_level_clicked(hit)
-				get_viewport().set_input_as_handled()
+			_pointer_down(_screen_to_world(touch.position), touch.position)
+		else:
+			_pointer_up()
+		get_viewport().set_input_as_handled()
+	elif event is InputEventScreenDrag:
+		if _press_on_diamond:
+			_pointer_drag((event as InputEventScreenDrag).position)
+			get_viewport().set_input_as_handled()
 
 
 func _on_level_clicked(index: int) -> void:
@@ -387,6 +414,12 @@ func _on_level_clicked(index: int) -> void:
 	var level: LevelConfig = _levels[index]
 	if not DailyCatalog.is_level_unlocked(_levels, level):
 		return
+	_launch_level(level)
+
+
+func _launch_level(level: LevelConfig) -> void:
+	if _navigating or level == null:
+		return
 	_navigating = true
 	GameSession.set_level_playlist(_levels)
 	GameSession.set_return_scene("res://scenes/ui/daily_puzzles.tscn")
@@ -394,7 +427,67 @@ func _on_level_clicked(index: int) -> void:
 	get_tree().change_scene_to_file(GAME_SCENE)
 
 
+func _ensure_hold_timer() -> void:
+	if _hold_timer != null:
+		return
+	_hold_timer = Timer.new()
+	_hold_timer.one_shot = true
+	_hold_timer.wait_time = HOLD_DELAY
+	_hold_timer.timeout.connect(_on_hold_timeout)
+	add_child(_hold_timer)
+
+
+func _pointer_down(world_pos: Vector2, screen_pos: Vector2) -> void:
+	_hold_fired = false
+	var hit := _hit_level(world_pos)
+	var level: LevelConfig = _levels[hit] if hit >= 0 and hit < _levels.size() else null
+	_press_on_diamond = level != null and DailyCatalog.is_level_unlocked(_levels, level)
+	if not _press_on_diamond:
+		_hold_index = -1
+		return
+	_hold_index = hit
+	_hold_from = screen_pos
+	if _hold_timer != null:
+		_hold_timer.start()
+
+
+func _pointer_drag(screen_pos: Vector2) -> void:
+	if not _press_on_diamond:
+		return
+	if screen_pos.distance_to(_hold_from) >= DRAG_CANCEL_PX:
+		if _hold_timer != null:
+			_hold_timer.stop()
+		_press_on_diamond = false
+		_hold_index = -1
+
+
+func _pointer_up() -> void:
+	if _hold_timer != null:
+		_hold_timer.stop()
+	if _press_on_diamond and not _hold_fired and _hold_index >= 0:
+		_on_level_clicked(_hold_index)
+	_press_on_diamond = false
+	_hold_index = -1
+	_hold_fired = false
+
+
+func _on_hold_timeout() -> void:
+	if not _press_on_diamond or _hold_index < 0:
+		return
+	_hold_fired = true
+	Haptics.light()
+	if details_modal != null and _hold_index < _levels.size():
+		details_modal.show_level(_levels[_hold_index])
+
+
+func _on_details_play_pressed(level: LevelConfig) -> void:
+	_launch_level(level)
+
+
 func _on_back_pressed() -> void:
+	if details_modal != null and details_modal.visible:
+		details_modal.hide_modal()
+		return
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
 
 

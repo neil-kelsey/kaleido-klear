@@ -849,3 +849,36 @@ msgstr "Géométrie de faille"
 
 msgid "UI_GROUP_CUSTOM_LEVELS"
 msgstr "Niveaux personnalisés"
+
+msgid "UI_GROUP_COMPUTER_GENERATED"
+msgstr "Généré par ordinateur"
+
+msgid "UI_DIFFICULTY_EASY"
+msgstr "Facile"
+
+msgid "UI_DIFFICULTY_MEDIUM"
+msgstr "Moyen"
+
+msgid "UI_DIFFICULTY_HARD"
+msgstr "Difficile"
+
+msgid "UI_DIFFICULTY_VERY_HARD"
+msgstr "Très difficile"
+
+msgid "UI_DIFFICULTY_EXTREME"
+msgstr "Extrême"
+
+msgid "UI_LEVEL_STAT_PAR"
+msgstr "Par"
+
+msgid "UI_LEVEL_STAT_BEST_MOVES"
+msgstr "Meilleur nombre de coups"
+
+msgid "UI_LEVEL_STAT_BEST_TIME"
+msgstr "Meilleur temps"
+
+msgid "UI_LEVEL_STAT_DASH"
+msgstr "—"
+
+msgid "UI_PLAY_LEVEL"
+msgstr "Jouer"

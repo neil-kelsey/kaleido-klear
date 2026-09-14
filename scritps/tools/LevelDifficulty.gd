@@ -75,6 +75,49 @@ static func rate(config: LevelConfig, min_moves: int = -1) -> Dictionary:
 	}
 
 
+static func resolved_tier(config: LevelConfig) -> int:
+	if config == null:
+		return 1
+	var stored := clampi(config.difficulty_tier, 0, 5)
+	if stored >= 1:
+		return stored
+	var rated := rate(config, config.min_moves)
+	return clampi(int(rated.get("tier", 1)), 1, 5)
+
+
+static func label_key(tier: int) -> String:
+	match clampi(tier, 1, 5):
+		1:
+			return "UI_DIFFICULTY_EASY"
+		2:
+			return "UI_DIFFICULTY_MEDIUM"
+		3:
+			return "UI_DIFFICULTY_HARD"
+		4:
+			return "UI_DIFFICULTY_VERY_HARD"
+		_:
+			return "UI_DIFFICULTY_EXTREME"
+
+
+static func label_for(config: LevelConfig) -> String:
+	return TranslationServer.translate(label_key(resolved_tier(config)))
+
+
+static func banner_color(tier: int) -> Color:
+	## White title text, so yellow is a deeper gold rather than a pale lemon.
+	match clampi(tier, 1, 5):
+		1:
+			return Color(0.18, 0.67, 0.32, 1.0)
+		2:
+			return Color(0.90, 0.72, 0.08, 1.0)
+		3:
+			return Color(0.95, 0.50, 0.10, 1.0)
+		4:
+			return Color(0.92, 0.28, 0.10, 1.0)
+		_:
+			return Color(0.84, 0.10, 0.16, 1.0)
+
+
 static func _unique_colors(config: LevelConfig) -> int:
 	var seen := {}
 	for i in config.block_colors.size():

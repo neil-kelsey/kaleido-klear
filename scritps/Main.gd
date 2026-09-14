@@ -4,6 +4,8 @@ const GAME_SCENE := "res://scenes/main.tscn"
 const LEVEL_SELECT_SCENE := "res://scenes/ui/dimension_map.tscn"
 const LEVEL_CREATOR_SCENE := "res://scenes/editor/level_creator.tscn"
 const LevelKlearedOverlay := preload("res://scritps/ui/LevelKlearedOverlay.gd")
+const DifficultyBannerScript := preload("res://scritps/ui/DifficultyBanner.gd")
+const LevelDifficultyScript := preload("res://scritps/tools/LevelDifficulty.gd")
 
 const ZOOM_MIN := 0.55
 const ZOOM_MAX := 2.75
@@ -22,6 +24,7 @@ const INTRO_ZOOM_DURATION := 0.9
 @onready var goals_button: CircleIconButton = %GoalsButton
 @onready var tutorial_help_button: CircleIconButton = %TutorialHelpButton
 @onready var lives_hud: LivesHearts = %LivesHearts
+@onready var difficulty_banner: DifficultyBannerScript = %DifficultyBanner
 @onready var goal_border_left: GoalBorder = $UI/GoalBorderLeft
 @onready var goal_border_top: GoalBorder = $UI/GoalBorderTop
 @onready var goal_border_right: GoalBorder = $UI/GoalBorderRight
@@ -47,6 +50,7 @@ var _tile_pointer_ids: Dictionary = {}
 var _intro_playing := false
 var _won_level := false
 var _intro_tween: Tween = null
+var _run_started_msec: int = 0
 
 
 func _ready() -> void:
@@ -90,6 +94,7 @@ func _ready() -> void:
 	_sync_tutorial_help_button()
 	_update_undo_button()
 	_play_level_intro()
+	_show_difficulty_banner()
 
 
 func _notification(what: int) -> void:
@@ -290,12 +295,37 @@ func _finish_level_intro() -> void:
 	else:
 		_set_play_controls_enabled(true)
 		_update_undo_button()
+		_mark_run_start()
 
 
 func _kill_intro_tween() -> void:
 	if _intro_tween != null and is_instance_valid(_intro_tween):
 		_intro_tween.kill()
 	_intro_tween = null
+
+
+func _show_difficulty_banner() -> void:
+	if difficulty_banner == null or _current_level == null:
+		return
+	if GameSession.playtest_mode:
+		return
+	if LevelCatalog.is_tutorial_dimension(_resolve_section_index(_current_level)):
+		return
+	difficulty_banner.present(
+		LevelDifficultyScript.label_for(_current_level),
+		LevelDifficultyScript.banner_color(LevelDifficultyScript.resolved_tier(_current_level))
+	)
+	difficulty_banner.pin_below(lives_hud)
+
+
+func _mark_run_start() -> void:
+	_run_started_msec = Time.get_ticks_msec()
+
+
+func _run_elapsed_ms() -> int:
+	if _run_started_msec <= 0:
+		return 0
+	return Time.get_ticks_msec() - _run_started_msec
 
 
 func _set_play_controls_enabled(enabled: bool) -> void:
@@ -628,6 +658,7 @@ func _sync_tutorial_help_button() -> void:
 func _on_tutorial_finished() -> void:
 	_set_play_controls_enabled(true)
 	_update_undo_button()
+	_mark_run_start()
 
 
 func get_tutorial_spotlight_rect(spotlight_id: String) -> Rect2:
@@ -769,9 +800,17 @@ func _on_level_cleared(remaining_lives: int) -> void:
 	_set_next_level_hud_visible(false)
 	if lives_hud != null:
 		lives_hud.visible = false
+	if difficulty_banner != null:
+		difficulty_banner.visible = false
 	var stars := clampi(remaining_lives, 1, 3)
 	var perfect := remaining_lives >= board.starting_lives and not board.used_undo()
 	GameSession.record_level_stars(_current_level, stars, perfect)
+	if not GameSession.playtest_mode:
+		GameSession.record_level_stats(
+			_current_level.level_id,
+			board.get_move_count(),
+			_run_elapsed_ms()
+		)
 	var section_complete := false
 	var has_next_section := false
 	if not GameSession.active_level_playlist.is_empty():

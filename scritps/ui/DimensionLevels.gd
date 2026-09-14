@@ -5,6 +5,7 @@ extends Node2D
 const DIMENSION_MAP_SCENE := "res://scenes/ui/dimension_map.tscn"
 const GAME_SCENE := "res://scenes/main.tscn"
 const STAR_CHART_PATH := "res://assets/backgrounds/level_star_chart.png"
+const LevelDetailsModalScript := preload("res://scritps/ui/LevelDetailsModal.gd")
 ## Must match StarChartBaker.LEVEL_STRIP_WORLD.
 const STRIP_WORLD := Rect2(-420, -180, 840, 2800)
 
@@ -55,6 +56,7 @@ const MAP_FONT := preload("res://assets/fonts/Quicksand-Medium.ttf")
 @onready var hint_label: Label = %HintLabel
 @onready var empty_label: Label = %EmptyLabel
 @onready var nebula_bg: TextureRect = %NebulaBg
+@onready var details_modal: LevelDetailsModalScript = %LevelDetailsModal
 
 var _dimension_index: int = 0
 var _levels: Array[LevelConfig] = []
@@ -88,6 +90,13 @@ var _fps_frames := 0
 var _ready_msec := 0
 var _resize_rebuilds := 0
 var _first_draw_logged := false
+const HOLD_DELAY := 0.5
+const DRAG_CANCEL_PX := 16.0
+var _hold_timer: Timer
+var _hold_index := -1
+var _hold_from := Vector2.ZERO
+var _hold_fired := false
+var _press_on_diamond := false
 ## Snapshot at rebuild so _draw never walks the catalog (find_level_context
 ## recopies and sorts every section on each call).
 var _level_unlocked: Array[bool] = []
@@ -127,6 +136,9 @@ func _ready() -> void:
 	if back_button != null:
 		back_button.z_index = 50
 	back_button.pressed.connect(_on_back_pressed)
+	_ensure_hold_timer()
+	if details_modal != null:
+		details_modal.play_pressed.connect(_on_details_play_pressed)
 	_apply_translations()
 	hint_label.visible = false
 	UiTheme.style_menu_hint(empty_label)
@@ -792,6 +804,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if details_modal != null and details_modal.visible:
+		return
 	if OS.has_feature("mobile") and (
 		event is InputEventMouseButton or event is InputEventMouseMotion
 	):
@@ -814,19 +828,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			_mark_input_handled()
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
-				_pan_velocity_y = 0.0
-				var hit := _hit_level(_world_mouse())
-				if hit >= 0:
-					_mark_input_handled()
-					_on_level_clicked(hit)
-				else:
-					_begin_pan(-1)
+				_pointer_down(_world_mouse(), mb.position, -1)
 			else:
-				_end_pan()
+				_pointer_up(-1)
+			_mark_input_handled()
 	elif event is InputEventMouseMotion:
-		if _panning:
+		if _panning or _press_on_diamond:
 			var motion := event as InputEventMouseMotion
-			_apply_pan_delta(motion.relative)
+			_pointer_drag(motion.position, motion.relative, -1)
 			_mark_input_handled()
 	elif event is InputEventScreenTouch:
 		_handle_touch(event as InputEventScreenTouch)
@@ -843,28 +852,15 @@ func _mark_input_handled() -> void:
 func _handle_touch(event: InputEventScreenTouch) -> void:
 	_set_hover_index(-1)
 	if event.pressed:
-		_pan_velocity_y = 0.0
-		var world := _screen_to_world(event.position)
-		var hit := _hit_level(world)
-		if hit >= 0:
-			_on_level_clicked(hit)
-			_mark_input_handled()
-			return
-		_begin_pan(event.index)
+		_pointer_down(_screen_to_world(event.position), event.position, event.index)
 		_mark_input_handled()
 		return
-
-	if _pan_pointer_id == event.index:
-		_end_pan()
-		_mark_input_handled()
+	_pointer_up(event.index)
+	_mark_input_handled()
 
 
 func _handle_drag(event: InputEventScreenDrag) -> void:
-	if not _panning and _pan_pointer_id != event.index:
-		return
-	if not _panning:
-		_begin_pan(event.index)
-	_apply_pan_delta(event.relative)
+	_pointer_drag(event.position, event.relative, event.index)
 	_mark_input_handled()
 
 
@@ -950,11 +946,87 @@ func _on_level_clicked(index: int) -> void:
 	var level: LevelConfig = _levels[index]
 	if index >= _level_unlocked.size() or not _level_unlocked[index]:
 		return
+	_launch_level(level)
+
+
+func _launch_level(level: LevelConfig) -> void:
+	if _navigating or level == null:
+		return
 	_navigating = true
 	GameSession.clear_level_playlist()
 	GameSession.set_return_scene("res://scenes/ui/dimension_levels.tscn")
 	GameSession.set_level(level)
 	GameSession.change_scene(GAME_SCENE)
+
+
+func _ensure_hold_timer() -> void:
+	if _hold_timer != null:
+		return
+	_hold_timer = Timer.new()
+	_hold_timer.one_shot = true
+	_hold_timer.wait_time = HOLD_DELAY
+	_hold_timer.timeout.connect(_on_hold_timeout)
+	add_child(_hold_timer)
+
+
+func _pointer_down(world_pos: Vector2, screen_pos: Vector2, pointer_id: int) -> void:
+	_pan_velocity_y = 0.0
+	_hold_fired = false
+	var hit := _hit_level(world_pos)
+	var unlocked := hit >= 0 and hit < _level_unlocked.size() and _level_unlocked[hit]
+	_press_on_diamond = unlocked
+	if _press_on_diamond:
+		_hold_index = hit
+		_hold_from = screen_pos
+		if _hold_timer != null:
+			_hold_timer.start()
+		return
+	_hold_index = -1
+	_begin_pan(pointer_id)
+
+
+func _pointer_drag(screen_pos: Vector2, relative: Vector2, pointer_id: int) -> void:
+	if _press_on_diamond and not _panning:
+		if screen_pos.distance_to(_hold_from) >= DRAG_CANCEL_PX:
+			if _hold_timer != null:
+				_hold_timer.stop()
+			_press_on_diamond = false
+			_hold_index = -1
+			_begin_pan(pointer_id)
+	if _panning:
+		_apply_pan_delta(relative)
+
+
+func _pointer_up(pointer_id: int) -> void:
+	if _hold_timer != null:
+		_hold_timer.stop()
+	if _panning and (_pan_pointer_id == pointer_id or pointer_id < 0):
+		_end_pan()
+	elif _press_on_diamond and not _hold_fired and _hold_index >= 0:
+		_on_level_clicked(_hold_index)
+	_press_on_diamond = false
+	_hold_index = -1
+	_hold_fired = false
+
+
+func _on_hold_timeout() -> void:
+	if not _press_on_diamond or _hold_index < 0 or _panning:
+		return
+	_hold_fired = true
+	Haptics.light()
+	_show_level_details(_hold_index)
+
+
+func _show_level_details(index: int) -> void:
+	if details_modal == null or index < 0 or index >= _levels.size():
+		return
+	if index >= _level_unlocked.size() or not _level_unlocked[index]:
+		return
+	details_modal.show_level(_levels[index])
+
+
+func _on_details_play_pressed(level: LevelConfig) -> void:
+	_launch_level(level)
 
 
 func _ensure_white_fade() -> void:
@@ -972,6 +1044,9 @@ func _ensure_white_fade() -> void:
 
 
 func _on_back_pressed() -> void:
+	if details_modal != null and details_modal.visible:
+		details_modal.hide_modal()
+		return
 	if _navigating:
 		return
 	_navigating = true

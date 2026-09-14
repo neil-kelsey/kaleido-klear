@@ -17,6 +17,8 @@ signal locale_changed(locale_code: String)
 var selected_level: LevelConfig = null
 var level_stars: Dictionary = {}
 var level_perfect: Dictionary = {}
+var level_best_moves: Dictionary = {}
+var level_best_time_ms: Dictionary = {}
 var develop_mode: bool = false
 var playtest_mode: bool = false
 var playtest_level_draft: LevelConfig = null
@@ -239,10 +241,45 @@ func get_level_stars(level_id: String) -> int:
 	return int(level_stars.get(level_id, 0))
 
 
+func record_level_stats(level_id: String, moves: int, time_ms: int) -> void:
+	if level_id.strip_edges().is_empty():
+		return
+	var changed := false
+	if moves > 0:
+		var previous_moves := int(level_best_moves.get(level_id, 0))
+		if previous_moves <= 0 or moves < previous_moves:
+			level_best_moves[level_id] = moves
+			changed = true
+	if time_ms > 0:
+		var previous_time := int(level_best_time_ms.get(level_id, 0))
+		if previous_time <= 0 or time_ms < previous_time:
+			level_best_time_ms[level_id] = time_ms
+			changed = true
+	if changed:
+		_save_progress()
+
+
+func get_level_best_moves(level_id: String) -> int:
+	return int(level_best_moves.get(level_id, 0))
+
+
+func get_level_best_time_ms(level_id: String) -> int:
+	return int(level_best_time_ms.get(level_id, 0))
+
+
+func format_play_time(time_ms: int) -> String:
+	var total_sec := maxi(time_ms, 0) / 1000
+	var minutes := total_sec / 60
+	var seconds := total_sec % 60
+	return "%d:%02d" % [minutes, seconds]
+
+
 func reset_progress() -> void:
 	## Clears stars / unlocks. Keeps tutorials, language, and develop-mode prefs.
 	level_stars.clear()
 	level_perfect.clear()
+	level_best_moves.clear()
+	level_best_time_ms.clear()
 	current_dimension_index = 0
 	selected_level = null
 	clear_level_playlist()
@@ -383,6 +420,8 @@ func _save_settings() -> void:
 func _load_progress() -> void:
 	level_stars.clear()
 	level_perfect.clear()
+	level_best_moves.clear()
+	level_best_time_ms.clear()
 	current_dimension_index = 0
 	seen_tutorials.clear()
 	if FileAccess.file_exists(PROGRESS_PATH):
@@ -414,6 +453,14 @@ func _apply_progress_dict(data: Dictionary) -> void:
 	if typeof(perfect_raw) == TYPE_DICTIONARY:
 		for key in (perfect_raw as Dictionary).keys():
 			level_perfect[str(key)] = bool(perfect_raw[key])
+	var moves_raw: Variant = data.get("level_best_moves", {})
+	if typeof(moves_raw) == TYPE_DICTIONARY:
+		for key in (moves_raw as Dictionary).keys():
+			level_best_moves[str(key)] = maxi(int(moves_raw[key]), 0)
+	var time_raw: Variant = data.get("level_best_time_ms", {})
+	if typeof(time_raw) == TYPE_DICTIONARY:
+		for key in (time_raw as Dictionary).keys():
+			level_best_time_ms[str(key)] = maxi(int(time_raw[key]), 0)
 	current_dimension_index = maxi(0, int(data.get("current_dimension_index", 0)))
 	var tutorials_raw: Variant = data.get("seen_tutorials", {})
 	seen_tutorials.clear()
@@ -427,6 +474,8 @@ func _save_progress() -> void:
 	var payload := {
 		"level_stars": level_stars.duplicate(),
 		"level_perfect": level_perfect.duplicate(),
+		"level_best_moves": level_best_moves.duplicate(),
+		"level_best_time_ms": level_best_time_ms.duplicate(),
 		"current_dimension_index": current_dimension_index,
 		"seen_tutorials": seen_tutorials.duplicate(),
 	}

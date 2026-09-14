@@ -1,0 +1,128 @@
+[gd_scene load_steps=4 format=3 uid="uid://kaleido_level_details_modal"]
+
+[ext_resource type="Script" path="res://scritps/ui/LevelDetailsModal.gd" id="1"]
+[ext_resource type="Script" path="res://scritps/ui/ChartModalPanel.gd" id="2_chart"]
+[ext_resource type="Script" path="res://scritps/ui/MenuActionButton.gd" id="3_cta"]
+
+[node name="LevelDetailsModal" type="Control"]
+visible = false
+z_index = 80
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1")
+
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.65)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(720, 0)
+layout_mode = 2
+script = ExtResource("2_chart")
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Header" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="Center/Panel/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.12, 0.13, 0.16, 1)
+theme_override_font_sizes/font_size = 44
+text = "Level"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="CloseButton" type="Button" parent="Center/Panel/VBox/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+text = ""
+
+[node name="DifficultyLabel" type="Label" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 52
+text = "Easy"
+horizontal_alignment = 1
+
+[node name="ParRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="ParLabel" type="Label" parent="Center/Panel/VBox/ParRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Par"
+
+[node name="ParValue" type="Label" parent="Center/Panel/VBox/ParRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "—"
+horizontal_alignment = 2
+
+[node name="BestMovesRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="BestMovesLabel" type="Label" parent="Center/Panel/VBox/BestMovesRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Best moves"
+
+[node name="BestMovesValue" type="Label" parent="Center/Panel/VBox/BestMovesRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "—"
+horizontal_alignment = 2
+
+[node name="BestTimeRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="BestTimeLabel" type="Label" parent="Center/Panel/VBox/BestTimeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Best time"
+
+[node name="BestTimeValue" type="Label" parent="Center/Panel/VBox/BestTimeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "—"
+horizontal_alignment = 2
+
+[node name="PlayButton" type="Button" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 128)
+layout_mode = 2
+script = ExtResource("3_cta")
+kind = 0
+compact = true
+show_trailing_icon = false
+label_text = "Play"

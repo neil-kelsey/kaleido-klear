@@ -849,3 +849,36 @@ msgstr "Rift Geometry"
 
 msgid "UI_GROUP_CUSTOM_LEVELS"
 msgstr "Custom Levels"
+
+msgid "UI_GROUP_COMPUTER_GENERATED"
+msgstr "Computer generated"
+
+msgid "UI_DIFFICULTY_EASY"
+msgstr "Easy"
+
+msgid "UI_DIFFICULTY_MEDIUM"
+msgstr "Medium"
+
+msgid "UI_DIFFICULTY_HARD"
+msgstr "Hard"
+
+msgid "UI_DIFFICULTY_VERY_HARD"
+msgstr "Very Hard"
+
+msgid "UI_DIFFICULTY_EXTREME"
+msgstr "Extreme"
+
+msgid "UI_LEVEL_STAT_PAR"
+msgstr "Par"
+
+msgid "UI_LEVEL_STAT_BEST_MOVES"
+msgstr "Best moves"
+
+msgid "UI_LEVEL_STAT_BEST_TIME"
+msgstr "Best time"
+
+msgid "UI_LEVEL_STAT_DASH"
+msgstr "—"
+
+msgid "UI_PLAY_LEVEL"
+msgstr "Play"
