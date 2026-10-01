@@ -27,7 +27,12 @@ color = 3
 script = ExtResource("2_vtqs8")
 level_id = "twinkle_pebbles_12"
 level_name_key = ""
-display_name = "Pebble Orbits 12"
+display_name = "Seeing red"
+locale_display_names = {
+"en": "Seeing red",
+"fr": "Pebble Orbits 12",
+"pirate": "Pebble Orbits 12"
+}
 sort_index = 120
 goal_left_color = 3
 goal_right_color = 0

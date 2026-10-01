@@ -3,10 +3,13 @@
 [ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_ayox8"]
 [ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_bco2w"]
 
+[sub_resource type="Resource" id="Resource_yesjh"]
+script = ExtResource("1_ayox8")
+color = 2
+count = 2
+
 [sub_resource type="Resource" id="Resource_hjbmx"]
 script = ExtResource("1_ayox8")
-color = 0
-count = 1
 
 [sub_resource type="Resource" id="Resource_r0240"]
 script = ExtResource("1_ayox8")
@@ -18,16 +21,16 @@ script = ExtResource("1_ayox8")
 color = 3
 count = 6
 
-[sub_resource type="Resource" id="Resource_yesjh"]
-script = ExtResource("1_ayox8")
-color = 2
-count = 2
-
 [resource]
 script = ExtResource("2_bco2w")
 level_id = "twinkle_pebbles_07"
 level_name_key = ""
-display_name = "Pebble Orbits 07"
+display_name = "Retro revolver"
+locale_display_names = {
+"en": "Retro revolver",
+"fr": "Pebble Orbits 07",
+"pirate": "Pebble Orbits 07"
+}
 sort_index = 70
 goal_top_color = 3
 goal_right_color = 2

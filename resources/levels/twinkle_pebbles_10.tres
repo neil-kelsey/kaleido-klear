@@ -25,7 +25,12 @@ count = 2
 script = ExtResource("2_h6dd8")
 level_id = "twinkle_pebbles_10"
 level_name_key = ""
-display_name = "Pebble Orbits 10"
+display_name = "Free the blob"
+locale_display_names = {
+"en": "Free the blob",
+"fr": "Pebble Orbits 10",
+"pirate": "Pebble Orbits 10"
+}
 sort_index = 100
 goal_left_color = 2
 goal_top_color = 0
