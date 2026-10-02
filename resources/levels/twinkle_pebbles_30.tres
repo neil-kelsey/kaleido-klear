@@ -37,8 +37,12 @@ unlimited = false
 script = ExtResource("2")
 level_id = "twinkle_pebbles_30"
 level_name_key = ""
-display_name = "Pebble Orbits 30"
-locale_display_names = {}
+display_name = "Wind in your back"
+locale_display_names = {
+"en": "Wind in your back",
+"fr": "Pebble Orbits 30",
+"pirate": "Pebble Orbits 30"
+}
 section_index = 0
 daily_date = ""
 sort_index = 290

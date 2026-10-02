@@ -37,8 +37,12 @@ unlimited = false
 script = ExtResource("2")
 level_id = "twinkle_pebbles_28"
 level_name_key = ""
-display_name = "Pebble Orbits 28"
-locale_display_names = {}
+display_name = "Imperial ambitions"
+locale_display_names = {
+"en": "Imperial ambitions",
+"fr": "Pebble Orbits 28",
+"pirate": "Pebble Orbits 28"
+}
 section_index = 0
 daily_date = ""
 sort_index = 380
@@ -64,7 +68,7 @@ block_shapes = Array[String](["single", "single", "single", "single", "single", 
 block_kinds = Array[int]([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 block_cell_patterns = [[Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)], [Vector2i(2, 2), Vector2i(2, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(1, 2), Vector2i(2, 0), Vector2i(0, 2)], [Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 1), Vector2i(1, 2), Vector2i(0, 0), Vector2i(1, 0)], [Vector2i(1, 1), Vector2i(1, 2), Vector2i(0, 2), Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, 0)], [Vector2i(1, 1), Vector2i(0, 1), Vector2i(2, 1), Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)], [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)], [Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 1), Vector2i(1, 2), Vector2i(2, 1), Vector2i(2, 0), Vector2i(2, 2)], [Vector2i(2, 0), Vector2i(2, 1), Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(0, 4), Vector2i(2, 2), Vector2i(3, 2), Vector2i(4, 2)], [Vector2i(0, 2), Vector2i(1, 2), Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 0)], [Vector2i(2, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 0), Vector2i(0, 1)], [Vector2i(1, 1), Vector2i(1, 0), Vector2i(1, 2), Vector2i(0, 0)]]
 block_shape_names = Array[String](["Bait", "Piece 0", "Piece 1", "Piece 2", "Piece 3", "Piece 4", "Piece 5", "Piece 6", "Piece 7", "Piece 8", "Piece 9"])
-group_title_key = "UI_GROUP_PEBBLE_ORBITS"
+group_title_key = "UI_GROUP_MOONLACE_WALLS"
 verified_solvable = true
 min_moves = 11
 difficulty_score = 47.36

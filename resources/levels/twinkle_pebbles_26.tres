@@ -7,7 +7,12 @@
 script = ExtResource("2_p36sh")
 level_id = "twinkle_pebbles_26"
 level_name_key = ""
-display_name = "Pebble Orbits 26"
+display_name = "Fields of gold"
+locale_display_names = {
+"en": "Fields of gold",
+"fr": "Pebble Orbits 26",
+"pirate": "Pebble Orbits 26"
+}
 sort_index = 260
 goal_right_color = 3
 goal_bottom_color = 1
