@@ -158,7 +158,7 @@ func _ready() -> void:
 		waited, _elapsed_ms(), get_viewport_rect().size
 	])
 	_rebuild_map()
-	_go_to_page(0, false)
+	_restore_level_focus(GameSession.consume_dimension_level_focus(_dimension_index))
 	_sync_title_to_chart_pole()
 	GameSession.fade_scene_wipe_out(0.32)
 	print("[DimensionLevels] first layout +%sms" % _elapsed_ms())
@@ -207,6 +207,11 @@ func _process(delta: float) -> void:
 		_nebula_mat.set_shader_parameter("brightness", pulse)
 	_sync_page_dots_to_camera()
 	_update_fps_overlay(delta)
+	## Diamonds are culled to the camera view. Pan/snap must redraw or newly
+	## visible rows stay blank (tappable, but never painted) — especially on
+	## phone, where hover never triggers a redraw.
+	if _panning or (_snap_tween != null and _snap_tween.is_running()):
+		queue_redraw()
 
 
 func _apply_translations() -> void:
@@ -490,6 +495,82 @@ func _clamp_camera_to_pages() -> void:
 	camera.position.y = clampf(camera.position.y, min_y, max_y)
 
 
+func _restore_level_focus(level_id: String) -> void:
+	var index := _index_of_level(level_id)
+	if index < 0:
+		_go_to_page(0, false)
+		return
+	if _paging_enabled:
+		_go_to_page(_page_index_for_level_index(index), false)
+		return
+	_frame_level_group(index)
+
+
+func _index_of_level(level_id: String) -> int:
+	if level_id.is_empty():
+		return -1
+	for i in _levels.size():
+		if _levels[i] != null and _levels[i].level_id == level_id:
+			return i
+	return -1
+
+
+func _page_index_for_level_index(level_index: int) -> int:
+	## Same page breaks as _rebuild_page_targets: one page per chapter, plus
+	## another page each time a chapter runs past CHAPTER_PAGE_SIZE.
+	if not _paging_enabled or level_index < 0:
+		return 0
+	var page := 0
+	var i := 0
+	var group_i := 0
+	while i < _levels.size():
+		var key := ""
+		if _levels[i] != null:
+			key = _levels[i].group_title_key.strip_edges()
+		var start := i
+		while i < _levels.size():
+			var next_key := ""
+			if _levels[i] != null:
+				next_key = _levels[i].group_title_key.strip_edges()
+			if next_key != key:
+				break
+			i += 1
+		if group_i > 0:
+			page += 1
+		var count := i - start
+		var extra_pages := 0
+		while (extra_pages + 1) * CHAPTER_PAGE_SIZE < count:
+			extra_pages += 1
+		if level_index < i:
+			var within := level_index - start
+			return page + mini(int(within / float(CHAPTER_PAGE_SIZE)), extra_pages)
+		page += extra_pages
+		group_i += 1
+	return 0
+
+
+func _frame_level_group(level_index: int) -> void:
+	var key := ""
+	if level_index >= 0 and level_index < _levels.size() and _levels[level_index] != null:
+		key = _levels[level_index].group_title_key.strip_edges()
+	if key.is_empty():
+		_go_to_page(0, false)
+		return
+	for header in _group_headers:
+		if str(header.get("title_key", "")) != key:
+			continue
+		var header_y := float(header.position.y)
+		camera.position = Vector2(
+			0.0,
+			_camera_y_to_place_world_at_screen_y(header_y, _page1_header_screen_y())
+		)
+		_clamp_camera_to_pages()
+		_sync_page_dots_to_camera()
+		queue_redraw()
+		return
+	_go_to_page(0, false)
+
+
 func _go_to_page(index: int, animate: bool) -> void:
 	if _page_ys.is_empty():
 		return
@@ -502,12 +583,15 @@ func _go_to_page(index: int, animate: bool) -> void:
 		camera.position = target
 		_clamp_camera_to_pages()
 		_sync_page_dots_to_camera()
+		queue_redraw()
 		return
 	_snap_tween = create_tween()
 	_snap_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_snap_tween.tween_property(camera, "position", target, PAGE_SNAP_DURATION)
 	_snap_tween.finished.connect(func() -> void:
+		_snap_tween = null
 		_sync_page_dots_to_camera()
+		queue_redraw()
 	)
 
 
@@ -556,12 +640,14 @@ func _apply_pan_delta(screen_delta: Vector2) -> void:
 	_clamp_camera_to_pages()
 	var dt := maxf(get_process_delta_time(), 0.0001)
 	_pan_velocity_y = lerpf(_pan_velocity_y, world_dy / dt, 0.55)
+	queue_redraw()
 
 
 func _nudge_scroll(world_dy: float) -> void:
 	camera.position.y += world_dy
 	camera.position.x = 0.0
 	_clamp_camera_to_pages()
+	queue_redraw()
 
 
 func _ensure_fps_overlay() -> void:
@@ -660,7 +746,8 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 	var z := maxf(camera.zoom.x, 0.001)
 	var world_px := 1.0 / z
 	var rim_w := 1.8 * MAP_DRAW_ZOOM * world_px
-	var view := _camera_view_rect(dsize)
+	## Extra row of padding so the next chapter is already painted as it peeks in.
+	var view := _camera_view_rect(dsize + _row_spacing())
 	var count := mini(_levels.size(), _level_positions.size())
 	var drawn := 0
 	for i in count:
@@ -884,6 +971,7 @@ func _end_pan() -> void:
 		_go_to_page(_resolve_snap_page(), true)
 	else:
 		_clamp_camera_to_pages()
+		queue_redraw()
 	_pan_velocity_y = 0.0
 	if _desktop_pointer():
 		_set_hover_index(_hoverable_index_at(_world_mouse()))
@@ -956,6 +1044,7 @@ func _launch_level(level: LevelConfig) -> void:
 	GameSession.clear_level_playlist()
 	GameSession.set_return_scene("res://scenes/ui/dimension_levels.tscn")
 	GameSession.set_level(level)
+	GameSession.focus_dimension_level(level)
 	GameSession.change_scene(GAME_SCENE)
 
 

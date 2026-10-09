@@ -21,10 +21,17 @@ var level_best_moves: Dictionary = {}
 var level_best_time_ms: Dictionary = {}
 var develop_mode: bool = false
 var playtest_mode: bool = false
+## Play launched from the level audit page. Back and Next return there.
+var audit_play: bool = false
 var playtest_level_draft: LevelConfig = null
 var playtest_passed: bool = false
 ## Creator dirty-check snapshot so Back still warns after returning from playtest.
 var playtest_baseline_signature: String = ""
+## Level opened from the audit. Empty when the creator started as a new level.
+var creator_loaded_level_id: String = ""
+## Where creator Back returns. Empty means the settings screen.
+var creator_return_scene: String = ""
+var creator_edit_level: LevelConfig = null
 ## Last / current dimension on the star map (section index).
 var current_dimension_index: int = 0
 ## When true, DimensionMap plays a zoom-out from the current diamond (back from levels).
@@ -33,6 +40,9 @@ var locale: String = "en"
 var sfx_enabled: bool = true
 ## Scene to return to from gameplay (dimensions map, daily list, etc.).
 var return_scene_path: String = "res://scenes/ui/dimension_map.tscn"
+## Dimension level map should reopen on the subsection of this level.
+var dimension_return_index: int = -1
+var dimension_return_level_id: String = ""
 ## Optional ordered playlist (daily puzzles). Empty = campaign catalog order.
 var active_level_playlist: Array[LevelConfig] = []
 ## Tutorial coach marks already shown (group id -> true).
@@ -65,6 +75,7 @@ func _boot_locale() -> void:
 func set_level(level: LevelConfig) -> void:
 	selected_level = level
 	playtest_mode = false
+	audit_play = false
 	if level != null:
 		var context: Dictionary = LevelCatalog.find_level_context(level.level_id)
 		if not context.is_empty():
@@ -157,6 +168,22 @@ func get_return_scene() -> String:
 	return return_scene_path
 
 
+func focus_dimension_level(level: LevelConfig) -> void:
+	if level == null or get_return_scene() != "res://scenes/ui/dimension_levels.tscn":
+		return
+	dimension_return_index = current_dimension_index
+	dimension_return_level_id = level.level_id
+
+
+func consume_dimension_level_focus(dimension_index: int) -> String:
+	if dimension_return_index != dimension_index or dimension_return_level_id.is_empty():
+		return ""
+	var level_id := dimension_return_level_id
+	dimension_return_index = -1
+	dimension_return_level_id = ""
+	return level_id
+
+
 func set_level_playlist(levels: Array[LevelConfig]) -> void:
 	active_level_playlist = levels.duplicate()
 
@@ -174,10 +201,53 @@ func is_last_in_playlist(level: LevelConfig) -> bool:
 func restart_level(level: LevelConfig) -> void:
 	if level == null:
 		return
+	var keep_audit := audit_play
 	if playtest_mode:
 		selected_level = level.duplicate(true) as LevelConfig
 	else:
 		set_level(level)
+		audit_play = keep_audit
+
+
+func begin_audit_play(level: LevelConfig) -> void:
+	if level == null:
+		return
+	clear_level_playlist()
+	set_return_scene("res://scenes/ui/level_audit.tscn")
+	set_level(level)
+	audit_play = true
+
+
+func end_audit_play() -> void:
+	audit_play = false
+
+
+func begin_creator_edit(level: LevelConfig, return_scene: String) -> void:
+	if level == null:
+		return
+	creator_edit_level = level.duplicate(true) as LevelConfig
+	creator_loaded_level_id = level.level_id
+	creator_return_scene = return_scene
+
+
+func begin_fresh_creator() -> void:
+	creator_edit_level = null
+	creator_loaded_level_id = ""
+	creator_return_scene = ""
+
+
+func consume_creator_edit_level() -> LevelConfig:
+	var level := creator_edit_level
+	creator_edit_level = null
+	return level
+
+
+func finish_creator_session() -> String:
+	var path := creator_return_scene
+	creator_edit_level = null
+	creator_loaded_level_id = ""
+	creator_return_scene = ""
+	return path
 
 
 func start_playtest(level: LevelConfig, baseline_signature: String = "") -> void:

@@ -167,6 +167,7 @@ func _on_develop_mode_checkbox_toggled(enabled: bool) -> void:
 
 
 func _on_level_creator_button_pressed() -> void:
+	GameSession.begin_fresh_creator()
 	get_tree().change_scene_to_file(LEVEL_CREATOR_SCENE)
 
 

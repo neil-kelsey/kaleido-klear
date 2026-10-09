@@ -39,27 +39,35 @@ static func get_levels_for_date(date_key: String) -> Array[LevelConfig]:
 	if key.is_empty():
 		return levels
 
+	var overrides: Dictionary = CustomLevelStore._user_levels_by_id()
+	var seen := {}
 	for path in CustomLevelStore.list_project_level_paths():
 		var level := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
 		if level == null:
 			continue
 		if level.daily_date.strip_edges() != key:
 			continue
+		if (
+			overrides.has(level.level_id)
+			or seen.has(level.level_id)
+			or CustomLevelStore.is_level_deleted(level.level_id)
+		):
+			continue
+		seen[level.level_id] = true
 		levels.append(level)
 
-	## Device drafts with a daily date (phone creator) also count for that day.
-	for level in CustomLevelStore.list_levels():
-		if level == null:
+	## Device drafts replace a packaged daily, or add a phone-only one.
+	for level_id in overrides.keys():
+		var level: LevelConfig = overrides[level_id]
+		if (
+			level == null
+			or level.daily_date.strip_edges() != key
+			or seen.has(level.level_id)
+			or CustomLevelStore.is_level_deleted(level.level_id)
+		):
 			continue
-		if level.daily_date.strip_edges() != key:
-			continue
-		var already := false
-		for existing in levels:
-			if existing.level_id == level.level_id:
-				already = true
-				break
-		if not already:
-			levels.append(level)
+		seen[level.level_id] = true
+		levels.append(level)
 
 	levels.sort_custom(func(a: LevelConfig, b: LevelConfig) -> bool:
 		if a.sort_index == b.sort_index:

@@ -1,15 +1,22 @@
 extends Control
 
-## Develop-mode audit: dimension tables with icon actions and drag-drop reorder.
+## Develop-mode audit: full-page dimension tables with icon actions and drag-drop reorder.
 
 const SETTINGS_SCENE := "res://scenes/ui/settings.tscn"
+const GAME_SCENE := "res://scenes/main.tscn"
+const LEVEL_CREATOR_SCENE := "res://scenes/editor/level_creator.tscn"
 const EXIT_CONFIRM_SCENE := preload("res://scenes/ui/exit_confirm_modal.tscn")
-const TITLE_FONT_SIZE := 48
 const COL_LEVEL_W := 88.0
-const COL_ACTIONS_W := 148.0
+const COL_DIFFICULTY_W := 176.0
+const COL_ACTIONS_W := 240.0
+const TITLE_FONT_SIZE := 48
+const TITLE_POLE_Y := 148.0
+## Open sections and scroll, restored when play returns to this page.
+static var _return_open: Dictionary = {}
+static var _return_scroll: int = 0
 
 @onready var title_badge: DiamondTitleBadge = %TitleBadge
-@onready var nebula_bg: TextureRect = %NebulaBg
+@onready var content_margin: MarginContainer = %ContentMargin
 @onready var scroll: ScrollContainer = %Scroll
 @onready var sections_container: VBoxContainer = %SectionsContainer
 @onready var empty_label: Label = %EmptyLabel
@@ -19,8 +26,6 @@ const COL_ACTIONS_W := 148.0
 var _levels: Array[LevelConfig] = []
 var _pending_delete_id: String = ""
 var _editing_level: LevelConfig = null
-var _nebula_mat: ShaderMaterial
-var _fx_time := 0.0
 
 var _open_sections: Dictionary = {}
 var _delete_modal: Control
@@ -50,27 +55,28 @@ func _ready() -> void:
 	if not OS.is_debug_build() or not GameSession.develop_mode:
 		get_tree().change_scene_to_file(SETTINGS_SCENE)
 		return
-	_nebula_mat = NebulaEffect.apply_backdrop(nebula_bg)
 	set_process(true)
 	_setup_dialogs()
 	back_button.pressed.connect(_on_back_button_pressed)
 	_apply_translations()
 	UiTheme.style_menu_hint(empty_label)
 	if count_label != null:
-		UiTheme.style_settings_row_label(count_label)
+		UiTheme.style_menu_hint(count_label)
+		count_label.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+		count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_style_scrollbar()
 	get_viewport().size_changed.connect(_sync_title_badge)
 	_sync_title_badge()
+	if not _return_open.is_empty():
+		_open_sections = _return_open.duplicate()
 	_refresh()
+	if _return_scroll > 0 and scroll != null:
+		await get_tree().process_frame
+		if is_instance_valid(scroll):
+			scroll.scroll_vertical = _return_scroll
 
 
 func _process(delta: float) -> void:
-	_fx_time += delta
-	if _nebula_mat != null and nebula_bg != null:
-		_nebula_mat.set_shader_parameter("time_sec", _fx_time)
-		_nebula_mat.set_shader_parameter("rect_size", nebula_bg.size)
-		var pulse := 0.99 + 0.01 * sin(_fx_time * 0.25)
-		_nebula_mat.set_shader_parameter("brightness", pulse)
 	BrandRainbow.tick(delta)
 	UiTheme.sync_host_rainbow_border(_edit_section_option)
 	UiTheme.sync_host_rainbow_border(_edit_subsection_option)
@@ -97,10 +103,13 @@ func _notification(what: int) -> void:
 
 func _apply_translations() -> void:
 	if title_badge != null:
+		title_badge.z_index = 2
 		title_badge.title = tr("UI_AUDIT_TITLE")
 		title_badge.font_size = TITLE_FONT_SIZE
 		title_badge.fill_color = UiTheme.PRIMARY
 		title_badge.show_rim = false
+	if count_label != null:
+		count_label.z_index = 2
 	empty_label.text = tr("UI_AUDIT_EMPTY")
 	_refresh_count_label()
 	if _edit_section_label != null:
@@ -115,6 +124,25 @@ func _apply_translations() -> void:
 		_catalog_names_label.text = tr("UI_CREATOR_DISPLAY_NAME")
 	_refresh_catalog_name_labels()
 	_sync_title_badge()
+
+
+func _sync_title_badge() -> void:
+	if title_badge == null:
+		return
+	var metrics := DiamondTitleBadge.measure(title_badge.title, title_badge.font_size)
+	var w: float = metrics.size.x
+	var h: float = metrics.size.y
+	title_badge.custom_minimum_size = metrics.size
+	title_badge.offset_left = -w * 0.5
+	title_badge.offset_right = w * 0.5
+	title_badge.offset_top = TITLE_POLE_Y - h * 0.5
+	title_badge.offset_bottom = TITLE_POLE_Y + h * 0.5
+	var subtitle_top := title_badge.offset_bottom + 40.0
+	if count_label != null:
+		count_label.offset_top = subtitle_top
+		count_label.offset_bottom = subtitle_top + 72.0
+	if content_margin != null:
+		content_margin.add_theme_constant_override("margin_top", int(subtitle_top + 72.0 + 56.0))
 
 
 func _style_scrollbar() -> void:
@@ -143,29 +171,6 @@ func _style_scrollbar() -> void:
 	bar.add_theme_stylebox_override("grabber_highlight", grabber_hover)
 	bar.add_theme_stylebox_override("grabber_pressed", grabber_pressed)
 	bar.add_theme_constant_override("grabber_offset", 0)
-	## Sit the bar in the chart card's right padding, clear of the action buttons.
-	var panel := get_node_or_null("Margin/Panel") as PanelContainer
-	if panel != null:
-		var existing := panel.get_theme_stylebox("panel")
-		if existing is StyleBoxFlat:
-			var flat := (existing as StyleBoxFlat).duplicate() as StyleBoxFlat
-			flat.content_margin_right = 20
-			panel.add_theme_stylebox_override("panel", flat)
-	scroll.add_theme_constant_override("scrollbar_h_separation", 16)
-
-
-func _sync_title_badge() -> void:
-	if title_badge == null:
-		return
-	var metrics := DiamondTitleBadge.measure(title_badge.title, title_badge.font_size)
-	var w: float = metrics.size.x
-	var h: float = metrics.size.y
-	var pole_y := 108.0
-	title_badge.custom_minimum_size = metrics.size
-	title_badge.offset_left = -w * 0.5
-	title_badge.offset_right = w * 0.5
-	title_badge.offset_top = pole_y - h * 0.5
-	title_badge.offset_bottom = pole_y + h * 0.5
 
 
 func _setup_dialogs() -> void:
@@ -427,7 +432,9 @@ func _open_catalog_editor(kind: String, section_id: int, msgid: String) -> void:
 	if kind == "group":
 		title_key = "UI_AUDIT_EDIT_SECTION_TITLE"
 	elif kind == "add_group":
-		title_key = "UI_AUDIT_ADD_SECTION_TITLE"
+		title_key = "UI_AUDIT_ADD_SUBSECTION_TITLE"
+	elif kind == "add_dimension":
+		title_key = "UI_AUDIT_ADD_DIMENSION_TITLE"
 	_catalog_modal.show_modal(title_key, "", "UI_AUDIT_SAVE", "UI_CANCEL")
 
 
@@ -455,6 +462,13 @@ func _on_catalog_confirmed() -> void:
 			_catalog_status_label.text = tr("UI_AUDIT_ERROR_CATALOG_SAVE")
 			call_deferred("_reopen_catalog_dialog")
 			return
+	elif _catalog_kind == "add_dimension":
+		msgid = LevelCatalog.make_dimension_title_key(english)
+		var dim_err := LevelCatalog.register_dimension(msgid)
+		if dim_err != OK:
+			_catalog_status_label.text = tr("UI_AUDIT_ERROR_CATALOG_SAVE")
+			call_deferred("_reopen_catalog_dialog")
+			return
 	var write_err := LocalePoStore.write_msgstrs(msgid, names)
 	if write_err != OK:
 		_catalog_status_label.text = tr("UI_AUDIT_ERROR_CATALOG_SAVE")
@@ -472,13 +486,33 @@ func _reopen_catalog_dialog() -> void:
 	if _catalog_kind == "group":
 		title_key = "UI_AUDIT_EDIT_SECTION_TITLE"
 	elif _catalog_kind == "add_group":
-		title_key = "UI_AUDIT_ADD_SECTION_TITLE"
+		title_key = "UI_AUDIT_ADD_SUBSECTION_TITLE"
+	elif _catalog_kind == "add_dimension":
+		title_key = "UI_AUDIT_ADD_DIMENSION_TITLE"
 	_catalog_modal.show_modal(title_key, "", "UI_AUDIT_SAVE", "UI_CANCEL")
+
+
+func _make_audit_cta(label: String, on_pressed: Callable) -> Control:
+	var wrap := MarginContainer.new()
+	wrap.add_theme_constant_override("margin_top", 28)
+	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var button := MenuActionButton.new()
+	button.kind = MenuActionButton.Kind.PRIMARY
+	button.compact = true
+	button.show_trailing_icon = false
+	button.label_text = label
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.pressed.connect(on_pressed)
+	wrap.add_child(button)
+	return wrap
 
 
 func _header_circle_button(icon: String, tooltip_key: String, accent: Color) -> CircleIconButton:
 	var button := CircleIconButton.new()
-	button.button_size = 48
+	button.button_size = 76
+	## Stay square. The dimension row is tall, and the default fill flags stretch these into pills.
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.fa_icon = icon
 	button.tooltip_key = tooltip_key
 	button.accent_color = accent
@@ -622,6 +656,10 @@ func _rebuild_sections() -> void:
 		var levels := _dimension_levels(i)
 		any = true
 		sections_container.add_child(_make_dimension_block(i, levels))
+	sections_container.add_child(_make_audit_cta(
+		tr("UI_AUDIT_ADD_DIMENSION"),
+		_open_catalog_editor.bind("add_dimension", -1, "")
+	))
 	var by_date := _daily_levels_by_date()
 	if not by_date.is_empty():
 		any = true
@@ -656,7 +694,7 @@ func _rebuild_sections() -> void:
 func _make_dimension_block(section_id: int, levels: Array[LevelConfig]) -> Control:
 	var section_key := "dim:%d" % section_id
 	var block := VBoxContainer.new()
-	block.add_theme_constant_override("separation", 28)
+	block.add_theme_constant_override("separation", 40)
 
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 16)
@@ -695,6 +733,10 @@ func _make_dimension_block(section_id: int, levels: Array[LevelConfig]) -> Contr
 			body.add_child(
 				_make_table(title, _group_key_dimension(section_id, key), bucket["levels"], 28, true, section_id, key)
 			)
+	body.add_child(_make_audit_cta(
+		tr("UI_AUDIT_ADD_SUBSECTION"),
+		_open_catalog_editor.bind("add_group", section_id, "")
+	))
 	body.visible = _is_section_open(section_key)
 	return block
 
@@ -718,8 +760,8 @@ func _make_fold_header(
 	section_id: int = -1
 ) -> Control:
 	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", 8)
-	bar.custom_minimum_size.y = 88
+	bar.add_theme_constant_override("separation", 20)
+	bar.custom_minimum_size.y = 128
 
 	var header := Button.new()
 	header.flat = true
@@ -746,13 +788,13 @@ func _make_fold_header(
 	label.clip_text = true
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	UiTheme.style_section_subtitle(label)
-	## Audit fold titles sit beside chevron / add / edit; the default subtitle size collides.
-	label.add_theme_font_size_override("font_size", 32)
+	## Full section-subtitle size crowds the chevron and edit buttons on this row.
+	label.add_theme_font_size_override("font_size", 44)
 	row.add_child(label)
 
 	var chevron := FaIconView.new()
 	chevron.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	chevron.custom_minimum_size = Vector2(36, 36)
+	chevron.custom_minimum_size = Vector2(44, 44)
 	chevron.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	chevron.icon_color = accent
 	_sync_fold_icon(chevron, _is_section_open(section_key))
@@ -761,9 +803,6 @@ func _make_fold_header(
 	header.pressed.connect(_on_fold_header_pressed.bind(section_key, body, chevron))
 
 	if section_id >= 0:
-		var add_btn := _header_circle_button("plus", "UI_AUDIT_ADD_SECTION", accent)
-		add_btn.pressed.connect(_open_catalog_editor.bind("add_group", section_id, ""))
-		bar.add_child(add_btn)
 		var edit_btn := _header_circle_button("pencil", "UI_AUDIT_EDIT", UiTheme.PRIMARY)
 		var title_key := str(LevelCatalog.SECTIONS[section_id].get("title_key", ""))
 		edit_btn.pressed.connect(_open_catalog_editor.bind("dimension", section_id, title_key))
@@ -840,6 +879,9 @@ func _make_header_row() -> Control:
 	var name_h := _header_cell(tr("UI_AUDIT_COL_NAME"), 0.0)
 	name_h.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(name_h)
+
+	var difficulty_h := _header_cell(tr("UI_AUDIT_COL_DIFFICULTY"), COL_DIFFICULTY_W)
+	row.add_child(difficulty_h)
 
 	var actions_h := _header_cell(tr("UI_AUDIT_COL_ACTIONS"), COL_ACTIONS_W)
 	actions_h.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1045,7 +1087,54 @@ func _find_level(level_id: String) -> LevelConfig:
 	return null
 
 
+func style_difficulty_option(option: OptionButton, tier: int) -> void:
+	var color := LevelDifficulty.banner_color(tier)
+	var face := StyleBoxFlat.new()
+	face.bg_color = color
+	face.set_corner_radius_all(14)
+	face.content_margin_left = 12
+	face.content_margin_top = 6
+	face.content_margin_right = 32
+	face.content_margin_bottom = 6
+	var hover := face.duplicate() as StyleBoxFlat
+	hover.bg_color = color.lightened(0.08)
+	option.add_theme_stylebox_override("normal", face)
+	option.add_theme_stylebox_override("hover", hover)
+	option.add_theme_stylebox_override("pressed", face)
+	option.add_theme_stylebox_override("focus", hover)
+	var ink := UiTheme.contrast_on(color)
+	option.add_theme_color_override("font_color", ink)
+	option.add_theme_color_override("font_hover_color", ink)
+	option.add_theme_color_override("font_pressed_color", ink)
+	option.add_theme_color_override("font_focus_color", ink)
+	option.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+	option.add_theme_font_size_override("font_size", 20)
+	option.add_theme_constant_override("arrow_margin", 10)
+
+
+func _on_edit_puzzle_pressed(level_id: String) -> void:
+	var level := CustomLevelStore.load_level(level_id)
+	if level == null:
+		return
+	_return_open = _open_sections.duplicate()
+	_return_scroll = scroll.scroll_vertical if scroll != null else 0
+	GameSession.begin_creator_edit(level, "res://scenes/ui/level_audit.tscn")
+	get_tree().change_scene_to_file(LEVEL_CREATOR_SCENE)
+
+
+func _on_play_pressed(level_id: String) -> void:
+	var level := CustomLevelStore.load_level(level_id)
+	if level == null:
+		return
+	_return_open = _open_sections.duplicate()
+	_return_scroll = scroll.scroll_vertical if scroll != null else 0
+	GameSession.begin_audit_play(level)
+	get_tree().change_scene_to_file(GAME_SCENE)
+
+
 func _on_back_button_pressed() -> void:
+	_return_open.clear()
+	_return_scroll = 0
 	get_tree().change_scene_to_file(SETTINGS_SCENE)
 
 
@@ -1068,8 +1157,9 @@ func handle_back() -> void:
 class _AuditRow extends PanelContainer:
 	const ROW_H := 72.0
 	const LEVEL_W := 60.0
-	const ACTIONS_W := 148.0
-	const BTN := 56
+	const ACTIONS_W := 240.0
+	const BTN := 52
+	const PLAY_ACCENT := Color(0.15, 0.58, 0.32, 1)
 
 	var audit: Control
 	var group_key: String = ""
@@ -1077,6 +1167,8 @@ class _AuditRow extends PanelContainer:
 	var order_index: int = 1
 	var _order_label: Label
 	var _name_label: Label
+	var _difficulty_option: OptionButton
+	var _applying_difficulty := false
 
 	func _init(host: Control, key: String, level: LevelConfig, order: int) -> void:
 		audit = host
@@ -1090,7 +1182,7 @@ class _AuditRow extends PanelContainer:
 
 	func _build(level: LevelConfig) -> void:
 		var style := StyleBoxFlat.new()
-		style.bg_color = Color(1, 1, 1, 0.55)
+		style.bg_color = Color(0.94, 0.945, 0.96, 1)
 		style.set_corner_radius_all(16)
 		style.content_margin_left = 12
 		style.content_margin_right = 12
@@ -1119,6 +1211,23 @@ class _AuditRow extends PanelContainer:
 		_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(_name_label)
 
+		_difficulty_option = OptionButton.new()
+		_difficulty_option.custom_minimum_size = Vector2(176, 52)
+		_difficulty_option.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		_difficulty_option.clip_text = true
+		_difficulty_option.focus_mode = Control.FOCUS_NONE
+		for tier in range(1, 6):
+			_difficulty_option.add_item(tr(LevelDifficulty.label_key(tier)), tier)
+		var selected_tier := LevelDifficulty.resolved_tier(level)
+		_applying_difficulty = true
+		_difficulty_option.select(maxi(_difficulty_option.get_item_index(selected_tier), 0))
+		_applying_difficulty = false
+		if audit != null and audit.has_method("style_difficulty_option"):
+			audit.style_difficulty_option(_difficulty_option, selected_tier)
+		_style_difficulty_popup()
+		_difficulty_option.item_selected.connect(_on_difficulty_selected)
+		row.add_child(_difficulty_option)
+
 		var actions := HBoxContainer.new()
 		actions.custom_minimum_size.x = ACTIONS_W
 		actions.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -1126,10 +1235,26 @@ class _AuditRow extends PanelContainer:
 		actions.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(actions)
 
+		var play_btn := CircleIconButton.new()
+		play_btn.button_size = BTN
+		play_btn.fa_icon = "play"
+		play_btn.tooltip_key = "UI_AUDIT_PLAY"
+		play_btn.accent_color = PLAY_ACCENT
+		play_btn.pressed.connect(func() -> void: audit._on_play_pressed(level_id))
+		actions.add_child(play_btn)
+
+		var puzzle_btn := CircleIconButton.new()
+		puzzle_btn.button_size = BTN
+		puzzle_btn.fa_icon = "th"
+		puzzle_btn.tooltip_key = "UI_AUDIT_EDIT_PUZZLE"
+		puzzle_btn.accent_color = UiTheme.ACCENT
+		puzzle_btn.pressed.connect(func() -> void: audit._on_edit_puzzle_pressed(level_id))
+		actions.add_child(puzzle_btn)
+
 		var edit_btn := CircleIconButton.new()
 		edit_btn.button_size = BTN
 		edit_btn.fa_icon = "pencil"
-		edit_btn.tooltip_key = "UI_AUDIT_EDIT"
+		edit_btn.tooltip_key = "UI_AUDIT_NAME_PLACE"
 		edit_btn.accent_color = UiTheme.PRIMARY
 		edit_btn.pressed.connect(func() -> void: audit._on_edit_pressed(level_id))
 		actions.add_child(edit_btn)
@@ -1141,6 +1266,39 @@ class _AuditRow extends PanelContainer:
 		delete_btn.accent_color = UiTheme.PLAY
 		delete_btn.pressed.connect(func() -> void: audit._on_delete_pressed(level_id))
 		actions.add_child(delete_btn)
+
+	func _style_difficulty_popup() -> void:
+		if _difficulty_option == null:
+			return
+		var popup := _difficulty_option.get_popup()
+		popup.add_theme_font_override("font", UiTheme.BUTTON_FONT)
+		popup.add_theme_font_size_override("font_size", 28)
+		popup.add_theme_color_override("font_color", UiTheme.TEXT)
+		popup.add_theme_color_override("font_hover_color", UiTheme.PRIMARY)
+		var panel := StyleBoxFlat.new()
+		panel.bg_color = Color(0.97, 0.97, 0.985, 1)
+		panel.set_corner_radius_all(16)
+		panel.content_margin_left = 8
+		panel.content_margin_top = 8
+		panel.content_margin_right = 8
+		panel.content_margin_bottom = 8
+		popup.add_theme_stylebox_override("panel", panel)
+
+	func _on_difficulty_selected(_index: int) -> void:
+		if _applying_difficulty or _difficulty_option == null:
+			return
+		var tier := _difficulty_option.get_selected_id()
+		var level := CustomLevelStore.load_level(level_id)
+		if level == null:
+			return
+		if audit != null and audit.has_method("style_difficulty_option"):
+			audit.style_difficulty_option(_difficulty_option, tier)
+		if level.difficulty_tier == tier:
+			return
+		level.difficulty_tier = tier
+		var err := CustomLevelStore.save_level(level)
+		if err != OK:
+			push_warning("Level audit difficulty save failed: %s" % error_string(err))
 
 	func _drag_payload() -> Dictionary:
 		return {"group_key": group_key, "from_index": order_index - 1, "level_id": level_id}

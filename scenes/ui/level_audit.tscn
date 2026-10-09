@@ -1,9 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://kaleido_level_audit"]
+[gd_scene load_steps=4 format=3 uid="uid://kaleido_level_audit"]
 
 [ext_resource type="Script" path="res://scritps/ui/LevelAudit.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://kaleido_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="2_back"]
 [ext_resource type="PackedScene" uid="uid://kaleido_diamond_title_badge" path="res://scenes/ui/diamond_title_badge.tscn" id="3_title"]
-[ext_resource type="Script" path="res://scritps/ui/ChartModalPanel.gd" id="4_chart"]
 
 [node name="LevelAudit" type="Control"]
 layout_mode = 3
@@ -14,7 +13,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="NightFill" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -22,72 +21,62 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.01, 0.01, 0.016, 1)
-
-[node name="NebulaBg" type="TextureRect" parent="."]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 1
+color = Color(1, 1, 1, 1)
 
 [node name="TitleBadge" parent="." instance=ExtResource("3_title")]
 unique_name_in_owner = true
-offset_top = 72.0
-offset_bottom = 168.0
 
-[node name="Margin" type="MarginContainer" parent="."]
+[node name="CountLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -420.0
+offset_top = 220.0
+offset_right = 420.0
+offset_bottom = 284.0
+grow_horizontal = 2
+mouse_filter = 2
+text = "Total levels: 0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ContentMargin" type="MarginContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 48
-theme_override_constants/margin_top = 196
-theme_override_constants/margin_right = 48
-theme_override_constants/margin_bottom = 176
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 320
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 168
 
-[node name="Panel" type="PanelContainer" parent="Margin"]
+[node name="VBox" type="VBoxContainer" parent="ContentMargin"]
 layout_mode = 2
-size_flags_vertical = 3
-script = ExtResource("4_chart")
-shrink_wrap = false
+theme_override_constants/separation = 12
 
-[node name="Content" type="VBoxContainer" parent="Margin/Panel"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 16
-
-[node name="CountLabel" type="Label" parent="Margin/Panel/Content"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Total levels: 0"
-
-[node name="Scroll" type="ScrollContainer" parent="Margin/Panel/Content"]
+[node name="Scroll" type="ScrollContainer" parent="ContentMargin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
-theme_override_constants/scrollbar_h_separation = 16
 
-[node name="InnerMargin" type="MarginContainer" parent="Margin/Panel/Content/Scroll"]
+[node name="InnerMargin" type="MarginContainer" parent="ContentMargin/VBox/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/margin_right = 48
+theme_override_constants/margin_right = 72
 
-[node name="SectionsContainer" type="VBoxContainer" parent="Margin/Panel/Content/Scroll/InnerMargin"]
+[node name="SectionsContainer" type="VBoxContainer" parent="ContentMargin/VBox/Scroll/InnerMargin"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 48
+theme_override_constants/separation = 56
 
-[node name="EmptyLabel" type="Label" parent="Margin/Panel/Content"]
+[node name="EmptyLabel" type="Label" parent="ContentMargin/VBox"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2

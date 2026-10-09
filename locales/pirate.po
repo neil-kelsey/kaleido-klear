@@ -502,6 +502,9 @@ msgstr "Yer voyage be completable."
 msgid "UI_BACK_TO_LEVEL_CREATOR"
 msgstr "Back to the chart maker"
 
+msgid "UI_BACK_TO_LEVEL_AUDIT"
+msgstr "Back to the charts"
+
 msgid "UI_CREATOR_RETURNED_FROM_PLAYTEST"
 msgstr "Back from the sea trial."
 
@@ -510,6 +513,18 @@ msgstr "Sea trial passed — ye may stow this chart."
 
 msgid "UI_CREATOR_SAVE_NEEDS_PLAYTEST"
 msgstr "Sea-trial and finish the voyage afore stowin’."
+
+msgid "UI_CREATOR_EDITING_LEVEL"
+msgstr "Amendin' \"%s\". Sail it through again if ye change the puzzle."
+
+msgid "UI_CREATOR_OVERWRITE_TITLE"
+msgstr "Overwrite this chart?"
+
+msgid "UI_CREATOR_OVERWRITE_CONFIRM"
+msgstr "A level by that name already be on the charts — be ye sure ye want to overwrite the level?"
+
+msgid "UI_CREATOR_OVERWRITE"
+msgstr "Overwrite"
 
 msgid "UI_LANGUAGE_FRENCH"
 msgstr "Fancy French"
@@ -652,6 +667,12 @@ msgstr "Level"
 msgid "UI_AUDIT_COL_NAME"
 msgstr "Name"
 
+msgid "UI_AUDIT_COL_DIFFICULTY"
+msgstr "Toughness"
+
+msgid "UI_AUDIT_PLAY"
+msgstr "Set sail"
+
 msgid "UI_AUDIT_COL_ACTIONS"
 msgstr "Actions"
 
@@ -661,8 +682,14 @@ msgstr "No banner"
 msgid "UI_AUDIT_SAVE"
 msgstr "Save"
 
+msgid "UI_AUDIT_NAME_PLACE"
+msgstr "Name an' berth"
+
+msgid "UI_AUDIT_EDIT_PUZZLE"
+msgstr "Edit the puzzle"
+
 msgid "UI_AUDIT_EDIT_TITLE"
-msgstr "Tweak this chart"
+msgstr "Name an' berth"
 
 msgid "UI_AUDIT_EDIT_DIMENSION_TITLE"
 msgstr "Tweak this dimension"
@@ -671,10 +698,22 @@ msgid "UI_AUDIT_EDIT_SECTION_TITLE"
 msgstr "Tweak this harbor"
 
 msgid "UI_AUDIT_ADD_SECTION_TITLE"
-msgstr "Add a harbor"
+msgstr "Add a sub-harbor"
 
 msgid "UI_AUDIT_ADD_SECTION"
-msgstr "Add a harbor"
+msgstr "Add a sub-harbor"
+
+msgid "UI_AUDIT_ADD_SUBSECTION"
+msgstr "Add a sub-harbor"
+
+msgid "UI_AUDIT_ADD_SUBSECTION_TITLE"
+msgstr "Add a sub-harbor"
+
+msgid "UI_AUDIT_ADD_DIMENSION"
+msgstr "Add a dimension"
+
+msgid "UI_AUDIT_ADD_DIMENSION_TITLE"
+msgstr "Add a dimension"
 
 msgid "UI_AUDIT_ERROR_CATALOG_NAME"
 msgstr "Give it a name in at least one tongue."

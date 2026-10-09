@@ -502,6 +502,9 @@ msgstr "Votre niveau est complétable."
 msgid "UI_BACK_TO_LEVEL_CREATOR"
 msgstr "Retour au créateur"
 
+msgid "UI_BACK_TO_LEVEL_AUDIT"
+msgstr "Retour à l'audit"
+
 msgid "UI_CREATOR_RETURNED_FROM_PLAYTEST"
 msgstr "Retour du test de jeu."
 
@@ -510,6 +513,18 @@ msgstr "Test réussi — vous pouvez enregistrer ce niveau."
 
 msgid "UI_CREATOR_SAVE_NEEDS_PLAYTEST"
 msgstr "Testez et terminez le niveau avant d’enregistrer."
+
+msgid "UI_CREATOR_EDITING_LEVEL"
+msgstr "Modification de « %s ». Rejouez le niveau si vous changez le puzzle."
+
+msgid "UI_CREATOR_OVERWRITE_TITLE"
+msgstr "Écraser le niveau ?"
+
+msgid "UI_CREATOR_OVERWRITE_CONFIRM"
+msgstr "Un niveau portant ce nom existe déjà. Voulez-vous vraiment écraser ce niveau ?"
+
+msgid "UI_CREATOR_OVERWRITE"
+msgstr "Écraser"
 
 msgid "UI_LANGUAGE_FRENCH"
 msgstr "Français"
@@ -652,6 +667,12 @@ msgstr "Niveau"
 msgid "UI_AUDIT_COL_NAME"
 msgstr "Nom"
 
+msgid "UI_AUDIT_COL_DIFFICULTY"
+msgstr "Difficulté"
+
+msgid "UI_AUDIT_PLAY"
+msgstr "Jouer"
+
 msgid "UI_AUDIT_COL_ACTIONS"
 msgstr "Actions"
 
@@ -661,8 +682,14 @@ msgstr "Sans groupe"
 msgid "UI_AUDIT_SAVE"
 msgstr "Save"
 
+msgid "UI_AUDIT_NAME_PLACE"
+msgstr "Nom et emplacement"
+
+msgid "UI_AUDIT_EDIT_PUZZLE"
+msgstr "Modifier le puzzle"
+
 msgid "UI_AUDIT_EDIT_TITLE"
-msgstr "Modifier le niveau"
+msgstr "Nom et emplacement"
 
 msgid "UI_AUDIT_EDIT_DIMENSION_TITLE"
 msgstr "Modifier la dimension"
@@ -671,10 +698,22 @@ msgid "UI_AUDIT_EDIT_SECTION_TITLE"
 msgstr "Modifier la section"
 
 msgid "UI_AUDIT_ADD_SECTION_TITLE"
-msgstr "Ajouter une section"
+msgstr "Ajouter une sous-section"
 
 msgid "UI_AUDIT_ADD_SECTION"
-msgstr "Ajouter une section"
+msgstr "Ajouter une sous-section"
+
+msgid "UI_AUDIT_ADD_SUBSECTION"
+msgstr "Ajouter une sous-section"
+
+msgid "UI_AUDIT_ADD_SUBSECTION_TITLE"
+msgstr "Ajouter une sous-section"
+
+msgid "UI_AUDIT_ADD_DIMENSION"
+msgstr "Ajouter une dimension"
+
+msgid "UI_AUDIT_ADD_DIMENSION_TITLE"
+msgstr "Ajouter une dimension"
 
 msgid "UI_AUDIT_ERROR_CATALOG_NAME"
 msgstr "Saisissez un nom dans au moins une langue."

@@ -67,6 +67,7 @@ func _ready() -> void:
 		board.load_level(selected_level)
 
 	_current_level = board.level_config
+	GameSession.focus_dimension_level(_current_level)
 	_apply_section_theme()
 	_apply_goal_borders(_current_level)
 	_sync_safe_hud()
@@ -312,6 +313,7 @@ func _show_difficulty_banner() -> void:
 	if LevelCatalog.is_tutorial_dimension(_resolve_section_index(_current_level)):
 		return
 	difficulty_banner.present(
+		LevelCatalog.get_level_label(_current_level),
 		LevelDifficultyScript.label_for(_current_level),
 		LevelDifficultyScript.banner_color(LevelDifficultyScript.resolved_tier(_current_level))
 	)
@@ -703,8 +705,19 @@ func _go_to_level_creator() -> void:
 func _go_back() -> void:
 	if GameSession.playtest_mode:
 		_go_to_level_creator()
+	elif _leave_audit_play():
+		return
 	else:
 		_go_to_level_select()
+
+
+func _leave_audit_play() -> bool:
+	if not GameSession.audit_play:
+		return false
+	var path := GameSession.get_return_scene()
+	GameSession.end_audit_play()
+	get_tree().change_scene_to_file(path)
+	return true
 
 
 func handle_back() -> void:
@@ -860,6 +873,8 @@ func _on_next_level_hud_pressed() -> void:
 func _on_next_level_pressed() -> void:
 	if GameSession.playtest_mode:
 		_go_to_level_creator()
+		return
+	if _leave_audit_play():
 		return
 	var next_level := GameSession.get_next_level(_current_level)
 	if next_level != null:

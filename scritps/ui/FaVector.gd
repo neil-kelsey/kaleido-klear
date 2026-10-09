@@ -28,6 +28,7 @@ const FA_CHARS := {
 	"heart": "\uf004",
 	"question-circle": "\uf059",
 	"pencil": "\uf040",
+	"th": "\uf00a",
 	"plus": "\uf067",
 	"trash": "\uf1f8",
 	"bars": "\uf0c9",

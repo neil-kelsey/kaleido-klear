@@ -137,7 +137,9 @@ func play() -> void:
 func show_result(stars: int, section_complete: bool = false, has_next_section: bool = false) -> void:
 	_playtest_mode = false
 	_set_standard_layout(true)
-	if section_complete:
+	if GameSession.audit_play:
+		next_level_button.label_text = tr("UI_BACK_TO_LEVEL_AUDIT")
+	elif section_complete:
 		if has_next_section:
 			next_level_button.label_text = tr("UI_PLAY_NEXT_SECTION")
 		else:
@@ -308,6 +310,8 @@ func _apply_translations() -> void:
 		return
 	if _playtest_mode:
 		next_level_button.label_text = tr("UI_BACK_TO_LEVEL_CREATOR")
+	elif GameSession.audit_play and next_level_button != null:
+		next_level_button.label_text = tr("UI_BACK_TO_LEVEL_AUDIT")
 	elif next_level_button != null and not _open:
 		next_level_button.label_text = tr("UI_NEXT_LEVEL")
 		remove_ads_button.label_text = tr("UI_REMOVE_ADS")

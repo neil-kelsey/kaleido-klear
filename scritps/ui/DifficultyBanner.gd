@@ -1,13 +1,18 @@
 extends Control
 class_name DifficultyBanner
 
-## Start-of-level hardness sting, drawn as the same diamond-ended chip as dimension titles.
+## Start-of-level sting: level name over the same diamond-ended difficulty chip.
 
 const FONT_SIZE := 53
+const TITLE_FONT_SIZE := 36
+const TITLE_FONT_MIN := 22
+const TITLE_GAP := 10.0
 const FADE_IN := 0.28
 const HOLD_SEC := 2.2
 const FADE_OUT := 0.5
+const TITLE_COLOR := Color(1.0, 0.92, 0.72, 0.96)
 
+var _title := ""
 var _text := ""
 var _fill := Color(0.18, 0.67, 0.32, 1.0)
 var _tween: Tween
@@ -21,8 +26,9 @@ func _ready() -> void:
 	_pin()
 
 
-func present(text: String, fill: Color) -> void:
-	_text = text
+func present(title: String, rating: String, fill: Color) -> void:
+	_title = title.strip_edges()
+	_text = rating.strip_edges()
 	_fill = fill
 	_refresh_size()
 	queue_redraw()
@@ -58,19 +64,90 @@ func _pin() -> void:
 	pin_below(null)
 
 
+func _max_title_width() -> float:
+	if is_inside_tree():
+		return maxf(get_viewport_rect().size.x * 0.82, 280.0)
+	return 720.0
+
+
+func _title_font_size() -> int:
+	if _title.is_empty():
+		return TITLE_FONT_SIZE
+	var max_w := _max_title_width()
+	var size_px := TITLE_FONT_SIZE
+	while size_px > TITLE_FONT_MIN:
+		var text_size := DiamondTitleBadge.FONT.get_string_size(
+			_title, HORIZONTAL_ALIGNMENT_LEFT, -1, size_px
+		)
+		if text_size.x <= max_w:
+			return size_px
+		size_px -= 2
+	return TITLE_FONT_MIN
+
+
+func _title_metrics() -> Dictionary:
+	if _title.is_empty():
+		return {"size": Vector2.ZERO, "font_size": TITLE_FONT_SIZE}
+	var size_px := _title_font_size()
+	var text_size := DiamondTitleBadge.FONT.get_string_size(
+		_title, HORIZONTAL_ALIGNMENT_LEFT, -1, size_px
+	)
+	return {"size": text_size, "font_size": size_px}
+
+
 func _refresh_size() -> void:
-	var metrics := DiamondTitleBadge.measure(_text, FONT_SIZE)
-	var chip: Vector2 = metrics.size
-	custom_minimum_size = chip
-	size = chip
+	var chip: Vector2 = DiamondTitleBadge.measure(_text, FONT_SIZE).size
+	var title_m := _title_metrics()
+	var title_size: Vector2 = title_m.size
+	var width := maxf(chip.x, title_size.x)
+	var height := chip.y
+	if title_size.y > 0.0:
+		height = title_size.y + TITLE_GAP + chip.y
+	custom_minimum_size = Vector2(width, height)
+	size = custom_minimum_size
 
 
 func _draw() -> void:
+	if _text.strip_edges().is_empty() and _title.is_empty():
+		return
+	var chip_metrics := DiamondTitleBadge.measure(_text, FONT_SIZE)
+	var title_m := _title_metrics()
+	var title_size: Vector2 = title_m.size
+	var chip_top := 0.0
+	if title_size.y > 0.0:
+		var title_fs: int = int(title_m.font_size)
+		var title_pos := Vector2(
+			size.x * 0.5 - title_size.x * 0.5,
+			title_size.y * 0.5
+			+ (
+				DiamondTitleBadge.FONT.get_ascent(title_fs)
+				- DiamondTitleBadge.FONT.get_descent(title_fs)
+			) * 0.5
+		)
+		draw_string(
+			DiamondTitleBadge.FONT,
+			title_pos + Vector2(0, 2),
+			_title,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			title_fs,
+			Color(0, 0, 0, 0.45)
+		)
+		draw_string(
+			DiamondTitleBadge.FONT,
+			title_pos,
+			_title,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			title_fs,
+			TITLE_COLOR
+		)
+		chip_top = title_size.y + TITLE_GAP
 	if _text.strip_edges().is_empty():
 		return
-	var center := size * 0.5
-	_draw_shadow(center)
-	DiamondTitleBadge.draw_on(self, center, _text, _fill, FONT_SIZE, false, true, 1.0, false)
+	var chip_center := Vector2(size.x * 0.5, chip_top + chip_metrics.size.y * 0.5)
+	_draw_shadow(chip_center)
+	DiamondTitleBadge.draw_on(self, chip_center, _text, _fill, FONT_SIZE, false, true, 1.0, false)
 
 
 func _draw_shadow(center: Vector2) -> void:

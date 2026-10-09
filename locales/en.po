@@ -502,6 +502,9 @@ msgstr "Your level is completable."
 msgid "UI_BACK_TO_LEVEL_CREATOR"
 msgstr "Back to level creator"
 
+msgid "UI_BACK_TO_LEVEL_AUDIT"
+msgstr "Back to level audit"
+
 msgid "UI_CREATOR_RETURNED_FROM_PLAYTEST"
 msgstr "Returned from playtest."
 
@@ -510,6 +513,18 @@ msgstr "Playtest passed — you can now save this level."
 
 msgid "UI_CREATOR_SAVE_NEEDS_PLAYTEST"
 msgstr "Playtest and complete the level before saving."
+
+msgid "UI_CREATOR_EDITING_LEVEL"
+msgstr "Editing “%s”. Play it through again if you change the puzzle."
+
+msgid "UI_CREATOR_OVERWRITE_TITLE"
+msgstr "Overwrite level?"
+
+msgid "UI_CREATOR_OVERWRITE_CONFIRM"
+msgstr "A level by that name already exists - are you sure you want to overwrite the level"
+
+msgid "UI_CREATOR_OVERWRITE"
+msgstr "Overwrite"
 
 msgid "UI_LANGUAGE_FRENCH"
 msgstr "French"
@@ -652,6 +667,12 @@ msgstr "Level"
 msgid "UI_AUDIT_COL_NAME"
 msgstr "Name"
 
+msgid "UI_AUDIT_COL_DIFFICULTY"
+msgstr "Difficulty"
+
+msgid "UI_AUDIT_PLAY"
+msgstr "Play"
+
 msgid "UI_AUDIT_COL_ACTIONS"
 msgstr "Actions"
 
@@ -661,8 +682,14 @@ msgstr "Ungrouped"
 msgid "UI_AUDIT_SAVE"
 msgstr "Save"
 
+msgid "UI_AUDIT_NAME_PLACE"
+msgstr "Name & place"
+
+msgid "UI_AUDIT_EDIT_PUZZLE"
+msgstr "Edit puzzle"
+
 msgid "UI_AUDIT_EDIT_TITLE"
-msgstr "Edit level"
+msgstr "Name and place"
 
 msgid "UI_AUDIT_EDIT_DIMENSION_TITLE"
 msgstr "Edit dimension"
@@ -671,10 +698,22 @@ msgid "UI_AUDIT_EDIT_SECTION_TITLE"
 msgstr "Edit section"
 
 msgid "UI_AUDIT_ADD_SECTION_TITLE"
-msgstr "Add section"
+msgstr "Add sub section"
 
 msgid "UI_AUDIT_ADD_SECTION"
-msgstr "Add section"
+msgstr "Add sub section"
+
+msgid "UI_AUDIT_ADD_SUBSECTION"
+msgstr "Add sub section"
+
+msgid "UI_AUDIT_ADD_SUBSECTION_TITLE"
+msgstr "Add sub section"
+
+msgid "UI_AUDIT_ADD_DIMENSION"
+msgstr "Add dimension"
+
+msgid "UI_AUDIT_ADD_DIMENSION_TITLE"
+msgstr "Add dimension"
 
 msgid "UI_AUDIT_ERROR_CATALOG_NAME"
 msgstr "Enter a name in at least one language."

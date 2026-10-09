@@ -96,6 +96,7 @@ var _passed_signature: String = ""
 var _baseline_signature: String = ""
 var _confirm_modal: Control
 var _confirm_action: String = ""
+var _pending_overwrite_id: String = ""
 var _shape_modal
 var _pending_shape_cell := Vector2i(-1, -1)
 var _shape_modal_edit_index: int = -1
@@ -138,7 +139,11 @@ func _ready() -> void:
 		else:
 			_set_status(tr("UI_CREATOR_RETURNED_FROM_PLAYTEST"))
 	else:
-		_new_level()
+		var edit_level := GameSession.consume_creator_edit_level()
+		if edit_level != null:
+			_load_existing_level(edit_level)
+		else:
+			_new_level()
 	await get_tree().process_frame
 	_sync_panel_widths()
 	resized.connect(_sync_panel_widths)
@@ -645,7 +650,7 @@ func _build_goal_modal() -> void:
 
 	_goal_modal_place_front = CheckBox.new()
 	_goal_modal_place_label = Label.new()
-	_goal_modal_place_front.button_pressed = true
+	_goal_modal_place_front.button_pressed = false
 	vbox.add_child(_make_goal_modal_check_row(
 		_goal_modal_place_front,
 		_goal_modal_place_label,
@@ -832,7 +837,7 @@ func _open_goal_modal(edge_key: String, edit_index: int) -> void:
 	_set_goal_check_row_visible(_goal_modal_place_front, not editing)
 	_set_goal_check_row_visible(_goal_modal_preview, not editing)
 	if not editing:
-		_goal_modal_place_front.button_pressed = true
+		_goal_modal_place_front.button_pressed = false
 		_goal_modal_preview.button_pressed = true
 	_refresh_goal_nudge_buttons()
 	_goal_modal.visible = true
@@ -954,6 +959,25 @@ func _on_goals_map_changed() -> void:
 	for edge_key in EDGE_KEYS:
 		_edge_panels[edge_key]["goals"] = _goals_map.get_edge_goals(edge_key)
 	_refresh_save_button()
+
+
+func _load_existing_level(level: LevelConfig) -> void:
+	_draft = level.duplicate(true) as LevelConfig
+	_undo_stack.clear()
+	_undo_stroke_open = false
+	_shapes.clear()
+	_selected_shape_index = -1
+	_apply_draft_to_ui()
+	_capture_baseline_signature()
+	## The loaded puzzle is already a saved level. A later edit drops this
+	## signature, and save stays locked until a playtest matches the change.
+	_passed_signature = _current_signature()
+	_refresh_save_button()
+	_refresh_undo_button()
+	var name := _draft.display_name.strip_edges()
+	if name.is_empty() and LevelCatalog != null:
+		name = LevelCatalog.get_level_label(_draft)
+	_set_status(tr("UI_CREATOR_EDITING_LEVEL") % name)
 
 
 func _new_level(keep_undo: bool = false) -> void:
@@ -1664,13 +1688,60 @@ func _on_erase_mode_selected() -> void:
 
 
 func _on_save_pressed() -> void:
+	if not _prepare_save():
+		return
+	var existing := _find_level_with_name(_draft.display_name)
+	if existing != null:
+		_pending_overwrite_id = existing.level_id
+		_confirm_action = "overwrite"
+		if _confirm_modal != null and _confirm_modal.has_method("show_modal"):
+			_confirm_modal.move_to_front()
+			_confirm_modal.show_modal(
+				"UI_CREATOR_OVERWRITE_TITLE",
+				"UI_CREATOR_OVERWRITE_CONFIRM",
+				"UI_CREATOR_OVERWRITE",
+				"UI_CANCEL",
+				[],
+				true
+			)
+		return
+	_write_level(false)
+
+
+func _prepare_save() -> bool:
 	if not _is_playtest_passed():
 		_set_status(tr("UI_CREATOR_SAVE_NEEDS_PLAYTEST"))
-		return
+		return false
 	_collect_draft_from_ui()
 	if _draft.display_name.is_empty():
 		_set_status(tr("UI_CREATOR_ERROR_DISPLAY_NAME"))
-		return
+		return false
+	if _draft.section_index == DailyCatalog.SECTION_DAILY and _draft.daily_date.is_empty():
+		_set_status(tr("UI_CREATOR_ERROR_DAILY_DATE"))
+		return false
+	if _draft.section_index != DailyCatalog.SECTION_DAILY and _draft.group_title_key.strip_edges().is_empty():
+		_set_status(tr("UI_CREATOR_ERROR_SUBSECTION"))
+		return false
+	if not _has_valid_blocks():
+		_set_status(tr("UI_CREATOR_ERROR_BLOCKS"))
+		return false
+	return true
+
+
+func _write_level(overwrite: bool) -> void:
+	var keep_sort := false
+	if overwrite:
+		var target := CustomLevelStore.load_level(_pending_overwrite_id)
+		_draft.level_id = _pending_overwrite_id
+		if target != null and _same_level_place(target, _draft):
+			_draft.sort_index = target.sort_index
+			keep_sort = true
+		else:
+			_draft.sort_index = 0
+	elif _is_copy_of_loaded_level():
+		## A new name keeps the level that was opened and writes a second one.
+		_draft.level_id = ""
+		_draft.sort_index = 0
 	if _draft.level_id.is_empty():
 		var stamp := int(Time.get_unix_time_from_system())
 		if not _draft.daily_date.is_empty():
@@ -1680,7 +1751,7 @@ func _on_save_pressed() -> void:
 		_draft.sort_index = CustomLevelStore.next_sort_index(
 			_draft.section_index, _draft.group_title_key
 		)
-	elif _draft.sort_index <= 0 or _draft.sort_index >= 1_000_000_000:
+	elif not keep_sort and (_draft.sort_index <= 0 or _draft.sort_index >= 1_000_000_000):
 		_draft.sort_index = CustomLevelStore.next_sort_index(
 			_draft.section_index, _draft.group_title_key
 		)
@@ -1688,15 +1759,10 @@ func _on_save_pressed() -> void:
 	if not _draft.daily_date.is_empty() and not _draft.level_id.begins_with("daily_%s_" % _draft.daily_date):
 		var stamp2 := int(Time.get_unix_time_from_system())
 		_draft.level_id = "daily_%s_%d" % [_draft.daily_date, stamp2]
-	if _draft.section_index == DailyCatalog.SECTION_DAILY and _draft.daily_date.is_empty():
-		_set_status(tr("UI_CREATOR_ERROR_DAILY_DATE"))
-		return
-	if _draft.section_index != DailyCatalog.SECTION_DAILY and _draft.group_title_key.strip_edges().is_empty():
-		_set_status(tr("UI_CREATOR_ERROR_SUBSECTION"))
-		return
-	if not _has_valid_blocks():
-		_set_status(tr("UI_CREATOR_ERROR_BLOCKS"))
-		return
+	if _current_signature() != _baseline_signature:
+		_draft.verified_solvable = false
+		_draft.min_moves = -1
+	_draft.locale_display_names[GameSession.locale] = _draft.display_name
 
 	var error := CustomLevelStore.save_level(_draft)
 	if error != OK:
@@ -1708,8 +1774,57 @@ func _on_save_pressed() -> void:
 		)
 		return
 
+	GameSession.creator_loaded_level_id = _draft.level_id
 	_capture_baseline_signature()
 	_show_save_success_modal()
+
+
+func _is_copy_of_loaded_level() -> bool:
+	var loaded_id := GameSession.creator_loaded_level_id.strip_edges()
+	return not loaded_id.is_empty() and _draft.level_id == loaded_id
+
+
+func _same_level_place(a: LevelConfig, b: LevelConfig) -> bool:
+	return (
+		a.section_index == b.section_index
+		and a.daily_date.strip_edges() == b.daily_date.strip_edges()
+		and a.group_title_key.strip_edges() == b.group_title_key.strip_edges()
+	)
+
+
+func _normalize_level_name(value: String) -> String:
+	return value.strip_edges().to_lower()
+
+
+func _level_has_name(level: LevelConfig, normalized: String) -> bool:
+	if level == null or normalized.is_empty():
+		return false
+	if _normalize_level_name(level.display_name) == normalized:
+		return true
+	for value in level.locale_display_names.values():
+		if _normalize_level_name(str(value)) == normalized:
+			return true
+	if LevelCatalog != null and _normalize_level_name(LevelCatalog.get_level_label(level)) == normalized:
+		return true
+	return false
+
+
+func _find_level_with_name(level_name: String) -> LevelConfig:
+	var want := _normalize_level_name(level_name)
+	if want.is_empty():
+		return null
+	var self_match: LevelConfig = null
+	var other_match: LevelConfig = null
+	for level in CustomLevelStore.list_all_levels():
+		if not _level_has_name(level, want):
+			continue
+		if level.level_id == _draft.level_id:
+			self_match = level
+		elif other_match == null:
+			other_match = level
+	if self_match != null:
+		return self_match
+	return other_match
 
 
 func _save_location_label() -> String:
@@ -2103,11 +2218,14 @@ func _on_clear_pressed() -> void:
 
 
 func _on_confirm_modal_confirmed() -> void:
-	if _confirm_action == "clear":
-		_on_clear_confirmed()
-	elif _confirm_action == "back":
-		_on_back_confirmed()
+	var action := _confirm_action
 	_confirm_action = ""
+	if action == "clear":
+		_on_clear_confirmed()
+	elif action == "back":
+		_on_back_confirmed()
+	elif action == "overwrite":
+		_write_level(true)
 
 
 func _on_clear_confirmed() -> void:
@@ -2139,7 +2257,10 @@ func handle_back() -> void:
 
 
 func _on_back_confirmed() -> void:
-	get_tree().change_scene_to_file(SETTINGS_SCENE)
+	var return_to := GameSession.finish_creator_session()
+	if return_to.is_empty():
+		return_to = SETTINGS_SCENE
+	get_tree().change_scene_to_file(return_to)
 
 
 func _set_status(message: String) -> void:
