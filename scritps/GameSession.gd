@@ -364,6 +364,12 @@ func set_sfx_enabled(enabled: bool) -> void:
 func set_develop_mode(enabled: bool) -> void:
 	develop_mode = enabled
 	_save_settings()
+	## Developer mode is what decides whether device drafts are part of the
+	## level list. Rebuild that list once here, not on every map visit.
+	if CustomLevelStore != null and CustomLevelStore.has_method("invalidate_user_levels"):
+		CustomLevelStore.invalidate_user_levels()
+	if LevelCatalog != null and LevelCatalog.has_method("refresh_runtime_levels"):
+		LevelCatalog.refresh_runtime_levels()
 
 
 func set_locale(locale_code: String) -> void:

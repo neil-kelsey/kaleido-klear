@@ -6,7 +6,7 @@ extends Node
 
 const PRIMARY_BLUE := Color(0.0, 0.28, 0.66, 1.0)
 
-const SECTIONS: Array[Dictionary] = [
+var SECTIONS: Array[Dictionary] = [
 	## Dimension 1 is the root of the main path; Tutorial is a leading side branch.
 	{
 		"title_key": "UI_DIMENSION_1",
@@ -83,13 +83,23 @@ const SECTIONS: Array[Dictionary] = [
 
 ## Cached project levels grouped by dimension index.
 var _project_levels_by_section: Array = []
+## Merged list the map actually uses. Built at startup, and again after a
+## developer-mode save. Published builds never rescan device drafts.
+var _runtime_levels_by_section: Array = []
+var _runtime_ready := false
 const EXTRA_GROUPS_PATH := "res://resources/catalog/dimension_groups.json"
+const EXTRA_DIMENSIONS_PATH := "res://resources/catalog/extra_dimensions.json"
 ## section_index (as string) -> Array of group_title_key strings created in audit.
 var _extra_group_keys: Dictionary = {}
+## title_key values shipped in SECTIONS, so extras can be saved separately.
+var _builtin_dimension_keys: Dictionary = {}
 
 
 func _ready() -> void:
+	for section in SECTIONS:
+		_builtin_dimension_keys[str(section.get("title_key", ""))] = true
 	_load_extra_group_keys()
+	_load_extra_dimensions()
 	reload_levels()
 
 
@@ -118,6 +128,51 @@ func reload_levels() -> void:
 
 	for i in SECTIONS.size():
 		sort_levels_by_chapter(_project_levels_by_section[i] as Array)
+	_rebuild_runtime_levels()
+
+
+func refresh_runtime_levels() -> void:
+	## Re-merge device drafts onto the packaged list without re-reading the APK.
+	if _project_levels_by_section.is_empty():
+		reload_levels()
+		return
+	_rebuild_runtime_levels()
+
+
+func _rebuild_runtime_levels() -> void:
+	var dynamic := CustomLevelStore != null and CustomLevelStore.uses_dynamic_level_list()
+	var overrides: Dictionary = CustomLevelStore._user_levels_by_id() if dynamic else {}
+	_runtime_levels_by_section.clear()
+	_runtime_levels_by_section.resize(SECTIONS.size())
+	for section_index in SECTIONS.size():
+		var levels: Array[LevelConfig] = []
+		for level in _project_levels_by_section[section_index]:
+			var packaged := level as LevelConfig
+			if packaged == null:
+				continue
+			if dynamic and (
+				overrides.has(packaged.level_id)
+				or CustomLevelStore.is_level_deleted(packaged.level_id)
+			):
+				continue
+			levels.append(packaged)
+		if dynamic:
+			for level_id in overrides.keys():
+				if CustomLevelStore.is_level_deleted(level_id):
+					continue
+				var custom_level: LevelConfig = overrides[level_id]
+				if (
+					DailyCatalog.is_daily_level(custom_level)
+					or custom_level.section_index == DailyCatalog.SECTION_DAILY
+					or custom_level.section_index < 0
+				):
+					continue
+				var index := clampi(custom_level.section_index, 0, SECTIONS.size() - 1)
+				if index == section_index:
+					levels.append(custom_level)
+		sort_levels_by_chapter(levels)
+		_runtime_levels_by_section[section_index] = levels
+	_runtime_ready = true
 
 
 ## Keep each chapter contiguous. Order chapters by the earliest sort_index in
@@ -304,6 +359,120 @@ func extra_group_keys_for(section_index: int) -> PackedStringArray:
 	return packed
 
 
+func register_dimension(title_key: String) -> Error:
+	var key := title_key.strip_edges()
+	if key.is_empty():
+		return ERR_INVALID_PARAMETER
+	if _dimension_key_taken(key):
+		return ERR_ALREADY_EXISTS
+	var parent := _last_main_dimension_index()
+	SECTIONS.append({
+		"title_key": key,
+		"color": _color_for_extra_dimension(SECTIONS.size()),
+		"background": "",
+		"parent": parent,
+	})
+	var err := _save_extra_dimensions()
+	if err != OK:
+		SECTIONS.pop_back()
+		return err
+	reload_levels()
+	return OK
+
+
+func make_dimension_title_key(english_name: String) -> String:
+	var slug := _slug_token(english_name)
+	if slug.is_empty():
+		slug = "CUSTOM"
+	var base := "UI_DIMENSION_%s" % slug
+	var candidate := base
+	var n := 2
+	while _dimension_key_taken(candidate):
+		candidate = "%s_%d" % [base, n]
+		n += 1
+	return candidate
+
+
+func _dimension_key_taken(key: String) -> bool:
+	for section in SECTIONS:
+		if str(section.get("title_key", "")) == key:
+			return true
+	return false
+
+
+func _last_main_dimension_index() -> int:
+	var last := 0
+	for i in SECTIONS.size():
+		if not is_dimension_side_branch(i):
+			last = i
+	return last
+
+
+func _color_for_extra_dimension(index: int) -> Color:
+	var palette: Array[Color] = [
+		Color(0.42, 0.36, 0.82, 1.0),
+		Color(0.18, 0.58, 0.42, 1.0),
+		Color(0.78, 0.32, 0.48, 1.0),
+		Color(0.22, 0.48, 0.72, 1.0),
+		Color(0.72, 0.48, 0.18, 1.0),
+	]
+	return palette[posmod(index, palette.size())]
+
+
+func _load_extra_dimensions() -> void:
+	if not FileAccess.file_exists(EXTRA_DIMENSIONS_PATH):
+		return
+	var file := FileAccess.open(EXTRA_DIMENSIONS_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return
+	var rows: Variant = (parsed as Dictionary).get("dimensions", [])
+	if not rows is Array:
+		return
+	for row in rows:
+		if not row is Dictionary:
+			continue
+		var key := str((row as Dictionary).get("title_key", "")).strip_edges()
+		if key.is_empty() or _dimension_key_taken(key):
+			continue
+		var parent := int((row as Dictionary).get("parent", _last_main_dimension_index()))
+		var color := Color.html(str((row as Dictionary).get("color", "6b5cd1")))
+		SECTIONS.append({
+			"title_key": key,
+			"color": color,
+			"background": "",
+			"parent": parent,
+		})
+
+
+func _save_extra_dimensions() -> Error:
+	var rows: Array = []
+	for section in SECTIONS:
+		var key := str(section.get("title_key", ""))
+		if _builtin_dimension_keys.has(key):
+			continue
+		var color: Color = section.get("color", PRIMARY_BLUE)
+		rows.append({
+			"title_key": key,
+			"color": color.to_html(false),
+			"parent": int(section.get("parent", -1)),
+		})
+	var text := JSON.stringify({"dimensions": rows}, "\t")
+	var abs_path := ProjectSettings.globalize_path(EXTRA_DIMENSIONS_PATH)
+	DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
+	var file := FileAccess.open(abs_path, FileAccess.WRITE)
+	if file == null:
+		file = FileAccess.open(EXTRA_DIMENSIONS_PATH, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	file.store_string(text)
+	file.close()
+	return OK
+
+
 func register_extra_group_key(section_index: int, group_key: String) -> Error:
 	var key := group_key.strip_edges()
 	if key.is_empty() or section_index < 0 or section_index >= SECTIONS.size():
@@ -316,7 +485,7 @@ func register_extra_group_key(section_index: int, group_key: String) -> Error:
 	return _save_extra_group_keys()
 
 
-func make_group_title_key(english_name: String) -> String:
+func _slug_token(english_name: String) -> String:
 	var slug := ""
 	var upper := english_name.strip_edges().to_upper()
 	for i in upper.length():
@@ -327,7 +496,11 @@ func make_group_title_key(english_name: String) -> String:
 		elif ch == " " or ch == "-" or ch == "_":
 			if not slug.ends_with("_"):
 				slug += "_"
-	slug = slug.trim_prefix("_").trim_suffix("_")
+	return slug.trim_prefix("_").trim_suffix("_")
+
+
+func make_group_title_key(english_name: String) -> String:
+	var slug := _slug_token(english_name)
 	if slug.is_empty():
 		slug = "SECTION"
 	var base := "UI_GROUP_%s" % slug
@@ -390,34 +563,9 @@ func get_section_levels(section_index: int) -> Array[LevelConfig]:
 	var levels: Array[LevelConfig] = []
 	if section_index < 0 or section_index >= SECTIONS.size():
 		return levels
-	if _project_levels_by_section.is_empty():
+	if not _runtime_ready:
 		reload_levels()
-	for level in _project_levels_by_section[section_index]:
-		levels.append(level as LevelConfig)
-	var known_ids: Dictionary = {}
-	for level in levels:
-		known_ids[level.level_id] = true
-	## Append on-device creator drafts that aren't already in the project.
-	for custom_level in _custom_levels_for_section(section_index):
-		if not known_ids.has(custom_level.level_id):
-			levels.append(custom_level)
-	sort_levels_by_chapter(levels)
-	return levels
-
-
-func _custom_levels_for_section(section_index: int) -> Array[LevelConfig]:
-	var levels: Array[LevelConfig] = []
-	for level in CustomLevelStore.list_levels():
-		if (
-			DailyCatalog.is_daily_level(level)
-			or level.section_index == DailyCatalog.SECTION_DAILY
-			or level.section_index < 0
-		):
-			continue
-		var index := clampi(level.section_index, 0, SECTIONS.size() - 1)
-		if index == section_index:
-			levels.append(level)
-	return levels
+	return _runtime_levels_by_section[section_index]
 
 
 func get_all_levels() -> Array[LevelConfig]:
