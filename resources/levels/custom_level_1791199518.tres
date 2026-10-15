@@ -139,7 +139,7 @@ locale_display_names = {
 }
 section_index = 1
 daily_date = ""
-sort_index = 520
+sort_index = 510
 columns = 10
 rows = 15
 goal_left_color = 0

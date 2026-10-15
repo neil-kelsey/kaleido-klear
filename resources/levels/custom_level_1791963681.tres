@@ -1,0 +1,115 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_f6c2d"]
+script = ExtResource("1")
+color = 1
+count = 2
+unlimited = false
+
+[sub_resource type="Resource" id="Resource_7sopg"]
+script = ExtResource("1")
+color = 4
+count = 1
+unlimited = false
+
+[sub_resource type="Resource" id="Resource_ghlmi"]
+script = ExtResource("1")
+color = 1
+count = 1
+unlimited = false
+
+[sub_resource type="Resource" id="Resource_fyyix"]
+script = ExtResource("1")
+color = 5
+count = 1
+unlimited = false
+
+[sub_resource type="Resource" id="Resource_1hgp2"]
+script = ExtResource("1")
+color = 4
+count = 1
+unlimited = false
+
+[sub_resource type="Resource" id="Resource_5ix1q"]
+script = ExtResource("1")
+color = 1
+count = 5
+unlimited = false
+
+[sub_resource type="Resource" id="Resource_3qx5g"]
+script = ExtResource("1")
+color = 5
+count = 1
+unlimited = false
+
+[sub_resource type="Resource" id="Resource_7fqad"]
+script = ExtResource("1")
+color = 0
+count = 1
+unlimited = false
+
+[sub_resource type="Resource" id="Resource_ejtxq"]
+script = ExtResource("1")
+color = 5
+count = 1
+unlimited = false
+
+[sub_resource type="Resource" id="Resource_4jnec"]
+script = ExtResource("1")
+color = 1
+count = 2
+unlimited = false
+
+[sub_resource type="Resource" id="Resource_hxvka"]
+script = ExtResource("1")
+color = 2
+count = 1
+unlimited = false
+
+[sub_resource type="Resource" id="Resource_lbcqs"]
+script = ExtResource("1")
+color = 4
+count = 1
+unlimited = false
+
+[resource]
+script = ExtResource("2")
+level_id = "custom_level_1791963681"
+level_name_key = "UI_DEMO_LEVEL_STANDARD"
+display_name = "Play pen"
+locale_display_names = {
+"en": "Play pen"
+}
+section_index = 1
+daily_date = ""
+sort_index = 560
+columns = 12
+rows = 12
+goal_left_color = 0
+goal_top_color = 0
+goal_right_color = 0
+goal_bottom_color = 1
+multi_goal_mode = true
+goal_left_phases = Array[ExtResource("1")]([])
+goal_top_phases = Array[ExtResource("1")]([])
+goal_right_phases = Array[ExtResource("1")]([])
+goal_bottom_phases = Array[ExtResource("1")]([SubResource("Resource_f6c2d"), SubResource("Resource_7sopg"), SubResource("Resource_ghlmi"), SubResource("Resource_fyyix"), SubResource("Resource_1hgp2"), SubResource("Resource_5ix1q"), SubResource("Resource_3qx5g"), SubResource("Resource_7fqad"), SubResource("Resource_ejtxq"), SubResource("Resource_4jnec"), SubResource("Resource_hxvka"), SubResource("Resource_lbcqs")])
+goal_left_enabled = false
+goal_top_enabled = false
+goal_right_enabled = false
+goal_bottom_enabled = true
+disabled_cells = Array[Vector2i]([])
+block_positions = Array[Vector2i]([Vector2i(4, 6), Vector2i(6, 6), Vector2i(6, 4), Vector2i(4, 4), Vector2i(7, 3), Vector2i(7, 7), Vector2i(3, 7), Vector2i(3, 3), Vector2i(1, 6), Vector2i(1, 4), Vector2i(4, 1), Vector2i(8, 4), Vector2i(8, 6), Vector2i(4, 8), Vector2i(6, 8), Vector2i(6, 1), Vector2i(8, 9), Vector2i(9, 8), Vector2i(1, 8), Vector2i(1, 9), Vector2i(1, 1), Vector2i(8, 1), Vector2i(9, 2), Vector2i(1, 2), Vector2i(0, 6), Vector2i(6, 6), Vector2i(6, 0), Vector2i(0, 0)])
+block_colors = Array[int]([0, 2, 3, 2, 2, 0, 3, 1, 1, 3, 0, 1, 3, 2, 3, 1, 1, 2, 0, 1, 2, 0, 3, 0, 0, 2, 3, 2])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 2), Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(2, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(2, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2), Vector2i(0, 2), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(2, 1), Vector2i(2, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(2, 1), Vector2i(1, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 5), Vector2i(1, 5), Vector2i(2, 5), Vector2i(3, 5), Vector2i(4, 5), Vector2i(5, 5), Vector2i(0, 4), Vector2i(0, 3), Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(5, 5), Vector2i(4, 5), Vector2i(3, 5), Vector2i(2, 5), Vector2i(1, 5), Vector2i(0, 5), Vector2i(5, 4), Vector2i(5, 3), Vector2i(5, 2), Vector2i(5, 1), Vector2i(5, 0)]), Array[Vector2i]([Vector2i(5, 0), Vector2i(5, 1), Vector2i(5, 2), Vector2i(5, 3), Vector2i(5, 4), Vector2i(5, 5), Vector2i(4, 0), Vector2i(3, 0), Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(0, 4), Vector2i(0, 5)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9", "Shape 10", "Shape 11", "Shape 12", "Shape 13", "Shape 14", "Shape 15", "Shape 16", "Shape 17", "Shape 18", "Shape 19", "Shape 20", "Shape 21", "Shape 22", "Shape 23", "Shape 24", "Shape 25", "Shape 26", "Shape 27", "Shape 28"])
+group_title_key = "UI_GROUP_COMPUTER_GENERATED"
+verified_solvable = false
+min_moves = -1
+difficulty_score = 0.0
+difficulty_tier = 3

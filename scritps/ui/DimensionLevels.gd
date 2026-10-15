@@ -39,8 +39,8 @@ const MAP_DRAW_ZOOM := 2.35
 ## Page-snap only above this count. Tutorial (25) must stay compact free-scroll.
 ## Twinkle Drift (150) is above; keep this above 25 and at/under 150.
 const PAGE_LEVEL_THRESHOLD := 48
-## Campaign chapters are 30 levels (6 rows of 5). Extra creator levels need more pages.
-const CHAPTER_PAGE_SIZE := 30
+## A campaign chapter is 6 rows. Split a chapter only when it is taller than the
+## viewport; a few extra levels that still fit stay on the same page.
 
 const PAGE_SNAP_DURATION := 0.42
 const SNAP_VELOCITY := 220.0
@@ -67,6 +67,7 @@ var _star_chart_tex: Texture2D
 var _map_font: Font
 var _panning := false
 var _pan_pointer_id := -1
+var _edge_back := EdgeBack.new()
 var _pan_velocity_y := 0.0
 var _pan_start_cam_y := 0.0
 var _navigating := false
@@ -470,8 +471,9 @@ func _rebuild_page_targets() -> void:
 				_page_ys.append(_camera_y_to_place_world_at_screen_y(header_y, header_screen))
 			var extra := 1
 			var count := i - start
-			while extra * CHAPTER_PAGE_SIZE < count and start + extra * CHAPTER_PAGE_SIZE < _level_positions.size():
-				var pos: Vector2 = _level_positions[start + extra * CHAPTER_PAGE_SIZE]
+			var page_size := _chapter_page_size()
+			while extra * page_size < count and start + extra * page_size < _level_positions.size():
+				var pos: Vector2 = _level_positions[start + extra * page_size]
 				_page_ys.append(_camera_y_to_place_world_at_screen_y(pos.y, diamond_screen))
 				extra += 1
 			group_i += 1
@@ -517,12 +519,13 @@ func _index_of_level(level_id: String) -> int:
 
 func _page_index_for_level_index(level_index: int) -> int:
 	## Same page breaks as _rebuild_page_targets: one page per chapter, plus
-	## another page each time a chapter runs past CHAPTER_PAGE_SIZE.
+	## another page only when a chapter is taller than the screen.
 	if not _paging_enabled or level_index < 0:
 		return 0
 	var page := 0
 	var i := 0
 	var group_i := 0
+	var page_size := _chapter_page_size()
 	while i < _levels.size():
 		var key := ""
 		if _levels[i] != null:
@@ -539,11 +542,11 @@ func _page_index_for_level_index(level_index: int) -> int:
 			page += 1
 		var count := i - start
 		var extra_pages := 0
-		while (extra_pages + 1) * CHAPTER_PAGE_SIZE < count:
+		while (extra_pages + 1) * page_size < count:
 			extra_pages += 1
 		if level_index < i:
 			var within := level_index - start
-			return page + mini(int(within / float(CHAPTER_PAGE_SIZE)), extra_pages)
+			return page + mini(int(within / float(page_size)), extra_pages)
 		page += extra_pages
 		group_i += 1
 	return 0
@@ -606,19 +609,43 @@ func _nearest_page_index(cam_y: float) -> int:
 	return best
 
 
+func _chapter_page_size() -> int:
+	## How many diamonds fit under the chapter title before the next title peeks
+	## in. Dewfall's first subsection is a few levels past a 30-pack and still
+	## fits, so it stays one page and a swipe lands on the next subsection.
+	var z := maxf(camera.zoom.x, 0.001)
+	var vp := get_viewport_rect().size
+	var first_screen := _page1_header_screen_y() + HEADER_CLEARANCE * z
+	var bottom_screen := vp.y - _diamond_size() * PEEK_DIAMOND_SLICE * z
+	var row_screen := _row_spacing() * z
+	var rows := 1
+	if row_screen > 1.0:
+		rows = maxi(int(floor((bottom_screen - first_screen) / row_screen)) + 1, 1)
+	return rows * COLUMNS
+
+
+func _neighbor_page_span(index: int, direction: int) -> float:
+	if _page_ys.size() < 2:
+		return 1.0
+	var neighbor := clampi(index + direction, 0, _page_ys.size() - 1)
+	if neighbor == index:
+		return 1.0
+	return maxf(absf(_page_ys[neighbor] - _page_ys[index]), 1.0)
+
+
 func _resolve_snap_page() -> int:
 	if _page_ys.is_empty():
 		return 0
 	var idx := _page_index
-	var page_span := 1.0
-	if _page_ys.size() >= 2:
-		page_span = absf(_page_ys[1] - _page_ys[0])
 	var drag := camera.position.y - _pan_start_cam_y
 	## Positive cam Y = looking further down the strip = next section.
+	## Measure the swipe against the next page, not the first gap in the list.
+	var dir := 1 if drag >= 0.0 else -1
 	if absf(_pan_velocity_y) >= SNAP_VELOCITY:
-		idx += 1 if _pan_velocity_y > 0.0 else -1
-	elif absf(drag) >= page_span * SNAP_DISTANCE_RATIO:
-		idx += 1 if drag > 0.0 else -1
+		dir = 1 if _pan_velocity_y > 0.0 else -1
+		idx += dir
+	elif absf(drag) >= _neighbor_page_span(idx, dir) * SNAP_DISTANCE_RATIO:
+		idx += dir
 	else:
 		idx = _nearest_page_index(camera.position.y)
 	return clampi(idx, 0, _page_ys.size() - 1)
@@ -1071,10 +1098,16 @@ func _pointer_down(world_pos: Vector2, screen_pos: Vector2, pointer_id: int) -> 
 			_hold_timer.start()
 		return
 	_hold_index = -1
+	if _edge_back.try_begin(pointer_id, screen_pos, get_viewport_rect().size.x):
+		return
 	_begin_pan(pointer_id)
 
 
 func _pointer_drag(screen_pos: Vector2, relative: Vector2, pointer_id: int) -> void:
+	if _edge_back.watching(pointer_id):
+		if _edge_back.drag(pointer_id, screen_pos):
+			_begin_pan(pointer_id)
+		return
 	if _press_on_diamond and not _panning:
 		if screen_pos.distance_to(_hold_from) >= DRAG_CANCEL_PX:
 			if _hold_timer != null:
@@ -1089,6 +1122,14 @@ func _pointer_drag(screen_pos: Vector2, relative: Vector2, pointer_id: int) -> v
 func _pointer_up(pointer_id: int) -> void:
 	if _hold_timer != null:
 		_hold_timer.stop()
+	if _edge_back.owns(pointer_id):
+		var go_back := _edge_back.release(pointer_id)
+		if go_back:
+			BackRouter.request_back()
+			_press_on_diamond = false
+			_hold_index = -1
+			_hold_fired = false
+			return
 	if _panning and (_pan_pointer_id == pointer_id or pointer_id < 0):
 		_end_pan()
 	elif _press_on_diamond and not _hold_fired and _hold_index >= 0:

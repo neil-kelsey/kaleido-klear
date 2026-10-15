@@ -80,10 +80,12 @@ script = ExtResource("2")
 level_id = "custom_level_1789674602"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
 display_name = "High road or the low?"
-locale_display_names = {}
+locale_display_names = {
+"en": "High road or the low?"
+}
 section_index = 1
 daily_date = ""
-sort_index = 350
+sort_index = 500
 columns = 16
 rows = 12
 goal_left_color = 0

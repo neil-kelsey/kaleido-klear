@@ -50,10 +50,12 @@ script = ExtResource("2")
 level_id = "custom_level_1789154396"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
 display_name = "Sea and O"
-locale_display_names = {}
+locale_display_names = {
+"en": "Sea and O"
+}
 section_index = 1
 daily_date = ""
-sort_index = 380
+sort_index = 390
 columns = 10
 rows = 8
 goal_left_color = 1

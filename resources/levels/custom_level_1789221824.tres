@@ -92,10 +92,12 @@ script = ExtResource("2")
 level_id = "custom_level_1789221824"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
 display_name = "Find the path"
-locale_display_names = {}
+locale_display_names = {
+"en": "Find the path"
+}
 section_index = 1
 daily_date = ""
-sort_index = 410
+sort_index = 450
 columns = 8
 rows = 8
 goal_left_color = 0

@@ -58,6 +58,7 @@ var _focus_tween: Tween
 var _intro_playing := false
 var _panning := false
 var _pan_pointer_id := -1
+var _edge_back := EdgeBack.new()
 var _pan_velocity := Vector2.ZERO
 var _selected_index: int = 0
 var _pinch_active := false
@@ -623,11 +624,14 @@ func _handle_pinch_touch(event: InputEventScreenTouch) -> bool:
 		_pan_velocity = Vector2.ZERO
 		if _pinch_touches.size() >= 2:
 			_end_pan()
+			_edge_back.cancel()
 			_begin_pinch()
 			return true
 		var hit := _hit_dimension(_screen_to_world(event.position))
 		if hit >= 0:
 			_on_dimension_clicked(hit)
+			return true
+		if _edge_back.try_begin(event.index, event.position, get_viewport_rect().size.x):
 			return true
 		_begin_pan(event.index)
 		return true
@@ -635,6 +639,10 @@ func _handle_pinch_touch(event: InputEventScreenTouch) -> bool:
 	_pinch_touches.erase(event.index)
 	if _pinch_touches.size() < 2:
 		_pinch_active = false
+	if _edge_back.owns(event.index):
+		var go_back := _edge_back.release(event.index)
+		if go_back:
+			BackRouter.request_back()
 	if _pan_pointer_id == event.index:
 		_end_pan()
 	return false
@@ -646,8 +654,13 @@ func _handle_pinch_drag(event: InputEventScreenDrag) -> bool:
 	if _pinch_touches.size() >= 2:
 		if not _pinch_active:
 			_end_pan()
+			_edge_back.cancel()
 			_begin_pinch()
 		_update_pinch()
+		return true
+	if _edge_back.watching(event.index):
+		if _edge_back.drag(event.index, event.position):
+			_begin_pan(event.index)
 		return true
 	if _pinch_touches.has(event.index) or _panning:
 		if not _panning:

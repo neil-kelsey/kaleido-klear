@@ -44,10 +44,12 @@ script = ExtResource("2")
 level_id = "custom_level_1790183324"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
 display_name = "Fight for your survival!"
-locale_display_names = {}
+locale_display_names = {
+"en": "Fight for your survival!"
+}
 section_index = 1
 daily_date = ""
-sort_index = 440
+sort_index = 430
 columns = 16
 rows = 16
 goal_left_color = 2

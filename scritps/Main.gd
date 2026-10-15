@@ -45,6 +45,7 @@ var _pinch_last_midpoint := Vector2.ZERO
 var _pan_active := false
 var _pan_pointer_id: int = -1
 var _pan_last_screen := Vector2.ZERO
+var _edge_back := EdgeBack.new()
 ## Pointers claimed for tile swipes — never pan while these are held.
 var _tile_pointer_ids: Dictionary = {}
 var _intro_playing := false
@@ -469,8 +470,15 @@ func _handle_camera_input(event: InputEvent) -> bool:
 	if event is InputEventScreenDrag:
 		if board.is_dragging or _tile_pointer_ids.has(event.index):
 			_end_pan()
+			_edge_back.cancel()
 			return false
 		if _handle_pinch_drag(event):
+			return true
+		if _edge_back.watching(event.index):
+			if _edge_back.drag(event.index, event.position):
+				_pan_active = true
+				_pan_pointer_id = event.index
+				_pan_last_screen = event.position
 			return true
 		if _pan_active and _pan_pointer_id == event.index:
 			_update_pan(event.position)
@@ -487,10 +495,14 @@ func _claim_pointer_on_press(pointer_id: int, screen_pos: Vector2) -> bool:
 	if board.is_dragging or board.is_swipable_at_screen(screen_pos):
 		_tile_pointer_ids[pointer_id] = true
 		_end_pan()
+		_edge_back.cancel()
 		return false
 
-	# Empty / wall / background → map pan only.
+	# Empty / wall / background. An inward edge swipe is back; anything else pans.
 	_tile_pointer_ids.erase(pointer_id)
+	if _edge_back.try_begin(pointer_id, screen_pos, get_viewport_rect().size.x):
+		_end_pan()
+		return true
 	_pan_active = true
 	_pan_pointer_id = pointer_id
 	_pan_last_screen = screen_pos
@@ -499,6 +511,13 @@ func _claim_pointer_on_press(pointer_id: int, screen_pos: Vector2) -> bool:
 
 func _release_pointer(pointer_id: int) -> bool:
 	_tile_pointer_ids.erase(pointer_id)
+	if _edge_back.owns(pointer_id):
+		var go_back := _edge_back.release(pointer_id)
+		if go_back:
+			BackRouter.request_back()
+		if _pan_active and _pan_pointer_id == pointer_id:
+			_end_pan()
+		return true
 	if _pan_active and _pan_pointer_id == pointer_id:
 		_end_pan()
 		return true
@@ -530,6 +549,7 @@ func _handle_pinch_touch(event: InputEventScreenTouch) -> bool:
 			board.cancel_active_pointer()
 			_tile_pointer_ids.clear()
 			_end_pan()
+			_edge_back.cancel()
 			_begin_pinch()
 			return true
 		return false
@@ -550,6 +570,7 @@ func _handle_pinch_drag(event: InputEventScreenDrag) -> bool:
 		board.cancel_active_pointer()
 		_tile_pointer_ids.clear()
 		_end_pan()
+		_edge_back.cancel()
 		_begin_pinch()
 	_update_pinch()
 	return true

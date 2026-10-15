@@ -38,10 +38,12 @@ script = ExtResource("2")
 level_id = "custom_level_1790075993"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
 display_name = "lick my wounds"
-locale_display_names = {}
+locale_display_names = {
+"en": "lick my wounds"
+}
 section_index = 1
 daily_date = ""
-sort_index = 420
+sort_index = 410
 columns = 26
 rows = 8
 goal_left_color = 0

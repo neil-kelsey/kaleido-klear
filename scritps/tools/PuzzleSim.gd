@@ -323,6 +323,9 @@ func _occupant(state: SimState, cell: Vector2i) -> SimBlock:
 
 
 func _blocking_index(state: SimState, moving: SimBlock, next_anchor: Vector2i) -> int:
+	## Same contact rule as Board._blocking_block_at: most shared cells wins.
+	var counts: Dictionary = {}
+	var order: Array[int] = []
 	for offset in moving.cells:
 		var cell := next_anchor + offset
 		if not _in_bounds(cell) or disabled.has(cell):
@@ -331,10 +334,33 @@ func _blocking_index(state: SimState, moving: SimBlock, next_anchor: Vector2i) -
 			var other: SimBlock = state.blocks[i]
 			if other == moving:
 				continue
+			var hit := false
 			for occupied in other.occupied():
 				if occupied == cell:
-					return i
-	return -1
+					hit = true
+					break
+			if not hit:
+				continue
+			if not counts.has(i):
+				counts[i] = 0
+				order.append(i)
+			counts[i] = int(counts[i]) + 1
+			break
+	if order.is_empty():
+		return -1
+	var best: int = order[0]
+	for i in order:
+		var n := int(counts[i])
+		var best_n := int(counts[best])
+		if n > best_n:
+			best = i
+		elif (
+			n == best_n
+			and _can_merge(moving, state.blocks[i])
+			and not _can_merge(moving, state.blocks[best])
+		):
+			best = i
+	return best
 
 
 func _can_merge(a: SimBlock, b: SimBlock) -> bool:

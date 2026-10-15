@@ -37,11 +37,13 @@ unlimited = false
 script = ExtResource("2")
 level_id = "custom_level_1787493949"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
-display_name = "Custom level 3"
-locale_display_names = {}
+display_name = "The circle of thrive"
+locale_display_names = {
+"en": "The circle of thrive"
+}
 section_index = 1
 daily_date = ""
-sort_index = 30
+sort_index = 70
 columns = 18
 rows = 18
 goal_left_color = 4

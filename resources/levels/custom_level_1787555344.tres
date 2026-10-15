@@ -56,10 +56,12 @@ script = ExtResource("2")
 level_id = "custom_level_1787555344"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
 display_name = "Custom level 5"
-locale_display_names = {}
+locale_display_names = {
+"en": "Custom level 5"
+}
 section_index = 1
 daily_date = ""
-sort_index = 70
+sort_index = 110
 columns = 8
 rows = 8
 goal_left_color = 5

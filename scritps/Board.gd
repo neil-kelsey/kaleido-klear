@@ -649,13 +649,38 @@ func _goal_color_for_edge(goal_edge: int) -> Block.TileColor:
 
 
 func _blocking_block_at(block: Block, anchor: Vector2i) -> Block:
+	## A wide piece can touch more than one block on the same swipe. Count
+	## shared cells and keep the largest contact. A one-cell graze must not
+	## hide a neighbour the piece is mostly pressed against. Equal contacts
+	## prefer a block that can actually merge.
+	var counts: Dictionary = {}
+	var order: Array[Block] = []
 	for offset in block.shape_cells:
 		var cell := anchor + offset
-		if cell_occupant.has(cell):
-			var occupant: Block = cell_occupant[cell]
-			if occupant != block:
-				return occupant
-	return null
+		if not cell_occupant.has(cell):
+			continue
+		var occupant: Block = cell_occupant[cell]
+		if occupant == block:
+			continue
+		if not counts.has(occupant):
+			counts[occupant] = 0
+			order.append(occupant)
+		counts[occupant] = int(counts[occupant]) + 1
+	if order.is_empty():
+		return null
+	var best: Block = order[0]
+	for occupant in order:
+		var n := int(counts[occupant])
+		var best_n := int(counts[best])
+		if n > best_n:
+			best = occupant
+		elif (
+			n == best_n
+			and Block.can_merge_blocks(block, occupant)
+			and not Block.can_merge_blocks(block, best)
+		):
+			best = occupant
+	return best
 
 
 func _clear_merge_previews() -> void:

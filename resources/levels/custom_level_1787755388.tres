@@ -43,8 +43,10 @@ unlimited = false
 script = ExtResource("2")
 level_id = "custom_level_1787755388"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
-display_name = "Custom level 16"
-locale_display_names = {}
+display_name = "The gates of Mordor"
+locale_display_names = {
+"en": "The gates of Mordor"
+}
 section_index = 1
 daily_date = ""
 sort_index = 190
@@ -74,4 +76,4 @@ group_title_key = "UI_GROUP_CUSTOM_LEVELS"
 verified_solvable = false
 min_moves = -1
 difficulty_score = 0.0
-difficulty_tier = 0
+difficulty_tier = 2

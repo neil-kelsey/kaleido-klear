@@ -30,6 +30,9 @@ script = ExtResource("2_ohlm7")
 level_id = "dewfall_computer_generated_01"
 level_name_key = ""
 display_name = "Yellow core"
+locale_display_names = {
+"en": "Yellow core"
+}
 section_index = 1
 sort_index = 310
 columns = 6
@@ -54,4 +57,4 @@ group_title_key = "UI_GROUP_COMPUTER_GENERATED"
 verified_solvable = true
 min_moves = 12
 difficulty_score = 67.66
-difficulty_tier = 5
+difficulty_tier = 3

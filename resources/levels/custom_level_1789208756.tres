@@ -266,10 +266,12 @@ script = ExtResource("2")
 level_id = "custom_level_1789208756"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
 display_name = "Block shot"
-locale_display_names = {}
+locale_display_names = {
+"en": "Block shot"
+}
 section_index = 1
 daily_date = ""
-sort_index = 400
+sort_index = 410
 columns = 8
 rows = 8
 goal_left_color = 4

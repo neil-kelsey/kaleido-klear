@@ -50,7 +50,9 @@ script = ExtResource("2")
 level_id = "custom_level_1789454531"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
 display_name = "Building blocks"
-locale_display_names = {}
+locale_display_names = {
+"en": "Building blocks"
+}
 section_index = 1
 daily_date = ""
 sort_index = 420

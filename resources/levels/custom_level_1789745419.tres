@@ -80,10 +80,12 @@ script = ExtResource("2")
 level_id = "custom_level_1789745419"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
 display_name = "Pyramid scheme"
-locale_display_names = {}
+locale_display_names = {
+"en": "Pyramid scheme"
+}
 section_index = 1
 daily_date = ""
-sort_index = 390
+sort_index = 370
 columns = 16
 rows = 16
 goal_left_color = 0
