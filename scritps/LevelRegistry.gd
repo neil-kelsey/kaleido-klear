@@ -75,6 +75,7 @@ const LEVEL_PATHS: PackedStringArray = [
 	"res://resources/levels/custom_level_1792051628.tres",
 	"res://resources/levels/custom_level_1792051671.tres",
 	"res://resources/levels/custom_level_1792055697.tres",
+	"res://resources/levels/custom_level_1792248739.tres",
 	"res://resources/levels/dewfall_computer_generated_01.tres",
 	"res://resources/levels/multi_goal_demo_1.tres",
 	"res://resources/levels/test_5x5_colour_mix_1.tres",
