@@ -70,4 +70,4 @@ group_title_key = "UI_GROUP_CUSTOM_LEVELS"
 verified_solvable = true
 min_moves = 17
 difficulty_score = 170.0
-difficulty_tier = 5
+difficulty_tier = 2

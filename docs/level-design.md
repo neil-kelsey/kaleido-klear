@@ -65,3 +65,32 @@ An 11×9 heart of 17 interlocking pieces, mostly primaries, with the cleft at th
 - Pieces leave in the order the sequence asks for, so the outer lobes have to clear in the right order to open lanes for the buried centre pieces.
 
 Where it may fall short: the eight-step sequence is long to read, and part of the difficulty is keeping count. The colour assignment came from a solver-guided search over this hand-drawn heart, not from a single idea built by hand.
+
+## Good vs bad: lessons from Bleeding heart and Yellow Core
+
+Measured with a full state-graph BFS (same move rules as `LevelSolver`/`PuzzleSim`: only exits and merges are accepted moves, so every solution is exactly `pieces` moves long). A **trap** is an accepted move from a still-solvable state into a state with no solution.
+
+| Metric | Yellow core (6x6, 12 pcs) | Bleeding heart (11x9, 17 pcs) | Pansy (8x8, 14 pcs) |
+|---|---|---|---|
+| Reachable states / solvable states | 2380 / 250 | 476 / 39 | 10183 / 331 |
+| Distinct solutions (all optimal) | 1,575,968 | 2,432 | 280,799,136 |
+| First move: accepted / traps | 33 / 12 | 23 / 17 | 42 / 22 |
+| Trap edges out of solvable states | 1,874 | 292 | 2,122 |
+| Avg accepted moves / avg winning moves per solvable state | 12.4 / 4.9 | 10.8 / 3.1 | 14.3 / 7.9 |
+| Solvable states with an exit available | 207 | 31 | 311 |
+| …where only one exit was possible (forced goal step) | 102 (49%) | 27 (87%) | 104 (33%) |
+| …where a legal exit is a trap (wrong candidate) | 21 (10%) | **0 (0%)** | 68 (22%) |
+| Random-legal-move win chance | 0.02% | ~0% | 0.03% |
+
+**Why Bleeding heart is boring despite many first-move traps:** the difficulty is all in three opening merges; after that, 87% of goal steps offer exactly one legal exit and *no* goal step ever offers a wrong exit. The goal asks for orange and there is exactly one orange, two purples and exactly two exist, and so on. Supply equals demand colour-for-colour, so reading the goal tells you the answer. Its traps are just "don't make a mix you were never asked for", which a player avoids by not merging randomly.
+
+**Why Yellow core is good:** the yellows (the colour you need for both green and orange) are buried in the centre, ringed by blue. Blues are surplus: there are more blues than the blue goal needs, so some must be spent making purple, and *which* blue goes where matters. Green is easy (yellow touches blue everywhere), but orange needs a yellow to travel out to a red corner without touching blue on the way, so you must clear blues out of the way first, usually by turning them into purples for the top goal. Wrong-candidate exits exist (10% of goal steps).
+
+### Rules
+
+1. **Surplus / decoys.** For each goal colour, give the board more candidate pieces than the goal needs (or several ways to mix it), so that choosing *which* piece satisfies the goal is a real decision. Supply == demand per colour ⇒ forced play.
+2. **Bury the key colour.** Put the scarce colour the goals depend on in the middle, surrounded by a colour that spoils it on contact (yellow ringed by blue: any accidental touch turns it green).
+3. **Require intermediate mixes.** Make the player spend blockers by mixing them into something a goal *does* want (purples), so clearing a path and scoring are the same action.
+4. **Measure, don't guess.** Before shipping, report: trap edges, first-move traps vs winners, % goal steps with a wrong-but-legal exit (aim ≥ 15%), % forced goal steps (aim ≤ 50%), avg winning branch. A level with 0% wrong-exit steps is easy/medium however many opening traps it has.
+5. **Plausible-but-wrong first moves.** Count first moves that look productive (merge into a colour that appears in a goal, or an exit of a goal colour) but are traps. These, not random bad merges, are what make a level feel clever.
+6. Stored `difficulty_tier` overrides `LevelDifficulty.rate()` (1 easy, 2 medium, 3 hard, 4 very hard, 5 extreme); set it by hand from these numbers.
