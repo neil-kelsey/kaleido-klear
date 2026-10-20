@@ -54,3 +54,14 @@ It stays in the set, marked Easy.
 - Do not build a parking spot. A piece that needs to "wait over there" has to mix into something, or leave.
 
 Length is the piece count. Every mix and every exit removes one piece, so five pieces is a five-move level no matter how the shape is dressed. A hard level needs more pieces, and the later ones have to be locked behind the earlier ones. Three copies of the same latch, solvable in any order, is still one idea.
+
+## Bleeding heart, and why it should work
+
+An 11×9 heart of 17 interlocking pieces, mostly primaries, with the cleft at the top and the tip at the bottom. Only the top edge is open, the way it is in Antibiotics. It asks for orange, purple ×2, green ×2, blue ×3, orange ×2, purple, blue, and then the two reds at the tip.
+
+- Nothing can leave on the first swipe. The edge wants orange, and the only orange is buried in the middle of the heart. So the first moves are mixes.
+- Seventeen pieces is seventeen moves, and nearly every mix is a choice. Most primaries touch two different partners, and only one pairing keeps the colour count right for the sequence. The first position has 23 accepted moves, and 17 of them (on 11 different pieces) make the level impossible. After that, every position on the main line has only one or two moves that still win, against 3 to 13 accepted moves that lose. Across the main line, that is 98 accepted dead-end moves.
+- The three blues and the final reds are bookkeeping you can't skip. Spend one blue in a purple or green mix and the B3 step can never be finished. Spend a red, and the tip can't close the level.
+- Pieces leave in the order the sequence asks for, so the outer lobes have to clear in the right order to open lanes for the buried centre pieces.
+
+Where it may fall short: the eight-step sequence is long to read, and part of the difficulty is keeping count. The colour assignment came from a solver-guided search over this hand-drawn heart, not from a single idea built by hand.
