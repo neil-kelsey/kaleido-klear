@@ -892,6 +892,9 @@ msgstr "Homemade Charts"
 msgid "UI_GROUP_COMPUTER_GENERATED"
 msgstr "Clockwork Charts"
 
+msgid "UI_GROUP_NEBULA_MENAGERIE"
+msgstr "Critter Charts"
+
 msgid "UI_DIFFICULTY_EASY"
 msgstr "Easy plunder"
 

@@ -892,6 +892,9 @@ msgstr "Niveaux personnalisés"
 msgid "UI_GROUP_COMPUTER_GENERATED"
 msgstr "Généré par ordinateur"
 
+msgid "UI_GROUP_NEBULA_MENAGERIE"
+msgstr "Ménagerie de la nébuleuse"
+
 msgid "UI_DIFFICULTY_EASY"
 msgstr "Facile"
 

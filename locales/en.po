@@ -892,6 +892,9 @@ msgstr "Custom Levels"
 msgid "UI_GROUP_COMPUTER_GENERATED"
 msgstr "Computer generated"
 
+msgid "UI_GROUP_NEBULA_MENAGERIE"
+msgstr "Nebula Menagerie"
+
 msgid "UI_DIFFICULTY_EASY"
 msgstr "Easy"
 
