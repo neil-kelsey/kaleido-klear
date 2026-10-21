@@ -1,4 +1,4 @@
-VERSION: 1.1.0
+VERSION: 1.2.0
 
 # Veilmoth splash
 
@@ -53,7 +53,21 @@ When loading is instant, the splash lasts 1.5 + 0.9 + 1.5 + 0.4 = 4.3 seconds. A
 
 The progress bar stays hidden if the load finishes within 0.3s, so it does not flash on a fast machine. If loading is still going after 0.3s, the bar appears and tracks `ResourceLoader` progress, then hides as soon as the load finishes.
 
-If the operating system asks to reduce animation, the wing beat, dust, and wipe are skipped. The dark hold and the light hold still run, and the fade is 0.28s. There is no switch for this inside the splash.
+The wing beat, the mist sweep, and the dust always play. `respect_reduce_motion` is an exported opt-in and defaults to off, so the operating-system query is ignored unless a game turns it on.
+
+`DisplayServer.accessibility_should_reduce_animation()` returns an int, not a bool: `1` when the system asks for less motion, `0` when it does not, and `-1` when the status is unknown. Godot implements that call on macOS and Windows only. Android, and a headless run, return `-1`. Version 1.1.0 stored the int in a bool. Any value other than `0` becomes true, so `-1` took the reduced-motion path and the splash cut from the dark moth to the light moth with no wing beat.
+
+When `respect_reduce_motion` is on and the call returns exactly `1`, the flap and the wipe still run, in about half the time (0.55 of normal). They are not removed. Unknown (`-1`) does not shorten anything. The dark hold and the light hold stay as they are, and the fade shortens from 0.4s to 0.28s.
+
+## Changelog
+
+### 1.2.0
+
+The flap, mist, and dust play by default. Reduced motion is an explicit opt-in (`respect_reduce_motion`, default false) and, when enabled, only shortens the flap, and only when `accessibility_should_reduce_animation()` returns `1`. It no longer replaces the beat with an instant colour cut. This fixes the Pixel 7a splash: that call returns `-1` (unknown) on Android, and 1.1.0 treated the non-zero int as true, which skipped the wings.
+
+### 1.1.0
+
+Dark and light holds of 1.5s each, a shared `addons/veilmoth_splash` folder, and a rig that fits and centres in any viewport.
 
 ## Layout
 

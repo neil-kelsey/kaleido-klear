@@ -9,6 +9,14 @@ extends Control
 ## If this is empty, ProjectSettings veilmoth_splash/next_scene is used,
 ## then application/run/main_scene_after_splash.
 @export var next_scene_path := ""
+## Off by default. accessibility_should_reduce_animation() returns an int:
+## 1 to reduce, 0 not to, and -1 when the status is unknown. The call is
+## implemented on macOS and Windows only, so Android and headless runs
+## return -1. Version 1.1.0 stored that int in a bool, and every non-zero
+## value (including -1) became true, which cut the wing beat. Turn this on
+## to shorten the flap only when the call returns exactly 1. The beat,
+## mist, and dust still play.
+@export var respect_reduce_motion := false
 
 const DARK_SHADER := preload("res://addons/veilmoth_splash/assets/shaders/veil_dark_key.gdshader")
 const MIST_SHADER := preload("res://addons/veilmoth_splash/assets/shaders/veil_mist.gdshader")
@@ -39,6 +47,9 @@ const BEAT_DUR := 0.860
 const WIPE_DUR := 0.900
 const FADE_DUR := 0.40
 const REDUCE_FADE := 0.28
+## When reduced motion is explicitly opted in, the flap and wipe take this
+## fraction of their normal time. They are never skipped.
+const REDUCE_FLAP_SCALE := 0.55
 ## An instant load never shows the bar. A slow load reveals it after this.
 const BAR_REVEAL_SEC := 0.30
 const RIG_W := 1280.0
@@ -80,7 +91,8 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_shown_msec = Time.get_ticks_msec()
-	_reduce = DisplayServer.accessibility_should_reduce_animation()
+	# Compare to 1. A bare assignment booleanizes -1 (unknown) to true.
+	_reduce = respect_reduce_motion and DisplayServer.accessibility_should_reduce_animation() == 1
 	_next = _resolve_next()
 	_build()
 	_layout()
@@ -113,7 +125,6 @@ func begin_playback() -> void:
 	capture_hold = "play"
 	_freeze_load = false
 	_load_done = true
-	_reduce = false
 	_begin_sequence()
 
 
@@ -139,15 +150,12 @@ func _process(_delta: float) -> void:
 		return
 	if _phase != 1:
 		return
-	var anim_s := _since(_anim_start_msec)
-	if _reduce:
-		if anim_s >= light_hold_sec:
-			_begin_fade()
-		return
+	var elapsed := _since(_anim_start_msec)
+	var anim_s := elapsed / _flap_scale()
 	_apply_frame(anim_s)
 	if capture_hold == "play":
 		return
-	if anim_s >= WIPE_DUR + light_hold_sec:
+	if elapsed >= WIPE_DUR * _flap_scale() + light_hold_sec:
 		_begin_fade()
 
 
@@ -155,11 +163,6 @@ func _begin_sequence() -> void:
 	_phase = 1
 	_bar.visible = false
 	_anim_start_msec = Time.get_ticks_msec()
-	if _reduce:
-		_apply_theme(true)
-		_apply_wings(-1.0)
-		_mist_mat.set_shader_parameter("progress", 0.0)
-		return
 	_swapped = false
 	_dust_on = false
 	_apply_theme(false)
@@ -507,6 +510,12 @@ func _setting_string(key: String) -> String:
 	if not ProjectSettings.has_setting(key):
 		return ""
 	return str(ProjectSettings.get_setting(key)).strip_edges()
+
+
+func _flap_scale() -> float:
+	if _reduce:
+		return REDUCE_FLAP_SCALE
+	return 1.0
 
 
 func _since(start_msec: int) -> float:

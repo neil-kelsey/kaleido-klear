@@ -12,3 +12,4 @@ grow_vertical = 2
 script = ExtResource("1")
 dark_hold_sec = 1.5
 light_hold_sec = 1.5
+respect_reduce_motion = false
