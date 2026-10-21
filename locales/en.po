@@ -895,6 +895,9 @@ msgstr "Computer generated"
 msgid "UI_GROUP_NEBULA_MENAGERIE"
 msgstr "Nebula Menagerie"
 
+msgid "UI_GROUP_EVENT_HORIZON"
+msgstr "Event Horizon"
+
 msgid "UI_DIFFICULTY_EASY"
 msgstr "Easy"
 

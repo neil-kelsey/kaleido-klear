@@ -895,6 +895,9 @@ msgstr "Généré par ordinateur"
 msgid "UI_GROUP_NEBULA_MENAGERIE"
 msgstr "Ménagerie de la nébuleuse"
 
+msgid "UI_GROUP_EVENT_HORIZON"
+msgstr "Horizon des événements"
+
 msgid "UI_DIFFICULTY_EASY"
 msgstr "Facile"
 

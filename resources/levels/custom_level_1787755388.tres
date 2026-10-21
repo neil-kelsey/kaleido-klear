@@ -47,9 +47,9 @@ display_name = "The gates of Mordor"
 locale_display_names = {
 "en": "The gates of Mordor"
 }
-section_index = 1
+section_index = 0
 daily_date = ""
-sort_index = 190
+sort_index = 3120
 columns = 8
 rows = 7
 goal_left_color = 0
@@ -72,7 +72,7 @@ block_shapes = Array[String](["single", "single", "single", "single", "single", 
 block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1])
 block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(0, 3), Vector2i(0, 4), Vector2i(1, 4), Vector2i(2, 4), Vector2i(3, 4), Vector2i(0, 5), Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6)]), Array[Vector2i]([Vector2i(3, 0), Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0), Vector2i(3, 1), Vector2i(3, 2), Vector2i(2, 2), Vector2i(1, 2), Vector2i(0, 2), Vector2i(3, 3), Vector2i(3, 4), Vector2i(2, 4), Vector2i(1, 4), Vector2i(0, 4), Vector2i(3, 5), Vector2i(3, 6), Vector2i(2, 6), Vector2i(1, 6), Vector2i(0, 6)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])]
 block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8"])
-group_title_key = "UI_GROUP_CUSTOM_LEVELS"
+group_title_key = "UI_GROUP_SOLAR_STACK"
 verified_solvable = false
 min_moves = -1
 difficulty_score = 0.0

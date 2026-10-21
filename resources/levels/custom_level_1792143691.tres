@@ -26,8 +26,8 @@ display_name = "Spare key"
 locale_display_names = {
 "en": "Spare key"
 }
-section_index = 1
-sort_index = 660
+section_index = 0
+sort_index = 1020
 columns = 13
 rows = 11
 multi_goal_mode = true
@@ -42,7 +42,7 @@ block_shapes = Array[String](["single", "single", "single", "single", "single"])
 block_kinds = Array[int]([1, 1, 1, 1, 1])
 block_cell_patterns = [Array[Vector2i]([Vector2i(2, 0), Vector2i(3, 0), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(1, 3), Vector2i(2, 3), Vector2i(3, 3), Vector2i(2, 4), Vector2i(3, 4)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3), Vector2i(0, 4), Vector2i(1, 4)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 1), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(4, 2)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(2, 1), Vector2i(2, 2), Vector2i(1, 1), Vector2i(1, 2), Vector2i(0, 2), Vector2i(0, 1), Vector2i(3, 1)])]
 block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5"])
-group_title_key = "UI_GROUP_CUSTOM_LEVELS"
+group_title_key = "UI_GROUP_PEBBLE_ORBITS"
 verified_solvable = true
 min_moves = 5
 difficulty_score = 64.98

@@ -56,7 +56,7 @@ locale_display_names = {
 "en": "Night owl"
 }
 section_index = 1
-sort_index = 750
+sort_index = 6020
 columns = 8
 rows = 8
 multi_goal_mode = true

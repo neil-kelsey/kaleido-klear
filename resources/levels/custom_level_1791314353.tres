@@ -43,7 +43,7 @@ locale_display_names = {
 }
 section_index = 1
 daily_date = ""
-sort_index = 500
+sort_index = 5140
 columns = 18
 rows = 18
 goal_left_color = 1
@@ -66,7 +66,7 @@ block_shapes = Array[String](["single", "single", "single", "single", "single", 
 block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)])]
 block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 10", "Shape 11", "Shape 12", "Shape 13", "Shape 14", "Shape 15", "Shape 16", "Shape 17", "Shape 18", "Shape 19", "Shape 20", "Shape 21", "Shape 22", "Shape 23", "Shape 24", "Shape 25"])
-group_title_key = "UI_GROUP_CUSTOM_LEVELS"
+group_title_key = "UI_GROUP_RIFT_GEOMETRY"
 verified_solvable = false
 min_moves = -1
 difficulty_score = 0.0

@@ -61,7 +61,7 @@ locale_display_names = {
 "en": "Scarab"
 }
 section_index = 1
-sort_index = 740
+sort_index = 6050
 columns = 8
 rows = 8
 multi_goal_mode = true

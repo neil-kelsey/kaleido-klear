@@ -67,7 +67,7 @@ locale_display_names = {
 }
 section_index = 1
 daily_date = ""
-sort_index = 200
+sort_index = 4020
 columns = 8
 rows = 8
 goal_left_color = 0
@@ -90,7 +90,7 @@ block_shapes = Array[String](["single", "single", "single", "single", "single", 
 block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 block_cell_patterns = [Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(2, 5), Vector2i(1, 5), Vector2i(0, 5), Vector2i(2, 4), Vector2i(2, 3), Vector2i(2, 2), Vector2i(2, 1), Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 3)]), Array[Vector2i]([Vector2i(3, 7), Vector2i(2, 7), Vector2i(1, 7), Vector2i(0, 7), Vector2i(3, 6), Vector2i(3, 5), Vector2i(3, 4), Vector2i(3, 3), Vector2i(3, 2), Vector2i(3, 1), Vector2i(3, 0), Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(0, 4), Vector2i(0, 5), Vector2i(0, 6)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(3, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 0)])]
 block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9", "Shape 10", "Shape 11", "Shape 12", "Shape 13", "Shape 14"])
-group_title_key = "UI_GROUP_CUSTOM_LEVELS"
+group_title_key = "UI_GROUP_PAINT_NOVA"
 verified_solvable = false
 min_moves = -1
 difficulty_score = 0.0
