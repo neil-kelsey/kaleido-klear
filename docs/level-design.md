@@ -110,3 +110,23 @@ Scarab (8x8, 17 pieces, min 17 moves, tier 4) is a symmetric blue/yellow beetle.
 | Random-legal-move win chance | 0.03% | <0.005% |
 
 What changed: both blue and yellow are surplus (each is needed pure on the top goal *and* as an ingredient of the three required greens), the greens are a required mix whose yellows sit in the wing interior behind blue, and the two goals interleave (the top wants a green mid-sequence, the bottom opens with two greens), so the order in which you spend yellows matters across both edges, not just "keep yellows pure".
+
+## What made Scarab work
+
+Neil's playtest: **visuals 8–9/10, difficulty 8–9/10, "hit the mark perfectly"** (Pansy was visuals 8, difficulty 5.5–6). The formula, now reused for the whole *Nebula Menagerie* chapter (Dewfall, `UI_GROUP_NEBULA_MENAGERIE`):
+
+1. **A creature or object you can name at a glance.** Mirror-symmetric, ~16–17 pieces on 8x8, every piece a meaningful part (head, wing, claw, tentacle). Pick subjects with a strong silhouette: abstract "flowers" read worse than a bug, an owl face or a crab. Check it in a real in-game render: piece outlines separate same-colour neighbours, but large same-colour areas still read as one blob.
+2. **Two surplus primaries.** Each is needed pure on one goal *and* as the ingredient of a mix, so choosing which piece to spend is the puzzle.
+3. **At least one required secondary whose ingredient is buried** (Scarab: three greens whose yellows sit inside the wings behind blue).
+4. **Interlocking goal sequences on two edges.** A mix is wanted mid-sequence on one edge while the other edge opens with it, so the spending order matters across both.
+5. **Targets** (measured with the full state-graph analysis): about 15–20 moves; ≤ ~3 winning moves per solvable state; < ~100k distinct solutions; > 25% of goal steps offering a wrong-but-legal exit; most first moves traps.
+
+| Metric | Scarab | Night owl | Moon jelly | Rock crab |
+|---|---|---|---|---|
+| Pieces / min moves | 17 / 17 | 16 / 16 | 16 / 16 | 16 / 16 |
+| Colours | B Y | R B Y | R B Y | R B Y |
+| States / solvable | 18381 / 240 | 7089 / 86 | 11859 / 106 | 4965 / 114 |
+| Distinct solutions | 60,632 | 2,352 | 13,824 | 40,704 |
+| First moves / traps | 34 / 22 | 35 / 23 | 32 / 18 | 28 / 16 |
+| Avg winning moves per solvable state | 2.92 | 2.88 | 2.93 | 2.44 |
+| Goal steps with wrong-but-legal exit | 28% | 33% | 41% | 32% |
