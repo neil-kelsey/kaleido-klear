@@ -45,6 +45,13 @@ const PEAK := 76.0
 const BEAT_START := 0.040
 const BEAT_DUR := 0.860
 const WIPE_DUR := 0.900
+## Cross-dissolve the dark rig into the light one across this slice of the
+## wipe. The website cuts the theme when the veil's ease crosses 0.5. The
+## bone moth on the cream band is almost the same colour, so the dissolve
+## finishes as that band covers the moth and the ink silhouette is what
+## stays readable.
+const BLEND_FROM := 0.30
+const BLEND_TO := 0.50
 const FADE_DUR := 0.40
 const REDUCE_FADE := 0.28
 ## When reduced motion is explicitly opted in, the flap and wipe take this
@@ -61,11 +68,8 @@ var capture_hold := ""
 
 var _bg: ColorRect
 var _stage: Control
-var _lwing: TextureRect
-var _rwing: TextureRect
-var _body: TextureRect
-var _word: TextureRect
-var _word_mat: ShaderMaterial
+var _dark_rig: Dictionary
+var _light_rig: Dictionary
 var _dust: CPUParticles2D
 var _mist: ColorRect
 var _mist_mat: ShaderMaterial
@@ -96,7 +100,7 @@ func _ready() -> void:
 	_next = _resolve_next()
 	_build()
 	_layout()
-	_apply_theme(false)
+	_set_blend(0.0)
 	_apply_wings(-1.0)
 	get_viewport().size_changed.connect(_layout)
 	if capture_hold == "loading":
@@ -165,7 +169,9 @@ func _begin_sequence() -> void:
 	_anim_start_msec = Time.get_ticks_msec()
 	_swapped = false
 	_dust_on = false
-	_apply_theme(false)
+	_bg.color = BG_DARK
+	_dust.color = Color(GHOST.r, GHOST.g, GHOST.b, 0.8)
+	_set_blend(0.0)
 	_apply_frame(0.0)
 
 
@@ -176,23 +182,29 @@ func _build() -> void:
 	_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_bg)
 
+	# Mist behind the moth. The website band covers the background at the
+	# midpoint; the logo stays in front of it, so the silhouette never drops out.
+	_mist = ColorRect.new()
+	_mist.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mist.color = Color.WHITE
+	_mist.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_mist_mat = ShaderMaterial.new()
+	_mist_mat.shader = MIST_SHADER
+	_mist_mat.set_shader_parameter("progress", 0.0)
+	_mist_mat.set_shader_parameter("mist_color", BG_LIGHT)
+	_mist_mat.set_shader_parameter("edge_color", BG_LIGHT)
+	_mist.material = _mist_mat
+	add_child(_mist)
+
 	_stage = Control.new()
 	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_stage.clip_contents = false
 	add_child(_stage)
 
-	_lwing = _make_layer(DARK_LWING)
-	_rwing = _make_layer(DARK_RWING)
-	_body = _make_layer(DARK_BODY)
-	_stage.add_child(_lwing)
-	_stage.add_child(_rwing)
-	_stage.add_child(_body)
-
-	_word = _make_layer(WORDMARK)
-	_word_mat = ShaderMaterial.new()
-	_word_mat.shader = WORD_SHADER
-	_word.material = _word_mat
-	_stage.add_child(_word)
+	_light_rig = _make_rig(true)
+	_dark_rig = _make_rig(false)
+	_stage.add_child(_light_rig["root"])
+	_stage.add_child(_dark_rig["root"])
 
 	_dust = CPUParticles2D.new()
 	_dust.amount = 110
@@ -211,7 +223,7 @@ func _build() -> void:
 	_dust.scale_amount_min = 0.14
 	_dust.scale_amount_max = 0.32
 	_dust.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	_dust.color = Color(TEAL.r, TEAL.g, TEAL.b, 0.9)
+	_dust.color = Color(GHOST.r, GHOST.g, GHOST.b, 0.8)
 	_dust.texture = _dust_texture()
 	var fade := Gradient.new()
 	fade.set_color(0, Color(1, 1, 1, 0))
@@ -220,18 +232,6 @@ func _build() -> void:
 	fade.add_point(0.62, Color(1, 1, 1, 0.9))
 	_dust.color_ramp = fade
 	_stage.add_child(_dust)
-
-	_mist = ColorRect.new()
-	_mist.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_mist.color = Color.WHITE
-	_mist.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_mist_mat = ShaderMaterial.new()
-	_mist_mat.shader = MIST_SHADER
-	_mist_mat.set_shader_parameter("progress", 0.0)
-	_mist_mat.set_shader_parameter("mist_color", BG_LIGHT)
-	_mist_mat.set_shader_parameter("edge_color", Color(0.75, 0.93, 0.86, 1.0))
-	_mist.material = _mist_mat
-	add_child(_mist)
 
 	_bar = ColorRect.new()
 	_bar.color = Color(BONE.r, BONE.g, BONE.b, 0.28)
@@ -242,6 +242,30 @@ func _build() -> void:
 	_bar_fill.color = GHOST
 	_bar_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bar.add_child(_bar_fill)
+
+
+func _make_rig(light: bool) -> Dictionary:
+	var root := Control.new()
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.clip_contents = false
+	var lwing := _make_layer(LIGHT_LWING if light else DARK_LWING)
+	var rwing := _make_layer(LIGHT_RWING if light else DARK_RWING)
+	var body := _make_layer(LIGHT_BODY if light else DARK_BODY)
+	if not light:
+		lwing.material = _new_dark_mat()
+		rwing.material = _new_dark_mat()
+		body.material = _new_dark_mat()
+	var word := _make_layer(WORDMARK)
+	var word_mat := ShaderMaterial.new()
+	word_mat.shader = WORD_SHADER
+	word_mat.set_shader_parameter("ink", INK if light else BONE)
+	word_mat.set_shader_parameter("accent", TEAL if light else GHOST)
+	word.material = word_mat
+	root.add_child(lwing)
+	root.add_child(rwing)
+	root.add_child(body)
+	root.add_child(word)
+	return {"root": root, "lwing": lwing, "rwing": rwing, "body": body, "word": word}
 
 
 func _make_layer(texture: Texture2D) -> TextureRect:
@@ -290,11 +314,15 @@ func _poll_load() -> void:
 
 func _apply_frame(anim_s: float) -> void:
 	_layout()
-	if not _swapped and anim_s >= WIPE_DUR * 0.5:
-		_swapped = true
-		_apply_theme(true)
-	_apply_wings(anim_s)
 	var wipe := clampf(anim_s / WIPE_DUR, 0.0, 1.0)
+	_set_blend(smoothstep(BLEND_FROM, BLEND_TO, wipe))
+	# The website swaps the page colour once the veil's ease crosses 0.5,
+	# while the band still covers the viewport. ease(0.5) is 0.5.
+	if not _swapped and wipe >= 0.5:
+		_swapped = true
+		_bg.color = BG_LIGHT
+		_dust.color = Color(TEAL.r, TEAL.g, TEAL.b, 0.85)
+	_apply_wings(anim_s)
 	_mist_mat.set_shader_parameter("progress", wipe)
 	_place_dust(anim_s)
 	if not _dust_on and anim_s >= BEAT_START + BEAT_DUR * 0.54:
@@ -303,28 +331,15 @@ func _apply_frame(anim_s: float) -> void:
 		_dust.emitting = true
 
 
-func _apply_theme(light: bool) -> void:
-	_bg.color = BG_LIGHT if light else BG_DARK
-	if light:
-		_lwing.texture = LIGHT_LWING
-		_rwing.texture = LIGHT_RWING
-		_body.texture = LIGHT_BODY
-		_lwing.material = null
-		_rwing.material = null
-		_body.material = null
-		_word_mat.set_shader_parameter("ink", INK)
-		_word_mat.set_shader_parameter("accent", TEAL)
-		_dust.color = Color(TEAL.r, TEAL.g, TEAL.b, 0.85)
-	else:
-		_lwing.texture = DARK_LWING
-		_rwing.texture = DARK_RWING
-		_body.texture = DARK_BODY
-		_lwing.material = _new_dark_mat()
-		_rwing.material = _new_dark_mat()
-		_body.material = _new_dark_mat()
-		_word_mat.set_shader_parameter("ink", BONE)
-		_word_mat.set_shader_parameter("accent", GHOST)
-		_dust.color = Color(GHOST.r, GHOST.g, GHOST.b, 0.8)
+func _set_blend(blend: float) -> void:
+	_rig_alpha(_dark_rig, 1.0 - blend)
+	_rig_alpha(_light_rig, blend)
+
+
+func _rig_alpha(rig: Dictionary, alpha: float) -> void:
+	var root: Control = rig["root"]
+	root.visible = alpha > 0.01
+	root.modulate.a = alpha
 
 
 func _new_dark_mat() -> ShaderMaterial:
@@ -338,17 +353,24 @@ func _apply_wings(anim_s: float) -> void:
 	if stage_size.x < 2.0:
 		return
 	var t := (anim_s - BEAT_START) / BEAT_DUR
-	_place_wing(_lwing, t, true, stage_size)
-	_place_wing(_rwing, t - 0.025, false, stage_size)
-	_body.size = stage_size
-	_body.pivot_offset = stage_size * 0.5
-	_body.scale = Vector2.ONE
-	_body.rotation = 0.0
-	_body.position = Vector2(0.0, _body_lift(t, stage_size.y))
-	_word.size = stage_size
-	_word.position = Vector2.ZERO
-	_word.scale = Vector2.ONE
-	_word.rotation = 0.0
+	var lift := _body_lift(t, stage_size.y)
+	for rig in [_dark_rig, _light_rig]:
+		var root: Control = rig["root"]
+		root.position = Vector2.ZERO
+		root.size = stage_size
+		_place_wing(rig["lwing"] as TextureRect, t, true, stage_size)
+		_place_wing(rig["rwing"] as TextureRect, t - 0.025, false, stage_size)
+		var body: TextureRect = rig["body"]
+		body.size = stage_size
+		body.pivot_offset = stage_size * 0.5
+		body.scale = Vector2.ONE
+		body.rotation = 0.0
+		body.position = Vector2(0.0, lift)
+		var word: TextureRect = rig["word"]
+		word.size = stage_size
+		word.position = Vector2.ZERO
+		word.scale = Vector2.ONE
+		word.rotation = 0.0
 
 
 func _place_wing(wing: TextureRect, t: float, is_left: bool, stage_size: Vector2) -> void:
@@ -463,6 +485,13 @@ func _finish_fade() -> void:
 	if _left:
 		return
 	_left = true
+	# Drop every splash layer before the node leaves, so a shader or a
+	# particle cannot sit on the menu for the frame between alpha 0 and free.
+	modulate.a = 0.0
+	visible = false
+	if _dust != null:
+		_dust.emitting = false
+		_dust.visible = false
 	if _menu != null:
 		get_tree().current_scene = _menu
 	queue_free()

@@ -1,4 +1,4 @@
-VERSION: 1.2.0
+VERSION: 1.3.0
 
 # Veilmoth splash
 
@@ -45,7 +45,7 @@ Leave `next_scene_path` empty in the shared scene so every game uses its own pro
 `dark_hold_sec` and `light_hold_sec` are exported on the splash (both default to 1.5). They are the knobs to tune.
 
 - The dark moth stays up for at least `dark_hold_sec`. If the next scene is still loading when that time is up, the splash waits for the load.
-- Then one wing beat, the dust, and the 0.9s mist wipe run together. The moth swaps from dark to light at the middle of the wipe.
+- Then one wing beat, the dust, and the 0.9s mist wipe run together. The mist passes behind the moth. From 30% to 50% of the wipe the dark moth dissolves into the light one, so the silhouette stays readable. The background colour swaps once the wipe is halfway, while the band still covers it.
 - After the wipe has finished, the light moth holds for `light_hold_sec`.
 - The splash then fades out over 0.4s.
 
@@ -60,6 +60,10 @@ The wing beat, the mist sweep, and the dust always play. `respect_reduce_motion`
 When `respect_reduce_motion` is on and the call returns exactly `1`, the flap and the wipe still run, in about half the time (0.55 of normal). They are not removed. Unknown (`-1`) does not shorten anything. The dark hold and the light hold stay as they are, and the fade shortens from 0.4s to 0.28s.
 
 ## Changelog
+
+### 1.3.0
+
+The moth stays visible through the mist. The wipe is the same band as the website and now draws behind the rig, and the dark moth cross-dissolves into the light moth across the middle of the wipe instead of being covered by an opaque sheet. The handoff fades every layer together: the wordmark shader was dropping the splash modulate, so the teal accent in the V stayed on the menu until the node was freed.
 
 ### 1.2.0
 
