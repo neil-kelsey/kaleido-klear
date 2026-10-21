@@ -94,3 +94,19 @@ Measured with a full state-graph BFS (same move rules as `LevelSolver`/`PuzzleSi
 4. **Measure, don't guess.** Before shipping, report: trap edges, first-move traps vs winners, % goal steps with a wrong-but-legal exit (aim ≥ 15%), % forced goal steps (aim ≤ 50%), avg winning branch. A level with 0% wrong-exit steps is easy/medium however many opening traps it has.
 5. **Plausible-but-wrong first moves.** Count first moves that look productive (merge into a colour that appears in a goal, or an exit of a goal colour) but are traps. These, not random bad merges, are what make a level feel clever.
 6. Stored `difficulty_tier` overrides `LevelDifficulty.rate()` (1 easy, 2 medium, 3 hard, 4 very hard, 5 extreme); set it by hand from these numbers.
+
+### Scarab (very hard, Dewfall sort 740) vs Pansy
+
+Scarab (8x8, 17 pieces, min 17 moves, tier 4) is a symmetric blue/yellow beetle. Goals: top `Y1 > B1 > Y1 > B1 > G1 > Y2 > B2`, bottom `G2 > Y2 > B1`.
+
+| Metric | Pansy (hard) | Scarab (very hard) |
+|---|---|---|
+| Reachable / solvable states | 10183 / 331 (3.3%) | 18381 / 240 (1.3%) |
+| Distinct solutions | 280,799,136 | 60,632 |
+| First move: accepted / traps | 42 / 22 | 34 / 22 |
+| Trap edges out of solvable states | 2,122 | 3,354 |
+| Avg accepted / winning moves per solvable state | 14.3 / 7.9 | 17.0 / 2.9 |
+| Goal steps with an exit / single-option / wrong-but-legal exit | 311 / 104 / 68 (22%) | 225 / 85 / 64 (28%) |
+| Random-legal-move win chance | 0.03% | <0.005% |
+
+What changed: both blue and yellow are surplus (each is needed pure on the top goal *and* as an ingredient of the three required greens), the greens are a required mix whose yellows sit in the wing interior behind blue, and the two goals interleave (the top wants a green mid-sequence, the bottom opens with two greens), so the order in which you spend yellows matters across both edges, not just "keep yellows pure".
