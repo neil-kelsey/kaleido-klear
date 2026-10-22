@@ -130,3 +130,43 @@ Neil's playtest: **visuals 8–9/10, difficulty 8–9/10, "hit the mark perfectl
 | First moves / traps | 34 / 22 | 35 / 23 | 32 / 18 | 28 / 16 |
 | Avg winning moves per solvable state | 2.92 | 2.88 | 2.93 | 2.44 |
 | Goal steps with wrong-but-legal exit | 28% | 33% | 41% | 32% |
+
+## Structural levels
+
+Neil's geometric levels (towers, pyramids, stamps, ladders), measured the same way as the creature levels. Levels too big for a full search got 1,500 random-legal-move playouts instead: "mc" is the share of random players who win, and "branch" is the average number of accepted moves.
+
+| Level | Size / pieces | States / solvable | Solutions | 1st moves / traps | Avg accepted / winning | Forced exits | Wrong-exit | Verdict |
+|---|---|---|---|---|---|---|---|---|
+| Block tower | 8x8 / 16 | 14392 / 3536 | 1.7e10 | 50 / 6 | 14.4 / 9.7 | 89% | 6% | Great silhouette, loose play: one edge, almost any order works |
+| connected blocks 2 | 8x8 / 8 | 181 / 19 | 20 | 28 / 18 | 14.2 / 1.6 | 82% | 5% | Tight but short; supply equals demand |
+| Pyramid scheme (10x8) | 10x8 / 8 | 376 / 120 | 37k | 32 / 16 | 10.4 / 5.6 | 29% | 14% | Best of the small ones: four short goal lists, real choices, too short |
+| Stampers | 12x15 / 12 | 881 / 204 | 1.4e7 | 46 / 19 | 15.2 / 9.5 | 77% | 11% | Readable stamps; too many winning options |
+| Step to the H | 12x12 / 9 | 354 / 186 | 2.9e5 | 32 / 9 | 7.6 / 5.4 | 66% | 0% | Easy: no wrong exits |
+| Building blocks | 8x8 / 7 | 19 / 13 | 9 | 3 / 1 | 1.5 / 1.4 | 58% | 8% | Standard blocks that cannot mix; 67% random win |
+| Step 2 | 16x16 / 17 | too big | – | – | branch 16.5 | – | – | mc 9.5%: big, but forgiving |
+| Block party v2, Square doubles (+squared), Cut a path | 16–19 wide / 24–25 | too big | – | – | branch 21–26 | – | – | mc 0–0.3%: hard by size and bookkeeping (P7, P8, P5 runs) |
+| Pyramid scheme (16x16), The striped Pyramid, Quatterns | 16x16 / 36–52 | too big | – | – | branch 40–45 | – | – | mc 0%: huge, not clever |
+| Block shot | 8x8 / 64 | too big | – | – | branch 5 | – | – | 64 non-mixing singles, four 7–19-step lists: pure sequencing |
+
+**What works:** a deliberate, symmetric shape that reads instantly (Block tower, Stampers, the small Pyramid scheme), and more than one open edge with short goal lists.
+
+**What doesn't:**
+- Single-edge towers whose goal accepts nearly any order (Block tower has 9.7 winning moves per position and only 6% wrong exits).
+- Supply that exactly equals demand (connected blocks 2).
+- Giants whose difficulty is long repeated counts like "P8" and a huge state space rather than decisions. The extreme giants feel long, not clever.
+- Standard (non-mixing) blocks, which remove the colour decisions altogether.
+
+### Ziggurat (Rift Geometry, last level; tier 4)
+
+A stepped pyramid with the Scarab formula applied. The gold core and inner gold blocks are ringed by blue pillars, posts and a blue base; two red steps make the purples. Goals: top P1 > Y1 > B2, bottom G1 > B2 > Y1 > B1 > P1 > Y2 > B2.
+
+| Metric | Ziggurat | Scarab |
+|---|---|---|
+| Pieces / min moves | 17 / 17 | 17 / 17 |
+| States / solvable | 9555 / 508 | 18381 / 240 |
+| Distinct solutions | 8,712,704 | 60,632 |
+| First moves / traps | 26 / 16 | 34 / 22 |
+| Avg accepted / winning per solvable state | 9.4 / 3.06 | 17.0 / 2.92 |
+| Goal steps with wrong-but-legal exit | 44% | 28% |
+
+The colours and goals came from a solver-guided climb over a hand-drawn, mirror-symmetric ziggurat. The colours are kept symmetric so the pattern stays deliberate. The large solution count comes mostly from the mirror (the left and right halves are interchangeable) and from independent moves that can be played in either order.
