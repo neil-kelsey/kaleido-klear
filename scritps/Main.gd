@@ -50,6 +50,7 @@ var _edge_back := EdgeBack.new()
 var _tile_pointer_ids: Dictionary = {}
 var _intro_playing := false
 var _won_level := false
+var _daily_recorded := false
 var _intro_tween: Tween = null
 var _run_started_msec: int = 0
 
@@ -839,6 +840,13 @@ func _on_level_cleared(remaining_lives: int) -> void:
 	var stars := clampi(remaining_lives, 1, 3)
 	var perfect := remaining_lives >= board.starting_lives and not board.used_undo()
 	GameSession.record_level_stars(_current_level, stars, perfect)
+	## One record per win; level_cleared can't re-enter because _won_level gates replays
+	## (Replay/Restart reloads the scene, which is a new attempt).
+	if not _daily_recorded and GameSession.is_daily_play(_current_level):
+		_daily_recorded = true
+		GameSession.record_daily_completion(
+			GameSession.active_daily_slot, stars, GameSession.active_daily_date
+		)
 	if not GameSession.playtest_mode:
 		GameSession.record_level_stats(
 			_current_level.level_id,

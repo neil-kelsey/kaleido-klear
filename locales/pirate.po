@@ -583,6 +583,9 @@ msgstr "Daily voyages"
 msgid "UI_DAILY_PUZZLE"
 msgstr "Voyage %d"
 
+msgid "UI_DAILY_STREAK"
+msgstr "Yer streak %d · Best %d, arr"
+
 msgid "UI_DAILY_EMPTY"
 msgstr "No voyages charted for this day."
 

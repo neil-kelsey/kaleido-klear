@@ -25,6 +25,7 @@ const FA_CHARS := {
 	"lock": "\uf023",
 	"check": "\uf00c",
 	"star": "\uf005",
+	"fire": "\uf06d",
 	"heart": "\uf004",
 	"question-circle": "\uf059",
 	"pencil": "\uf040",

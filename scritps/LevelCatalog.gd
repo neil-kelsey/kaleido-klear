@@ -87,6 +87,8 @@ var _project_levels_by_section: Array = []
 ## developer-mode save. Published builds never rescan device drafts.
 var _runtime_levels_by_section: Array = []
 var _runtime_ready := false
+## Packaged (APK) levels with a daily_date, gathered in the same scan as the map.
+var _project_daily_levels: Array[LevelConfig] = []
 const EXTRA_GROUPS_PATH := "res://resources/catalog/dimension_groups.json"
 const EXTRA_DIMENSIONS_PATH := "res://resources/catalog/extra_dimensions.json"
 ## section_index (as string) -> Array of group_title_key strings created in audit.
@@ -111,12 +113,15 @@ func reload_levels() -> void:
 	for i in SECTIONS.size():
 		var bucket: Array[LevelConfig] = []
 		_project_levels_by_section[i] = bucket
+	_project_daily_levels.clear()
 
 	for path in CustomLevelStore.list_project_level_paths():
 		var level := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
 		if level == null:
 			continue
 		## Daily puzzles live in DailyCatalog, not on the dimension map.
+		if DailyCatalog.is_daily_level(level):
+			_project_daily_levels.append(level)
 		if (
 			DailyCatalog.is_daily_level(level)
 			or level.section_index == DailyCatalog.SECTION_DAILY
@@ -129,6 +134,21 @@ func reload_levels() -> void:
 	for i in SECTIONS.size():
 		sort_levels_by_chapter(_project_levels_by_section[i] as Array)
 	_rebuild_runtime_levels()
+	DailyCatalog.invalidate_cache()
+
+
+## Shipped levels only (never device drafts) for one dimension.
+func get_project_section_levels(section_index: int) -> Array[LevelConfig]:
+	var out: Array[LevelConfig] = []
+	if section_index < 0 or section_index >= _project_levels_by_section.size():
+		return out
+	for level in _project_levels_by_section[section_index]:
+		out.append(level as LevelConfig)
+	return out
+
+
+func get_project_daily_levels() -> Array[LevelConfig]:
+	return _project_daily_levels.duplicate()
 
 
 func refresh_runtime_levels() -> void:
@@ -137,6 +157,7 @@ func refresh_runtime_levels() -> void:
 		reload_levels()
 		return
 	_rebuild_runtime_levels()
+	DailyCatalog.invalidate_cache()
 
 
 func _rebuild_runtime_levels() -> void:

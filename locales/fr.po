@@ -583,6 +583,9 @@ msgstr "Puzzles du jour"
 msgid "UI_DAILY_PUZZLE"
 msgstr "Puzzle %d"
 
+msgid "UI_DAILY_STREAK"
+msgstr "Série %d · Record %d"
+
 msgid "UI_DAILY_EMPTY"
 msgstr "Aucun puzzle du jour."
 

@@ -45,8 +45,18 @@ var dimension_return_index: int = -1
 var dimension_return_level_id: String = ""
 ## Optional ordered playlist (daily puzzles). Empty = campaign catalog order.
 var active_level_playlist: Array[LevelConfig] = []
+## Daily puzzles: "YYYY-MM-DD" -> {"easy": stars, "medium": stars, "hard": stars}.
+var daily_completed: Dictionary = {}
+var daily_streak_current: int = 0
+var daily_streak_best: int = 0
+var daily_streak_last_date: String = ""
+## Set while a daily is being played (cleared when any other level starts).
+var active_daily_slot: String = ""
+var active_daily_date: String = ""
+var active_daily_level_id: String = ""
 ## Tutorial coach marks already shown (group id -> true).
 var seen_tutorials: Dictionary = {}
+const DAILY_PUZZLES_SCENE := "res://scenes/ui/daily_puzzles.tscn"
 var _scene_wipe: ColorRect
 var _scene_wipe_tween: Tween
 
@@ -76,6 +86,9 @@ func set_level(level: LevelConfig) -> void:
 	selected_level = level
 	playtest_mode = false
 	audit_play = false
+	## Leaving the daily for any other level drops the daily context and playlist.
+	if level == null or level.level_id != active_daily_level_id:
+		_clear_daily_context()
 	if level != null:
 		var context: Dictionary = LevelCatalog.find_level_context(level.level_id)
 		if not context.is_empty():
@@ -207,6 +220,88 @@ func restart_level(level: LevelConfig) -> void:
 	else:
 		set_level(level)
 		audit_play = keep_audit
+
+
+func begin_daily_play(level: LevelConfig, slot: String, date_key: String) -> void:
+	if level == null:
+		return
+	set_level(level)
+	var single: Array[LevelConfig] = [level]
+	## A one-level playlist: "next" can never walk into the campaign.
+	set_level_playlist(single)
+	set_return_scene(DAILY_PUZZLES_SCENE)
+	active_daily_slot = slot
+	active_daily_date = date_key
+	active_daily_level_id = level.level_id
+
+
+func is_daily_play(level: LevelConfig) -> bool:
+	return (
+		level != null
+		and not playtest_mode
+		and not audit_play
+		and not active_daily_slot.is_empty()
+		and level.level_id == active_daily_level_id
+	)
+
+
+func _clear_daily_context() -> void:
+	if active_daily_level_id.is_empty():
+		return
+	active_daily_slot = ""
+	active_daily_date = ""
+	active_daily_level_id = ""
+	clear_level_playlist()
+
+
+## The single entry point for a daily win. Idempotent per (day, slot): stars keep the
+## best, and the streak moves at most once per UTC day. Returns true if anything changed.
+func record_daily_completion(slot: String, stars: int, date_key: String = "") -> bool:
+	if not DailyCatalog.SLOTS.has(slot):
+		return false
+	var day := date_key if not date_key.is_empty() else DailyCatalog.today_key()
+	var clamped := clampi(stars, 0, 3)
+	if clamped <= 0:
+		return false
+	var changed := false
+	var entry: Dictionary = daily_completed.get(day, {})
+	if clamped > int(entry.get(slot, 0)):
+		entry[slot] = clamped
+		daily_completed[day] = entry
+		changed = true
+	if apply_daily_streak(day):
+		changed = true
+	if changed:
+		_save_progress()
+	return changed
+
+
+## Streak transition for a clear on `day`. Same day: no-op. Next day: +1. Gap: restart at 1.
+func apply_daily_streak(day: String) -> bool:
+	if day == daily_streak_last_date:
+		return false
+	if not daily_streak_last_date.is_empty() and day < daily_streak_last_date:
+		return false
+	if daily_streak_last_date == DailyCatalog.shift_date_key(day, -1):
+		daily_streak_current += 1
+	else:
+		daily_streak_current = 1
+	daily_streak_last_date = day
+	daily_streak_best = maxi(daily_streak_best, daily_streak_current)
+	return true
+
+
+func get_daily_stars(slot: String, date_key: String = "") -> int:
+	var day := date_key if not date_key.is_empty() else DailyCatalog.today_key()
+	return int((daily_completed.get(day, {}) as Dictionary).get(slot, 0))
+
+
+## Shown streak: 0 once a whole UTC day has been missed.
+func get_display_streak(today: String = "") -> int:
+	var day := today if not today.is_empty() else DailyCatalog.today_key()
+	if daily_streak_last_date == day or daily_streak_last_date == DailyCatalog.shift_date_key(day, -1):
+		return daily_streak_current
+	return 0
 
 
 func begin_audit_play(level: LevelConfig) -> void:
@@ -350,6 +445,10 @@ func reset_progress() -> void:
 	level_perfect.clear()
 	level_best_moves.clear()
 	level_best_time_ms.clear()
+	daily_completed.clear()
+	daily_streak_current = 0
+	daily_streak_best = 0
+	daily_streak_last_date = ""
 	current_dimension_index = 0
 	selected_level = null
 	clear_level_playlist()
@@ -498,6 +597,10 @@ func _load_progress() -> void:
 	level_perfect.clear()
 	level_best_moves.clear()
 	level_best_time_ms.clear()
+	daily_completed.clear()
+	daily_streak_current = 0
+	daily_streak_best = 0
+	daily_streak_last_date = ""
 	current_dimension_index = 0
 	seen_tutorials.clear()
 	if FileAccess.file_exists(PROGRESS_PATH):
@@ -537,6 +640,19 @@ func _apply_progress_dict(data: Dictionary) -> void:
 	if typeof(time_raw) == TYPE_DICTIONARY:
 		for key in (time_raw as Dictionary).keys():
 			level_best_time_ms[str(key)] = maxi(int(time_raw[key]), 0)
+	var daily_raw: Variant = data.get("daily_completed", {})
+	if typeof(daily_raw) == TYPE_DICTIONARY:
+		for day in (daily_raw as Dictionary).keys():
+			var slots_raw: Variant = daily_raw[day]
+			if typeof(slots_raw) != TYPE_DICTIONARY:
+				continue
+			var entry := {}
+			for slot in (slots_raw as Dictionary).keys():
+				entry[str(slot)] = clampi(int(slots_raw[slot]), 0, 3)
+			daily_completed[str(day)] = entry
+	daily_streak_current = maxi(0, int(data.get("daily_streak_current", 0)))
+	daily_streak_best = maxi(daily_streak_current, int(data.get("daily_streak_best", 0)))
+	daily_streak_last_date = str(data.get("daily_streak_last_date", ""))
 	current_dimension_index = maxi(0, int(data.get("current_dimension_index", 0)))
 	var tutorials_raw: Variant = data.get("seen_tutorials", {})
 	seen_tutorials.clear()
@@ -554,6 +670,10 @@ func _save_progress() -> void:
 		"level_best_time_ms": level_best_time_ms.duplicate(),
 		"current_dimension_index": current_dimension_index,
 		"seen_tutorials": seen_tutorials.duplicate(),
+		"daily_completed": daily_completed.duplicate(true),
+		"daily_streak_current": daily_streak_current,
+		"daily_streak_best": daily_streak_best,
+		"daily_streak_last_date": daily_streak_last_date,
 	}
 	var file := FileAccess.open(PROGRESS_PATH, FileAccess.WRITE)
 	if file == null:

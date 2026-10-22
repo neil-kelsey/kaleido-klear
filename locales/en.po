@@ -583,6 +583,9 @@ msgstr "Daily puzzles"
 msgid "UI_DAILY_PUZZLE"
 msgstr "Puzzle %d"
 
+msgid "UI_DAILY_STREAK"
+msgstr "Streak %d · Best %d"
+
 msgid "UI_DAILY_EMPTY"
 msgstr "No daily puzzles today."
 

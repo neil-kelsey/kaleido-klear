@@ -19,9 +19,14 @@ const MENU_SIDE_MARGIN_RATIO := 0.15
 @onready var settings_button: MenuActionButton = %SettingsButton
 @onready var exit_confirm_modal: Control = %ExitConfirmModal
 
+const STREAK_GOLD := Color(1.0, 0.78, 0.30, 1.0)
+var _streak_badge: PanelContainer
+var _streak_count: Label
+
 
 func _ready() -> void:
 	_apply_translations()
+	_build_streak_badge()
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	await get_tree().process_frame
 	_on_viewport_resized()
@@ -42,7 +47,57 @@ func handle_back() -> void:
 		exit_confirm_modal.show_modal()
 
 
+## Small flame + current daily streak pinned to the Daily Puzzles button. Hidden at 0.
+func _build_streak_badge() -> void:
+	if level_select_button == null:
+		return
+	var streak := GameSession.get_display_streak()
+	_streak_badge = PanelContainer.new()
+	_streak_badge.name = "StreakBadge"
+	_streak_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var bg := UiTheme.rounded_stylebox(Color(0.06, 0.05, 0.12, 0.88), 999)
+	bg.border_color = STREAK_GOLD
+	bg.set_border_width_all(3)
+	bg.content_margin_left = 18
+	bg.content_margin_right = 22
+	bg.content_margin_top = 4
+	bg.content_margin_bottom = 4
+	_streak_badge.add_theme_stylebox_override("panel", bg)
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 8)
+	_streak_badge.add_child(row)
+	var flame := FaIconView.new()
+	flame.icon_name = "fire"
+	flame.icon_color = Color(1.0, 0.55, 0.15, 1.0)
+	flame.custom_minimum_size = Vector2(40, 44)
+	flame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(flame)
+	_streak_count = Label.new()
+	_streak_count.text = str(streak)
+	_streak_count.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UiTheme.apply_label_font(_streak_count, 36)
+	_streak_count.add_theme_color_override("font_color", STREAK_GOLD)
+	row.add_child(_streak_count)
+	level_select_button.add_child(_streak_badge)
+	_streak_badge.z_index = 5
+	_streak_badge.visible = streak > 0
+	_place_streak_badge()
+
+
+func _place_streak_badge() -> void:
+	if _streak_badge == null or level_select_button == null:
+		return
+	var badge_size := _streak_badge.get_combined_minimum_size()
+	_streak_badge.size = badge_size
+	_streak_badge.position = Vector2(
+		level_select_button.size.x - badge_size.x * 0.75,
+		-badge_size.y * 0.45
+	)
+
+
 func _on_viewport_resized() -> void:
+	_place_streak_badge.call_deferred()
 	_apply_side_margins()
 	_fit_brand_titles()
 
@@ -78,12 +133,12 @@ func _apply_translations() -> void:
 
 
 func _on_play_button_pressed() -> void:
-	GameSession.set_return_scene("res://scenes/ui/dimension_map.tscn")
-	get_tree().change_scene_to_file("res://scenes/ui/dimension_map.tscn")
+	GameSession.set_return_scene(DIMENSION_MAP_SCENE)
+	get_tree().change_scene_to_file(DIMENSION_MAP_SCENE)
 
 
 func _on_level_select_button_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/ui/daily_puzzles.tscn")
+	get_tree().change_scene_to_file(DAILY_PUZZLES_SCENE)
 
 
 func _on_settings_button_pressed() -> void:
