@@ -586,6 +586,9 @@ msgstr "Puzzle %d"
 msgid "UI_DAILY_STREAK"
 msgstr "Streak %d · Best %d"
 
+msgid "UI_DAILY_STREAK_HINT"
+msgstr "Complete one puzzle to keep your streak going!"
+
 msgid "UI_DAILY_EMPTY"
 msgstr "No daily puzzles today."
 

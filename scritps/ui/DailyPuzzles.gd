@@ -9,8 +9,8 @@ const STAR_CHART_PATH := "res://assets/backgrounds/level_star_chart.png"
 const LevelDetailsModalScript := preload("res://scritps/ui/LevelDetailsModal.gd")
 const STRIP_WORLD := Rect2(-420, -180, 840, 2800)
 
-const CARD_SPACING := 250.0
-const CARD_FIRST_SCREEN_Y := 640.0
+const CARD_SPACING := 240.0
+const CARD_FIRST_SCREEN_Y := 720.0
 const LEVEL_DIAMOND_SIZE := 130.0
 const DIAMOND_X := -160.0
 const TEXT_X := -70.0
@@ -39,6 +39,7 @@ var _slots: PackedStringArray = []
 var _day_key := ""
 var _day_check_accum := 0.0
 var _streak_label: Label
+var _hint_label: Label
 var _level_positions: Array[Vector2] = []
 var _theme_color: Color = LevelCatalog.PRIMARY_BLUE
 var _star_chart_tex: Texture2D
@@ -119,6 +120,18 @@ func _ensure_streak_label() -> void:
 	_streak_label.add_theme_font_override("font", MAP_FONT)
 	_streak_label.add_theme_font_size_override("font_size", 36)
 	_streak_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.85, 0.82))
+	_hint_label = Label.new()
+	_hint_label.name = "StreakHintLabel"
+	_hint_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_hint_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_hint_label.offset_left = 60.0
+	_hint_label.offset_right = -60.0
+	date_label.get_parent().add_child(_hint_label)
+	_hint_label.add_theme_font_override("font", MAP_FONT)
+	_hint_label.add_theme_font_size_override("font_size", 34)
+	_hint_label.add_theme_color_override("font_color", GOLD_TITLE)
 
 
 func _process(delta: float) -> void:
@@ -184,6 +197,8 @@ func _apply_translations() -> void:
 		_streak_label.text = tr("UI_DAILY_STREAK") % [
 			GameSession.get_display_streak(_day_key), GameSession.daily_streak_best
 		]
+	if _hint_label != null:
+		_hint_label.text = tr("UI_DAILY_STREAK_HINT")
 	_sync_title_to_chart_pole()
 	_sync_secondary_titles()
 
@@ -228,6 +243,10 @@ func _sync_secondary_titles() -> void:
 	if _streak_label != null:
 		_streak_label.offset_top = top + 66.0
 		_streak_label.offset_bottom = top + 116.0
+	if _hint_label != null:
+		## Two lines of room so it wraps on narrow phones instead of clipping.
+		_hint_label.offset_top = top + 122.0
+		_hint_label.offset_bottom = top + 220.0
 	if empty_label != null:
 		empty_label.visible = empty
 		var empty_y := top + 150.0

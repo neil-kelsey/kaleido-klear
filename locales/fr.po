@@ -586,6 +586,9 @@ msgstr "Puzzle %d"
 msgid "UI_DAILY_STREAK"
 msgstr "Série %d · Record %d"
 
+msgid "UI_DAILY_STREAK_HINT"
+msgstr "Terminez un puzzle pour garder votre série !"
+
 msgid "UI_DAILY_EMPTY"
 msgstr "Aucun puzzle du jour."
 

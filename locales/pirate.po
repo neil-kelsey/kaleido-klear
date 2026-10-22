@@ -586,6 +586,9 @@ msgstr "Voyage %d"
 msgid "UI_DAILY_STREAK"
 msgstr "Yer streak %d · Best %d, arr"
 
+msgid "UI_DAILY_STREAK_HINT"
+msgstr "Plunder one puzzle to keep yer streak afloat, matey!"
+
 msgid "UI_DAILY_EMPTY"
 msgstr "No voyages charted for this day."
 
