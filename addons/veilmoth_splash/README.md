@@ -1,10 +1,10 @@
-VERSION: 1.3.0
+VERSION: 1.4.0
 
 # Veilmoth splash
 
 A Godot 4.7 boot splash for Veilmoth Games. Copy this folder into another project and both games play the same splash. Nothing in the folder refers to a host game.
 
-The splash shows the dark moth, beats the wings once, wipes to the light moth, then fades into whatever scene you name.
+The splash shows the dark moth, beats the wings once, wipes to the light moth, then fades into whatever scene you name. Under the moth, the wordmark reads VEILMOTH with a smaller GAMES centred beneath it.
 
 ## Install
 
@@ -60,6 +60,10 @@ The wing beat, the mist sweep, and the dust always play. `respect_reduce_motion`
 When `respect_reduce_motion` is on and the call returns exactly `1`, the flap and the wipe still run, in about half the time (0.55 of normal). They are not removed. Unknown (`-1`) does not shorten anything. The dark hold and the light hold stay as they are, and the fade shortens from 0.4s to 0.28s.
 
 ## Changelog
+
+### 1.4.0
+
+GAMES sits under VEILMOTH. It is a clean letter-spaced serif (Noto Serif Display), about 45% of the VEILMOTH cap height, centred on the wordmark, and coloured with the same ink. It is a layer on both the dark rig and the light rig, so it crossfades and fades out with the wordmark. The moth beat is unchanged. The progress bar sits below GAMES.
 
 ### 1.3.0
 

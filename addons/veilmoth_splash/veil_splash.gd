@@ -28,6 +28,7 @@ const LIGHT_BODY := preload("res://addons/veilmoth_splash/assets/rig/moth-light-
 const LIGHT_LWING := preload("res://addons/veilmoth_splash/assets/rig/moth-light-lwing.png")
 const LIGHT_RWING := preload("res://addons/veilmoth_splash/assets/rig/moth-light-rwing.png")
 const WORDMARK := preload("res://addons/veilmoth_splash/assets/logo/veilmoth-wordmark-letters-splitv.png")
+const GAMES := preload("res://addons/veilmoth_splash/assets/logo/veilmoth-games.png")
 
 const NEXT_SETTING := "veilmoth_splash/next_scene"
 const NEXT_FALLBACK := "application/run/main_scene_after_splash"
@@ -256,16 +257,21 @@ func _make_rig(light: bool) -> Dictionary:
 		rwing.material = _new_dark_mat()
 		body.material = _new_dark_mat()
 	var word := _make_layer(WORDMARK)
+	var games := _make_layer(GAMES)
 	var word_mat := ShaderMaterial.new()
 	word_mat.shader = WORD_SHADER
 	word_mat.set_shader_parameter("ink", INK if light else BONE)
 	word_mat.set_shader_parameter("accent", TEAL if light else GHOST)
+	# One material so VEILMOTH and GAMES take the same ink and fade together
+	# when the rig, or the splash, changes modulate.
 	word.material = word_mat
+	games.material = word_mat
 	root.add_child(lwing)
 	root.add_child(rwing)
 	root.add_child(body)
 	root.add_child(word)
-	return {"root": root, "lwing": lwing, "rwing": rwing, "body": body, "word": word}
+	root.add_child(games)
+	return {"root": root, "lwing": lwing, "rwing": rwing, "body": body, "word": word, "games": games}
 
 
 func _make_layer(texture: Texture2D) -> TextureRect:
@@ -371,6 +377,11 @@ func _apply_wings(anim_s: float) -> void:
 		word.position = Vector2.ZERO
 		word.scale = Vector2.ONE
 		word.rotation = 0.0
+		var games: TextureRect = rig["games"]
+		games.size = stage_size
+		games.position = Vector2.ZERO
+		games.scale = Vector2.ONE
+		games.rotation = 0.0
 
 
 func _place_wing(wing: TextureRect, t: float, is_left: bool, stage_size: Vector2) -> void:
@@ -434,9 +445,10 @@ func _layout() -> void:
 	_stage.size = Vector2(stage_w, stage_h)
 	var bar_h := clampf(stage_h * 0.012, 3.0, 8.0)
 	var bar_w := stage_w * 0.38
-	# The wordmark ends near 86% of the canvas. Sit the bar just under it,
-	# still inside the rig, so it cannot push the moth off centre or off screen.
-	var bar_y := top + stage_h * (640.0 / RIG_H)
+	# VEILMOTH ends near y 619 and GAMES near y 664 on the 720 canvas.
+	# Sit the bar just under GAMES, still inside the rig, so it cannot
+	# push the moth off centre or off screen.
+	var bar_y := top + stage_h * (678.0 / RIG_H)
 	_bar.position = Vector2(left + (stage_w - bar_w) * 0.5, bar_y)
 	_bar.size = Vector2(bar_w, bar_h)
 	_update_bar()
