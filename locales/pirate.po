@@ -933,3 +933,6 @@ msgstr "—"
 
 msgid "UI_PLAY_LEVEL"
 msgstr "Set sail"
+
+msgid "UI_LEVEL_SINGULARITY"
+msgstr "Davy Jones' Plughole"
