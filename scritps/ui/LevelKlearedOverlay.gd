@@ -261,7 +261,8 @@ func _result_controls() -> Array[Control]:
 func _set_standard_layout(standard: bool) -> void:
 	brand_root.visible = standard
 	stars_row.visible = standard
-	remove_ads_button.visible = standard
+	## Hidden for good once "Remove ads" is owned (Ads autoload).
+	remove_ads_button.visible = standard and not Ads.ads_removed
 	share_button.visible = standard
 	playtest_message.visible = not standard
 

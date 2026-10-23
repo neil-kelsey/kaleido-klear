@@ -175,6 +175,53 @@ compact = true
 show_trailing_icon = false
 label_text = "Level audit"
 
+[node name="AdsSection" type="VBoxContainer" parent="Margin/Panel/Scroll/SettingsList"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="AdsTitle" type="Label" parent="Margin/Panel/Scroll/SettingsList/AdsSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ads"
+
+[node name="RemoveAdsSettingsButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/AdsSection"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+script = ExtResource("6_cta")
+kind = 1
+compact = true
+show_trailing_icon = false
+label_text = "Remove ads"
+
+[node name="RestorePurchasesButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/AdsSection"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+script = ExtResource("6_cta")
+kind = 1
+compact = true
+show_trailing_icon = false
+label_text = "Restore purchases"
+
+[node name="PrivacySettingsButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/AdsSection"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+script = ExtResource("6_cta")
+kind = 1
+compact = true
+show_trailing_icon = false
+label_text = "Privacy settings"
+
+[node name="AdsStatusLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/AdsSection"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+
 [node name="DataSection" type="VBoxContainer" parent="Margin/Panel/Scroll/SettingsList"]
 layout_mode = 2
 theme_override_constants/separation = 10
@@ -225,3 +272,6 @@ grow_vertical = 2
 [connection signal="item_selected" from="Margin/Panel/Scroll/SettingsList/PreferencesSection/LanguageRow/LanguageOption" to="." method="_on_language_option_item_selected"]
 [connection signal="confirmed" from="ResetConfirmModal" to="." method="_on_reset_confirm_modal_confirmed"]
 [connection signal="cancelled" from="ResetConfirmModal" to="." method="_on_reset_confirm_modal_cancelled"]
+[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/AdsSection/RemoveAdsSettingsButton" to="." method="_on_remove_ads_settings_button_pressed"]
+[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/AdsSection/RestorePurchasesButton" to="." method="_on_restore_purchases_button_pressed"]
+[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/AdsSection/PrivacySettingsButton" to="." method="_on_privacy_settings_button_pressed"]

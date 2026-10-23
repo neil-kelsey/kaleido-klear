@@ -933,3 +933,39 @@ msgstr "—"
 
 msgid "UI_PLAY_LEVEL"
 msgstr "Set sail"
+
+msgid "UI_SETTINGS_ADS"
+msgstr "Ship's notices"
+
+msgid "UI_RESTORE_PURCHASES"
+msgstr "Recover me treasure"
+
+msgid "UI_PRIVACY_SETTINGS"
+msgstr "Secrets o' the ship"
+
+msgid "UI_ADS_REMOVED"
+msgstr "No more scurvy ads. Thank ye!"
+
+msgid "UI_PURCHASE_PENDING"
+msgstr "Yer coin be in transit. Ads walk the plank once it lands."
+
+msgid "UI_PURCHASES_RESTORED"
+msgstr "Treasure recovered!"
+
+msgid "UI_NOTHING_TO_RESTORE"
+msgstr "No treasure in yer chest."
+
+msgid "UI_STORE_UNAVAILABLE"
+msgstr "The market be closed, matey."
+
+msgid "UI_PURCHASE_FAILED"
+msgstr "The trade fell through."
+
+msgid "UI_REMOVE_ADS_PROMPT_TITLE"
+msgstr "Enjoyin' the voyage?"
+
+msgid "UI_REMOVE_ADS_PROMPT_BODY"
+msgstr "Make the ads walk the plank fer good with one bag o' doubloons."
+
+msgid "UI_NOT_NOW"
+msgstr "Not today"

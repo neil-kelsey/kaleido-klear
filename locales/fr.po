@@ -933,3 +933,39 @@ msgstr "—"
 
 msgid "UI_PLAY_LEVEL"
 msgstr "Jouer"
+
+msgid "UI_SETTINGS_ADS"
+msgstr "Publicités"
+
+msgid "UI_RESTORE_PURCHASES"
+msgstr "Restaurer les achats"
+
+msgid "UI_PRIVACY_SETTINGS"
+msgstr "Confidentialité"
+
+msgid "UI_ADS_REMOVED"
+msgstr "Publicités supprimées. Merci !"
+
+msgid "UI_PURCHASE_PENDING"
+msgstr "Achat en attente. Les publicités disparaîtront une fois l'achat finalisé."
+
+msgid "UI_PURCHASES_RESTORED"
+msgstr "Achats restaurés."
+
+msgid "UI_NOTHING_TO_RESTORE"
+msgstr "Aucun achat à restaurer."
+
+msgid "UI_STORE_UNAVAILABLE"
+msgstr "La boutique n'est pas disponible pour le moment."
+
+msgid "UI_PURCHASE_FAILED"
+msgstr "L'achat n'a pas abouti."
+
+msgid "UI_REMOVE_ADS_PROMPT_TITLE"
+msgstr "Vous aimez Kaleido Klear ?"
+
+msgid "UI_REMOVE_ADS_PROMPT_BODY"
+msgstr "Supprimez les publicités pour de bon avec un achat unique."
+
+msgid "UI_NOT_NOW"
+msgstr "Plus tard"

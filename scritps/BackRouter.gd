@@ -29,6 +29,10 @@ func request_back() -> void:
 	if now - _last_back_msec < BACK_DEBOUNCE_MSEC:
 		return
 	_last_back_msec = now
+	## The ads layer (remove-ads prompt) sits above every scene.
+	var ads := get_node_or_null("/root/Ads")
+	if ads != null and ads.handle_back():
+		return
 	var scene := get_tree().current_scene
 	if scene != null and scene.has_method("handle_back"):
 		scene.handle_back()

@@ -933,3 +933,39 @@ msgstr "—"
 
 msgid "UI_PLAY_LEVEL"
 msgstr "Play"
+
+msgid "UI_SETTINGS_ADS"
+msgstr "Ads"
+
+msgid "UI_RESTORE_PURCHASES"
+msgstr "Restore purchases"
+
+msgid "UI_PRIVACY_SETTINGS"
+msgstr "Privacy settings"
+
+msgid "UI_ADS_REMOVED"
+msgstr "Ads removed. Thank you!"
+
+msgid "UI_PURCHASE_PENDING"
+msgstr "Purchase pending. Ads will go once it completes."
+
+msgid "UI_PURCHASES_RESTORED"
+msgstr "Purchases restored."
+
+msgid "UI_NOTHING_TO_RESTORE"
+msgstr "No purchases to restore."
+
+msgid "UI_STORE_UNAVAILABLE"
+msgstr "The store isn't available right now."
+
+msgid "UI_PURCHASE_FAILED"
+msgstr "The purchase didn't go through."
+
+msgid "UI_REMOVE_ADS_PROMPT_TITLE"
+msgstr "Enjoying Kaleido Klear?"
+
+msgid "UI_REMOVE_ADS_PROMPT_BODY"
+msgstr "Remove ads for good with a one-off purchase."
+
+msgid "UI_NOT_NOW"
+msgstr "Not now"
