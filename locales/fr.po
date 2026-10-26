@@ -936,3 +936,12 @@ msgstr "Jouer"
 
 msgid "UI_LEVEL_SINGULARITY"
 msgstr "Singularité"
+
+msgid "UI_LEVEL_PAINTED_LADY"
+msgstr "Belle-Dame"
+
+msgid "UI_LEVEL_TOADSTOOL"
+msgstr "Amanite"
+
+msgid "UI_LEVEL_RUNG_BY_RUNG"
+msgstr "Barreau par barreau"

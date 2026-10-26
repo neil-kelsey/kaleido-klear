@@ -936,3 +936,12 @@ msgstr "Set sail"
 
 msgid "UI_LEVEL_SINGULARITY"
 msgstr "Davy Jones' Plughole"
+
+msgid "UI_LEVEL_PAINTED_LADY"
+msgstr "Cap'n Flutterby"
+
+msgid "UI_LEVEL_TOADSTOOL"
+msgstr "Grog Toadstool"
+
+msgid "UI_LEVEL_RUNG_BY_RUNG"
+msgstr "Crow's Nest Ladder"

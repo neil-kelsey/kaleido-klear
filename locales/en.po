@@ -936,3 +936,12 @@ msgstr "Play"
 
 msgid "UI_LEVEL_SINGULARITY"
 msgstr "Singularity"
+
+msgid "UI_LEVEL_PAINTED_LADY"
+msgstr "Painted Lady"
+
+msgid "UI_LEVEL_TOADSTOOL"
+msgstr "Toadstool"
+
+msgid "UI_LEVEL_RUNG_BY_RUNG"
+msgstr "Rung by Rung"
