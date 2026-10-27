@@ -74,7 +74,7 @@ const EXTRA_EN = {
   UI_GROUP_PAINT_NOVA: "Paint Nova",
   UI_GROUP_RIFT_GEOMETRY: "Rift Geometry",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
-    "Mix two different colours to make a new one. Red and yellow make orange, yellow and blue make green, red and blue make purple.",
+    "Slide two different colours together to blend them into a new one.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:
     "Only the mixed colour fits that goal — a red block will not go into an orange goal.",
   UI_TUTORIAL_COLOUR_MIX_ONCE:
@@ -142,7 +142,7 @@ const FR = {
   UI_GROUP_PAINT_NOVA: "Nova de peinture",
   UI_GROUP_RIFT_GEOMETRY: "Géométrie de faille",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
-    "Mélangez deux couleurs différentes pour en créer une nouvelle. Rouge et jaune donnent orange, jaune et bleu donnent vert, rouge et bleu donnent violet.",
+    "Faites glisser deux couleurs différentes l’une contre l’autre pour les mélanger en une nouvelle.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:
     "Seule la couleur mélangée correspond à ce but — un bloc rouge n’entrera pas dans un but orange.",
   UI_TUTORIAL_COLOUR_MIX_ONCE:
@@ -352,7 +352,7 @@ const PIRATE = {
   UI_GROUP_PAINT_NOVA: "Paintin' Nova",
   UI_GROUP_RIFT_GEOMETRY: "Rift Riggin'",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
-    "Mix two different colours to brew a new one. Crimson an’ gold make sunset orange, gold an’ ocean make sea green, crimson an’ ocean make royal purple.",
+    "Slide two different colours together to brew a new one.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:
     "Only the mixed colour fits that mark — a crimson block won’t sail into an orange goal.",
   UI_TUTORIAL_COLOUR_MIX_ONCE:

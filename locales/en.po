@@ -842,7 +842,7 @@ msgid "UI_GROUP_COLOUR_MIX"
 msgstr "Colour Mix"
 
 msgid "UI_TUTORIAL_COLOUR_MIX_BLEND"
-msgstr "Mix two different colours to make a new one. Red and yellow make orange, yellow and blue make green, red and blue make purple."
+msgstr "Slide two different colours together to blend them into a new one."
 
 msgid "UI_TUTORIAL_COLOUR_MIX_GOALS"
 msgstr "Only the mixed colour fits that goal — a red block will not go into an orange goal."

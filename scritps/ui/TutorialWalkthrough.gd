@@ -17,45 +17,95 @@ const TITLE_FONT_SIZE := 58
 const BODY_FONT_SIZE := 40
 const BODY_LINE_SPACING := 14
 
+const ICON_ROW_GAP := 12
+const ICON_LABEL_SIZE := 34
+
+## Each step may list "icons": drawn diagram rows (see TutorialIcon). A row with a
+## "text_key" becomes icon + caption (Square Shift style); without one the icon
+## spans the card.
 const SCRIPTS := {
 	"UI_GROUP_BASIC_TRAINING": {
 		"id": "UI_GROUP_BASIC_TRAINING",
 		"title_key": "UI_GROUP_BASIC_TRAINING",
 		"steps": [
-			{"text_key": "UI_TUTORIAL_BASIC_SWIPE", "spotlight": "board"},
-			{"text_key": "UI_TUTORIAL_BASIC_GOALS", "spotlight": "goal_edges"},
-			{"text_key": "UI_TUTORIAL_BASIC_LIVES", "spotlight": "lives"},
+			{
+				"text_key": "UI_TUTORIAL_BASIC_SWIPE",
+				"spotlight": "board",
+				"icons": [{"kind": "swipe", "a": 2, "height": 150}],
+			},
+			{
+				"text_key": "UI_TUTORIAL_BASIC_GOALS",
+				"spotlight": "goal_edges",
+				"icons": [{"kind": "goals", "height": 240}],
+			},
+			{
+				"text_key": "UI_TUTORIAL_BASIC_LIVES",
+				"spotlight": "lives",
+				"icons": [{"kind": "lives", "height": 100}],
+			},
 		],
 	},
 	"UI_GROUP_COLOUR_MIX": {
 		"id": "UI_GROUP_COLOUR_MIX",
 		"title_key": "UI_GROUP_COLOUR_MIX",
 		"steps": [
-			{"text_key": "UI_TUTORIAL_COLOUR_MIX_BLEND", "spotlight": "board"},
-			{"text_key": "UI_TUTORIAL_COLOUR_MIX_GOALS", "spotlight": "goal_edges"},
-			{"text_key": "UI_TUTORIAL_COLOUR_MIX_ONCE", "spotlight": "board"},
+			{
+				"text_key": "UI_TUTORIAL_COLOUR_MIX_BLEND",
+				"spotlight": "board",
+				"icons": [
+					{"kind": "merge", "a": 0, "b": 3, "r": 5, "height": 112},
+					{"kind": "merge", "a": 3, "b": 2, "r": 1, "height": 112},
+					{"kind": "merge", "a": 0, "b": 2, "r": 4, "height": 112},
+				],
+			},
+			{
+				"text_key": "UI_TUTORIAL_COLOUR_MIX_GOALS",
+				"spotlight": "goal_edges",
+				"icons": [{"kind": "mismatch", "a": 0, "r": 5, "height": 124}],
+			},
+			{
+				"text_key": "UI_TUTORIAL_COLOUR_MIX_ONCE",
+				"spotlight": "board",
+				"icons": [{"kind": "nomerge", "a": 5, "b": 1, "height": 124}],
+			},
 		],
 	},
 	"UI_GROUP_SHIFTING_GOALS": {
 		"id": "UI_GROUP_SHIFTING_GOALS",
 		"title_key": "UI_GROUP_SHIFTING_GOALS",
 		"steps": [
-			{"text_key": "UI_TUTORIAL_SHIFTING_CHEVRONS", "spotlight": "goal_edges"},
-			{"text_key": "UI_TUTORIAL_SHIFTING_MAP", "spotlight": "goals_button"},
+			{
+				"text_key": "UI_TUTORIAL_SHIFTING_CHEVRONS",
+				"spotlight": "goal_edges",
+				"icons": [{"kind": "chevrons", "a": 0, "b": 2, "height": 112}],
+			},
+			{
+				"text_key": "UI_TUTORIAL_SHIFTING_MAP",
+				"spotlight": "goals_button",
+				"icons": [{"kind": "goal_list", "a": 0, "b": 2, "r": 3, "height": 96}],
+			},
 		],
 	},
 	"UI_GROUP_WALLS": {
 		"id": "UI_GROUP_WALLS",
 		"title_key": "UI_GROUP_WALLS",
 		"steps": [
-			{"text_key": "UI_TUTORIAL_WALLS", "spotlight": "board"},
+			{
+				"text_key": "UI_TUTORIAL_WALLS",
+				"spotlight": "board",
+				"icons": [{"kind": "walls", "height": 230}],
+			},
 		],
 	},
 	"UI_GROUP_BIGGER_BOARDS": {
 		"id": "UI_GROUP_BIGGER_BOARDS",
 		"title_key": "UI_GROUP_BIGGER_BOARDS",
 		"steps": [
-			{"text_key": "UI_TUTORIAL_BIGGER_BOARDS", "spotlight": "board"},
+			{
+				"text_key": "UI_TUTORIAL_BIGGER_BOARDS",
+				"spotlight": "board",
+				"icons": [{"kind": "bigger", "height": 240}],
+			},
 		],
 	},
 }
@@ -73,6 +123,7 @@ var _ring: Panel
 var _card: PanelContainer
 var _title: Label
 var _body: Label
+var _icon_box: VBoxContainer
 var _next_button: MenuActionButton
 
 
@@ -208,6 +259,12 @@ func _build() -> void:
 	_body.add_theme_constant_override("line_spacing", BODY_LINE_SPACING)
 	vbox.add_child(_body)
 
+	_icon_box = VBoxContainer.new()
+	_icon_box.add_theme_constant_override("separation", ICON_ROW_GAP)
+	_icon_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_icon_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(_icon_box)
+
 	_next_button = MenuActionButton.new()
 	_next_button.kind = MenuActionButton.Kind.PRIMARY
 	_next_button.compact = true
@@ -250,8 +307,37 @@ func _apply_step_copy() -> void:
 	var step: Dictionary = steps[_step_index]
 	_title.text = tr(str(_script.get("title_key", "")))
 	_body.text = tr(str(step.get("text_key", "")))
+	_rebuild_icons(step.get("icons", []))
 	var last := _step_index >= steps.size() - 1
 	_next_button.set_label(tr("UI_TUTORIAL_GOT_IT" if last else "UI_TUTORIAL_NEXT"))
+
+
+func _rebuild_icons(specs: Array) -> void:
+	for child in _icon_box.get_children():
+		_icon_box.remove_child(child)
+		child.queue_free()
+	_icon_box.visible = not specs.is_empty()
+	for spec in specs:
+		var icon := TutorialIcon.make(spec as Dictionary)
+		var caption_key := str((spec as Dictionary).get("text_key", ""))
+		if caption_key.is_empty():
+			_icon_box.add_child(icon)
+			continue
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 28)
+		icon.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		icon.custom_minimum_size.x = maxf(icon.custom_minimum_size.x, 104.0)
+		row.add_child(icon)
+		var label := Label.new()
+		label.text = tr(caption_key)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		label.custom_minimum_size.x = 500.0
+		UiTheme.style_chart_modal_copy(null, label)
+		label.add_theme_font_size_override("font_size", ICON_LABEL_SIZE)
+		row.add_child(label)
+		_icon_box.add_child(row)
 
 
 func _layout_step() -> void:

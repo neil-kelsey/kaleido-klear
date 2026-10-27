@@ -842,7 +842,7 @@ msgid "UI_GROUP_COLOUR_MIX"
 msgstr "Mélange de couleurs"
 
 msgid "UI_TUTORIAL_COLOUR_MIX_BLEND"
-msgstr "Mélangez deux couleurs différentes pour en créer une nouvelle. Rouge et jaune donnent orange, jaune et bleu donnent vert, rouge et bleu donnent violet."
+msgstr "Faites glisser deux couleurs différentes l’une contre l’autre pour les mélanger en une nouvelle."
 
 msgid "UI_TUTORIAL_COLOUR_MIX_GOALS"
 msgstr "Seule la couleur mélangée correspond à ce but — un bloc rouge n’entrera pas dans un but orange."

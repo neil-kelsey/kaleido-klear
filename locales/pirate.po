@@ -842,7 +842,7 @@ msgid "UI_GROUP_COLOUR_MIX"
 msgstr "Colour Brewin’"
 
 msgid "UI_TUTORIAL_COLOUR_MIX_BLEND"
-msgstr "Mix two different colours to brew a new one. Crimson an’ gold make sunset orange, gold an’ ocean make sea green, crimson an’ ocean make royal purple."
+msgstr "Slide two different colours together to brew a new one."
 
 msgid "UI_TUTORIAL_COLOUR_MIX_GOALS"
 msgstr "Only the mixed colour fits that mark — a crimson block won’t sail into an orange goal."
