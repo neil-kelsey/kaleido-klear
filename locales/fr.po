@@ -1002,3 +1002,18 @@ msgstr "Conque spirale"
 
 msgid "UI_LEVEL_ABALONE"
 msgstr "Ormeau"
+
+msgid "UI_LEVEL_TIDAL_FORGE"
+msgstr "Forge de marée"
+
+msgid "UI_LEVEL_NAUTILUS_COIL"
+msgstr "Spirale nautile"
+
+msgid "UI_LEVEL_SHOAL_SERPENT"
+msgstr "Serpent des hauts-fonds"
+
+msgid "UI_LEVEL_REEFWALL"
+msgstr "Mur de récif"
+
+msgid "UI_LEVEL_KRAKEN_GATE"
+msgstr "Porte du kraken"

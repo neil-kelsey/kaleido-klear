@@ -1002,3 +1002,18 @@ msgstr "Spiral Conch"
 
 msgid "UI_LEVEL_ABALONE"
 msgstr "Abalone"
+
+msgid "UI_LEVEL_TIDAL_FORGE"
+msgstr "Tidal Forge"
+
+msgid "UI_LEVEL_NAUTILUS_COIL"
+msgstr "Nautilus Coil"
+
+msgid "UI_LEVEL_SHOAL_SERPENT"
+msgstr "Shoal Serpent"
+
+msgid "UI_LEVEL_REEFWALL"
+msgstr "Reefwall"
+
+msgid "UI_LEVEL_KRAKEN_GATE"
+msgstr "Kraken Gate"

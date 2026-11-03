@@ -81,6 +81,11 @@ const EXTRA_EN = {
   UI_LEVEL_GYRE_EYE: "Gyre Eye",
   UI_LEVEL_SPIRAL_CONCH: "Spiral Conch",
   UI_LEVEL_ABALONE: "Abalone",
+  UI_LEVEL_TIDAL_FORGE: "Tidal Forge",
+  UI_LEVEL_NAUTILUS_COIL: "Nautilus Coil",
+  UI_LEVEL_SHOAL_SERPENT: "Shoal Serpent",
+  UI_LEVEL_REEFWALL: "Reefwall",
+  UI_LEVEL_KRAKEN_GATE: "Kraken Gate",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
     "Slide two different colours together to blend them into a new one.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:
@@ -157,6 +162,11 @@ const FR = {
   UI_LEVEL_GYRE_EYE: "Œil du gyre",
   UI_LEVEL_SPIRAL_CONCH: "Conque spirale",
   UI_LEVEL_ABALONE: "Ormeau",
+  UI_LEVEL_TIDAL_FORGE: "Forge de marée",
+  UI_LEVEL_NAUTILUS_COIL: "Spirale nautile",
+  UI_LEVEL_SHOAL_SERPENT: "Serpent des hauts-fonds",
+  UI_LEVEL_REEFWALL: "Mur de récif",
+  UI_LEVEL_KRAKEN_GATE: "Porte du kraken",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
     "Faites glisser deux couleurs différentes l’une contre l’autre pour les mélanger en une nouvelle.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:
@@ -375,6 +385,11 @@ const PIRATE = {
   UI_LEVEL_GYRE_EYE: "Gyre Maw",
   UI_LEVEL_SPIRAL_CONCH: "Spiral Conch",
   UI_LEVEL_ABALONE: "Sea-Ear",
+  UI_LEVEL_TIDAL_FORGE: "Tide Forge",
+  UI_LEVEL_NAUTILUS_COIL: "Nautilus Coil",
+  UI_LEVEL_SHOAL_SERPENT: "Shoal Wyrm",
+  UI_LEVEL_REEFWALL: "Reef Wall",
+  UI_LEVEL_KRAKEN_GATE: "Kraken Gate",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
     "Slide two different colours together to brew a new one.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:
