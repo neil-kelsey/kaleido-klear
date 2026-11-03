@@ -37,8 +37,12 @@ unlimited = false
 script = ExtResource("2")
 level_id = "custom_level_1787754374"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
-display_name = "Custom level 14"
-locale_display_names = {}
+display_name = "Lonely heart"
+locale_display_names = {
+"en": "Lonely heart",
+"fr": "Custom level 14",
+"pirate": "Custom level 14"
+}
 section_index = 0
 daily_date = ""
 sort_index = 2100

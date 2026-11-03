@@ -49,7 +49,7 @@ locale_display_names = {
 }
 section_index = 0
 daily_date = ""
-sort_index = 3120
+sort_index = 3130
 columns = 8
 rows = 7
 goal_left_color = 0

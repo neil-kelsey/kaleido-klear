@@ -20,7 +20,13 @@ script = ExtResource("2_gqxao")
 level_id = "twinkle_paint_06"
 section_index = 0
 level_name_key = ""
-display_name = "Paint Nova 06"
+display_name = "Paint Nova"
+daily_date = ""
+locale_display_names = {
+"en": "Paint Nova",
+"fr": "Paint Nova",
+"pirate": "Paint Nova"
+}
 sort_index = 2030
 goal_left_color = 4
 goal_top_color = 0
@@ -39,4 +45,4 @@ group_title_key = "UI_GROUP_MOONLACE_WALLS"
 verified_solvable = true
 min_moves = 10
 difficulty_score = 47.49
-difficulty_tier = 2
+difficulty_tier = 1

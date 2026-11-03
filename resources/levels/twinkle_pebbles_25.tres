@@ -27,6 +27,7 @@ script = ExtResource("2_5q0gf")
 level_id = "twinkle_pebbles_25"
 level_name_key = ""
 display_name = "Safe port"
+daily_date = ""
 locale_display_names = {
 "en": "Safe port",
 "fr": "Pebble Orbits 25",
@@ -54,4 +55,4 @@ group_title_key = "UI_GROUP_MOONLACE_WALLS"
 verified_solvable = true
 min_moves = 11
 difficulty_score = 48.69
-difficulty_tier = 2
+difficulty_tier = 1

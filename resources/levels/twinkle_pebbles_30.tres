@@ -72,4 +72,4 @@ group_title_key = "UI_GROUP_PEBBLE_ORBITS"
 verified_solvable = true
 min_moves = 9
 difficulty_score = 46.36
-difficulty_tier = 2
+difficulty_tier = 1

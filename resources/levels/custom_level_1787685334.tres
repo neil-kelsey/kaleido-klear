@@ -43,8 +43,12 @@ unlimited = false
 script = ExtResource("2")
 level_id = "custom_level_1787685334"
 level_name_key = "UI_DEMO_LEVEL_STANDARD"
-display_name = "Custom level 14"
-locale_display_names = {}
+display_name = "Staircase"
+locale_display_names = {
+"en": "Staircase",
+"fr": "Custom level 14",
+"pirate": "Custom level 14"
+}
 section_index = 1
 daily_date = ""
 sort_index = 7070
@@ -74,4 +78,4 @@ group_title_key = "UI_GROUP_EVENT_HORIZON"
 verified_solvable = false
 min_moves = -1
 difficulty_score = 0.0
-difficulty_tier = 5
+difficulty_tier = 3

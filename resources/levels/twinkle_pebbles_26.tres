@@ -8,6 +8,7 @@ script = ExtResource("2_p36sh")
 level_id = "twinkle_pebbles_26"
 level_name_key = ""
 display_name = "Fields of gold"
+daily_date = ""
 locale_display_names = {
 "en": "Fields of gold",
 "fr": "Pebble Orbits 26",
@@ -28,4 +29,4 @@ group_title_key = "UI_GROUP_SOLAR_STACK"
 verified_solvable = true
 min_moves = 11
 difficulty_score = 45.47
-difficulty_tier = 2
+difficulty_tier = 1
