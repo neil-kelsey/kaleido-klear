@@ -1,3 +1,15 @@
+
+msgid "UI_LEVEL_EVENTIDE_VAULT"
+msgstr "Eventide Vault"
+
+msgid "UI_LEVEL_SIREN_WELL"
+msgstr "Siren Well"
+
+msgid "UI_LEVEL_CHITIN_REEF"
+msgstr "Chitin Reef"
+
+msgid "UI_LEVEL_ANVIL_GYRE"
+msgstr "Anvil Gyre"
 msgid ""
 msgstr ""
 "Language: en\n"

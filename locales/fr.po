@@ -1,3 +1,15 @@
+
+msgid "UI_LEVEL_EVENTIDE_VAULT"
+msgstr "Voûte du crépuscule"
+
+msgid "UI_LEVEL_SIREN_WELL"
+msgstr "Puits des sirènes"
+
+msgid "UI_LEVEL_CHITIN_REEF"
+msgstr "Récif de chitine"
+
+msgid "UI_LEVEL_ANVIL_GYRE"
+msgstr "Gyre enclume"
 msgid ""
 msgstr ""
 "Language: fr\n"
