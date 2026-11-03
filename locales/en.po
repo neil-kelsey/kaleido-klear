@@ -1029,3 +1029,19 @@ msgstr "Reefwall"
 
 msgid "UI_LEVEL_KRAKEN_GATE"
 msgstr "Kraken Gate"
+
+msgid "UI_LEVEL_NEEDLE_SPIRE"
+msgstr "Needle Spire"
+
+msgid "UI_LEVEL_DRIFT_RIBBON"
+msgstr "Drift Ribbon"
+
+msgid "UI_LEVEL_MIDGATE_RIFT"
+msgstr "Midgate Rift"
+
+msgid "UI_LEVEL_SLUICE_CANAL"
+msgstr "Sluice Canal"
+
+msgid "UI_LEVEL_TWIN_MERIDIAN"
+msgstr "Twin Meridian"
+

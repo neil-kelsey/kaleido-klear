@@ -1029,3 +1029,19 @@ msgstr "Mur de récif"
 
 msgid "UI_LEVEL_KRAKEN_GATE"
 msgstr "Porte du kraken"
+
+msgid "UI_LEVEL_NEEDLE_SPIRE"
+msgstr "Aiguille"
+
+msgid "UI_LEVEL_DRIFT_RIBBON"
+msgstr "Ruban dérivant"
+
+msgid "UI_LEVEL_MIDGATE_RIFT"
+msgstr "Faille médiane"
+
+msgid "UI_LEVEL_SLUICE_CANAL"
+msgstr "Canal d'écluse"
+
+msgid "UI_LEVEL_TWIN_MERIDIAN"
+msgstr "Double méridien"
+
