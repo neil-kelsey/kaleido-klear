@@ -284,7 +284,9 @@ func is_first_level_of_group(level: LevelConfig) -> bool:
 func is_dimension_unlocked(section_index: int) -> bool:
 	if section_index < 0 or section_index >= SECTIONS.size():
 		return false
-	## Dimension progression is always enforced on the star map (even in develop mode).
+	## Develop mode: any dimension that has at least one level is open; empty stubs stay locked.
+	if GameSession.develop_mode:
+		return not get_section_levels(section_index).is_empty()
 	## Dimension 1 is always available; marked test branches can start unlocked too.
 	var section: Dictionary = SECTIONS[section_index]
 	if section_index == 0 or bool(section.get("starts_unlocked", false)):
