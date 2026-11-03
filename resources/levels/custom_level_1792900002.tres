@@ -74,4 +74,4 @@ group_title_key = "UI_GROUP_COMET_SHALLOWS"
 verified_solvable = true
 min_moves = 13
 difficulty_score = 130.0
-difficulty_tier = 2
+difficulty_tier = 3
