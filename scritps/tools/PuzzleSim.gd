@@ -247,7 +247,7 @@ func apply_move(state: SimState, block_index: int, direction: Vector2i) -> Dicti
 
 	if target == start_pos:
 		if next_result == Placement.BLOCKED:
-			var blocker_i := _blocking_index(next, moving, next_anchor)
+			var blocker_i := _blocking_index(next, moving, next_anchor, direction)
 			if blocker_i >= 0 and _can_merge(moving, next.blocks[blocker_i] as SimBlock):
 				_merge_into(next, block_index, blocker_i)
 				return {"ok": true, "outcome": Outcome.MERGE, "state": next}
@@ -257,7 +257,7 @@ func apply_move(state: SimState, block_index: int, direction: Vector2i) -> Dicti
 		return {"ok": false, "outcome": Outcome.NONE, "state": next}
 
 	if next_result == Placement.BLOCKED:
-		var blocker_j := _blocking_index(next, moving, next_anchor)
+		var blocker_j := _blocking_index(next, moving, next_anchor, direction)
 		if blocker_j >= 0 and _can_merge(moving, next.blocks[blocker_j] as SimBlock):
 			moving.pos = target
 			_merge_into(next, block_index, blocker_j)
@@ -322,9 +322,11 @@ func _occupant(state: SimState, cell: Vector2i) -> SimBlock:
 	return null
 
 
-func _blocking_index(state: SimState, moving: SimBlock, next_anchor: Vector2i) -> int:
-	## Same contact rule as Board._blocking_block_at: most shared cells wins.
+func _blocking_index(state: SimState, moving: SimBlock, next_anchor: Vector2i, direction: Vector2i = Vector2i.ZERO) -> int:
+	## Same contact rule as Board._blocking_block_at: furthest in swipe direction,
+	## then most shared cells, then prefer mergeable.
 	var counts: Dictionary = {}
+	var proj: Dictionary = {}
 	var order: Array[int] = []
 	for offset in moving.cells:
 		var cell := next_anchor + offset
@@ -343,13 +345,24 @@ func _blocking_index(state: SimState, moving: SimBlock, next_anchor: Vector2i) -
 				continue
 			if not counts.has(i):
 				counts[i] = 0
+				proj[i] = cell.x * direction.x + cell.y * direction.y
 				order.append(i)
 			counts[i] = int(counts[i]) + 1
+			var pr := cell.x * direction.x + cell.y * direction.y
+			if pr > int(proj[i]):
+				proj[i] = pr
 			break
 	if order.is_empty():
 		return -1
 	var best: int = order[0]
 	for i in order:
+		var p := int(proj[i])
+		var best_p := int(proj[best])
+		if p > best_p:
+			best = i
+			continue
+		if p < best_p:
+			continue
 		var n := int(counts[i])
 		var best_n := int(counts[best])
 		if n > best_n:

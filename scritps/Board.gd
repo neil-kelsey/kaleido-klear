@@ -648,12 +648,13 @@ func _goal_color_for_edge(goal_edge: int) -> Block.TileColor:
 	return Block.TileColor.RED
 
 
-func _blocking_block_at(block: Block, anchor: Vector2i) -> Block:
-	## A wide piece can touch more than one block on the same swipe. Count
-	## shared cells and keep the largest contact. A one-cell graze must not
-	## hide a neighbour the piece is mostly pressed against. Equal contacts
-	## prefer a block that can actually merge.
+func _blocking_block_at(block: Block, anchor: Vector2i, direction: Vector2i = Vector2i.ZERO) -> Block:
+	## A wide piece can touch more than one block on the same swipe. Prefer the
+	## contact furthest in the swipe direction (the face you are sliding into),
+	## then most shared cells, then a mergeable partner over a non-mergeable one.
+	## This keeps a side-graze from stealing a head-on merge (Zero to Sixty shells).
 	var counts: Dictionary = {}
+	var proj: Dictionary = {}
 	var order: Array[Block] = []
 	for offset in block.shape_cells:
 		var cell := anchor + offset
@@ -664,12 +665,23 @@ func _blocking_block_at(block: Block, anchor: Vector2i) -> Block:
 			continue
 		if not counts.has(occupant):
 			counts[occupant] = 0
+			proj[occupant] = cell.x * direction.x + cell.y * direction.y
 			order.append(occupant)
 		counts[occupant] = int(counts[occupant]) + 1
+		var pr := cell.x * direction.x + cell.y * direction.y
+		if pr > int(proj[occupant]):
+			proj[occupant] = pr
 	if order.is_empty():
 		return null
 	var best: Block = order[0]
 	for occupant in order:
+		var p := int(proj[occupant])
+		var best_p := int(proj[best])
+		if p > best_p:
+			best = occupant
+			continue
+		if p < best_p:
+			continue
 		var n := int(counts[occupant])
 		var best_n := int(counts[best])
 		if n > best_n:
@@ -855,7 +867,7 @@ func _get_reachable_merge_targets(source: Block) -> Array[Block]:
 		if slide.next_result != PlacementResult.BLOCKED_BY_BLOCK:
 			continue
 
-		var blocker := _blocking_block_at(source, slide.next_anchor)
+		var blocker := _blocking_block_at(source, slide.next_anchor, direction)
 		if blocker == null or blocker.block_kind != Block.BlockKind.MERGE:
 			continue
 		if not Block.can_merge_blocks(source, blocker):
@@ -1182,7 +1194,7 @@ func _try_merge_collision(
 	speed: float,
 	from_visual: Vector2
 ) -> bool:
-	var blocker := _blocking_block_at(moving, next_anchor)
+	var blocker := _blocking_block_at(moving, next_anchor, direction)
 	if blocker == null or not Block.can_merge_blocks(moving, blocker):
 		return false
 	_merge_blocks_animated(moving, blocker, moving_anchor, direction, speed, from_visual)
