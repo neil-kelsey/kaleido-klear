@@ -317,7 +317,7 @@ msgid "UI_CREATOR_ACTIONS"
 msgstr "Actions"
 
 msgid "UI_CREATOR_PAINT_HINT"
-msgstr "Touchez une case vide pour créer une forme. Touchez une forme pour la sélectionner, puis ajoutez des cases connectées. Appui long ou clic droit pour modifier."
+msgstr "Créez une forme, sélectionnez-la, puis dessinez des cases connectées une par une. Utilisez Effacer pour retirer des cases."
 
 msgid "UI_CREATOR_CREATE_SHAPE"
 msgstr "Créer une forme"
@@ -981,3 +981,24 @@ msgstr "Supprimez les publicités pour de bon avec un achat unique."
 
 msgid "UI_NOT_NOW"
 msgstr "Plus tard"
+
+msgid "UI_GROUP_COMET_SHALLOWS"
+msgstr "Hauts-fonds des comètes"
+
+msgid "UI_LEVEL_STELLAR_WAKE"
+msgstr "Sillage stellaire"
+
+msgid "UI_LEVEL_TIDE_PULSE"
+msgstr "Pouls de marée"
+
+msgid "UI_LEVEL_IRON_FLUKE"
+msgstr "Patte de fer"
+
+msgid "UI_LEVEL_GYRE_EYE"
+msgstr "Œil du gyre"
+
+msgid "UI_LEVEL_SPIRAL_CONCH"
+msgstr "Conque spirale"
+
+msgid "UI_LEVEL_ABALONE"
+msgstr "Ormeau"

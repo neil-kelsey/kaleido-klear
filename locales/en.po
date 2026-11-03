@@ -981,3 +981,24 @@ msgstr "Remove ads for good with a one-off purchase."
 
 msgid "UI_NOT_NOW"
 msgstr "Not now"
+
+msgid "UI_GROUP_COMET_SHALLOWS"
+msgstr "Comet Shallows"
+
+msgid "UI_LEVEL_STELLAR_WAKE"
+msgstr "Stellar Wake"
+
+msgid "UI_LEVEL_TIDE_PULSE"
+msgstr "Tide Pulse"
+
+msgid "UI_LEVEL_IRON_FLUKE"
+msgstr "Iron Fluke"
+
+msgid "UI_LEVEL_GYRE_EYE"
+msgstr "Gyre Eye"
+
+msgid "UI_LEVEL_SPIRAL_CONCH"
+msgstr "Spiral Conch"
+
+msgid "UI_LEVEL_ABALONE"
+msgstr "Abalone"

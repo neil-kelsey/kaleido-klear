@@ -317,7 +317,7 @@ msgid "UI_CREATOR_ACTIONS"
 msgstr "Orders"
 
 msgid "UI_CREATOR_PAINT_HINT"
-msgstr "Tap empty sea to forge a shape. Tap a shape to pick it, then add connected squares. Long-press or right-click to rewrite it."
+msgstr "Make a shape, pick it, then draw connected squares one by one. Erase to yank ’em off."
 
 msgid "UI_CREATOR_CREATE_SHAPE"
 msgstr "Forge a shape"
@@ -981,3 +981,24 @@ msgstr "Make the ads walk the plank fer good with one bag o' doubloons."
 
 msgid "UI_NOT_NOW"
 msgstr "Not today"
+
+msgid "UI_GROUP_COMET_SHALLOWS"
+msgstr "Comet Shoals"
+
+msgid "UI_LEVEL_STELLAR_WAKE"
+msgstr "Star Wake"
+
+msgid "UI_LEVEL_TIDE_PULSE"
+msgstr "Tide Throb"
+
+msgid "UI_LEVEL_IRON_FLUKE"
+msgstr "Iron Fluke"
+
+msgid "UI_LEVEL_GYRE_EYE"
+msgstr "Gyre Maw"
+
+msgid "UI_LEVEL_SPIRAL_CONCH"
+msgstr "Spiral Conch"
+
+msgid "UI_LEVEL_ABALONE"
+msgstr "Sea-Ear"

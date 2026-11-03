@@ -74,6 +74,13 @@ const EXTRA_EN = {
   UI_GROUP_PAINT_NOVA: "Paint Nova",
   UI_GROUP_RIFT_GEOMETRY: "Rift Geometry",
   UI_GROUP_NEBULA_MENAGERIE: "Nebula Menagerie",
+  UI_GROUP_COMET_SHALLOWS: "Comet Shallows",
+  UI_LEVEL_STELLAR_WAKE: "Stellar Wake",
+  UI_LEVEL_TIDE_PULSE: "Tide Pulse",
+  UI_LEVEL_IRON_FLUKE: "Iron Fluke",
+  UI_LEVEL_GYRE_EYE: "Gyre Eye",
+  UI_LEVEL_SPIRAL_CONCH: "Spiral Conch",
+  UI_LEVEL_ABALONE: "Abalone",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
     "Slide two different colours together to blend them into a new one.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:
@@ -143,6 +150,13 @@ const FR = {
   UI_GROUP_PAINT_NOVA: "Nova de peinture",
   UI_GROUP_RIFT_GEOMETRY: "Géométrie de faille",
   UI_GROUP_NEBULA_MENAGERIE: "Ménagerie de la nébuleuse",
+  UI_GROUP_COMET_SHALLOWS: "Hauts-fonds des comètes",
+  UI_LEVEL_STELLAR_WAKE: "Sillage stellaire",
+  UI_LEVEL_TIDE_PULSE: "Pouls de marée",
+  UI_LEVEL_IRON_FLUKE: "Patte de fer",
+  UI_LEVEL_GYRE_EYE: "Œil du gyre",
+  UI_LEVEL_SPIRAL_CONCH: "Conque spirale",
+  UI_LEVEL_ABALONE: "Ormeau",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
     "Faites glisser deux couleurs différentes l’une contre l’autre pour les mélanger en une nouvelle.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:
@@ -354,6 +368,13 @@ const PIRATE = {
   UI_GROUP_PAINT_NOVA: "Paintin' Nova",
   UI_GROUP_RIFT_GEOMETRY: "Rift Riggin'",
   UI_GROUP_NEBULA_MENAGERIE: "Critter Charts",
+  UI_GROUP_COMET_SHALLOWS: "Comet Shoals",
+  UI_LEVEL_STELLAR_WAKE: "Star Wake",
+  UI_LEVEL_TIDE_PULSE: "Tide Throb",
+  UI_LEVEL_IRON_FLUKE: "Iron Fluke",
+  UI_LEVEL_GYRE_EYE: "Gyre Maw",
+  UI_LEVEL_SPIRAL_CONCH: "Spiral Conch",
+  UI_LEVEL_ABALONE: "Sea-Ear",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
     "Slide two different colours together to brew a new one.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:
