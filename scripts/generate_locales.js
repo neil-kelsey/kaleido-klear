@@ -73,6 +73,7 @@ const EXTRA_EN = {
   UI_GROUP_SOLAR_STACK: "Solar Stack",
   UI_GROUP_PAINT_NOVA: "Paint Nova",
   UI_GROUP_RIFT_GEOMETRY: "Rift Geometry",
+  UI_GROUP_NEBULA_MENAGERIE: "Nebula Menagerie",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
     "Mix two different colours to make a new one. Red and yellow make orange, yellow and blue make green, red and blue make purple.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:
@@ -141,6 +142,7 @@ const FR = {
   UI_GROUP_SOLAR_STACK: "Pile solaire",
   UI_GROUP_PAINT_NOVA: "Nova de peinture",
   UI_GROUP_RIFT_GEOMETRY: "Géométrie de faille",
+  UI_GROUP_NEBULA_MENAGERIE: "Ménagerie de la nébuleuse",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
     "Mélangez deux couleurs différentes pour en créer une nouvelle. Rouge et jaune donnent orange, jaune et bleu donnent vert, rouge et bleu donnent violet.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:
@@ -351,6 +353,7 @@ const PIRATE = {
   UI_GROUP_SOLAR_STACK: "Solar Hold",
   UI_GROUP_PAINT_NOVA: "Paintin' Nova",
   UI_GROUP_RIFT_GEOMETRY: "Rift Riggin'",
+  UI_GROUP_NEBULA_MENAGERIE: "Critter Charts",
   UI_TUTORIAL_COLOUR_MIX_BLEND:
     "Mix two different colours to brew a new one. Crimson an’ gold make sunset orange, gold an’ ocean make sea green, crimson an’ ocean make royal purple.",
   UI_TUTORIAL_COLOUR_MIX_GOALS:

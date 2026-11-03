@@ -583,6 +583,12 @@ msgstr "Daily puzzles"
 msgid "UI_DAILY_PUZZLE"
 msgstr "Puzzle %d"
 
+msgid "UI_DAILY_STREAK"
+msgstr "Streak %d · Best %d"
+
+msgid "UI_DAILY_STREAK_HINT"
+msgstr "Complete one puzzle to keep your streak going!"
+
 msgid "UI_DAILY_EMPTY"
 msgstr "No daily puzzles today."
 
@@ -892,6 +898,12 @@ msgstr "Custom Levels"
 msgid "UI_GROUP_COMPUTER_GENERATED"
 msgstr "Computer generated"
 
+msgid "UI_GROUP_NEBULA_MENAGERIE"
+msgstr "Nebula Menagerie"
+
+msgid "UI_GROUP_EVENT_HORIZON"
+msgstr "Event Horizon"
+
 msgid "UI_DIFFICULTY_EASY"
 msgstr "Easy"
 
@@ -921,3 +933,15 @@ msgstr "—"
 
 msgid "UI_PLAY_LEVEL"
 msgstr "Play"
+
+msgid "UI_LEVEL_SINGULARITY"
+msgstr "Singularity"
+
+msgid "UI_LEVEL_PAINTED_LADY"
+msgstr "Painted Lady"
+
+msgid "UI_LEVEL_TOADSTOOL"
+msgstr "Toadstool"
+
+msgid "UI_LEVEL_RUNG_BY_RUNG"
+msgstr "Rung by Rung"

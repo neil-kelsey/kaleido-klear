@@ -35,7 +35,7 @@ locale_display_names = {
 "pirate": "Pebble Orbits 22"
 }
 section_index = 0
-sort_index = 250
+sort_index = 1050
 goal_left_color = 1
 goal_top_color = 0
 goal_right_color = 2

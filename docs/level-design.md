@@ -65,3 +65,108 @@ An 11×9 heart of 17 interlocking pieces, mostly primaries, with the cleft at th
 - Pieces leave in the order the sequence asks for, so the outer lobes have to clear in the right order to open lanes for the buried centre pieces.
 
 Where it may fall short: the eight-step sequence is long to read, and part of the difficulty is keeping count. The colour assignment came from a solver-guided search over this hand-drawn heart, not from a single idea built by hand.
+
+## Good vs bad: lessons from Bleeding heart and Yellow Core
+
+Measured with a full state-graph BFS (same move rules as `LevelSolver`/`PuzzleSim`: only exits and merges are accepted moves, so every solution is exactly `pieces` moves long). A **trap** is an accepted move from a still-solvable state into a state with no solution.
+
+| Metric | Yellow core (6x6, 12 pcs) | Bleeding heart (11x9, 17 pcs) | Pansy (8x8, 14 pcs) |
+|---|---|---|---|
+| Reachable states / solvable states | 2380 / 250 | 476 / 39 | 10183 / 331 |
+| Distinct solutions (all optimal) | 1,575,968 | 2,432 | 280,799,136 |
+| First move: accepted / traps | 33 / 12 | 23 / 17 | 42 / 22 |
+| Trap edges out of solvable states | 1,874 | 292 | 2,122 |
+| Avg accepted moves / avg winning moves per solvable state | 12.4 / 4.9 | 10.8 / 3.1 | 14.3 / 7.9 |
+| Solvable states with an exit available | 207 | 31 | 311 |
+| …where only one exit was possible (forced goal step) | 102 (49%) | 27 (87%) | 104 (33%) |
+| …where a legal exit is a trap (wrong candidate) | 21 (10%) | **0 (0%)** | 68 (22%) |
+| Random-legal-move win chance | 0.02% | ~0% | 0.03% |
+
+**Why Bleeding heart is boring despite many first-move traps:** the difficulty is all in three opening merges; after that, 87% of goal steps offer exactly one legal exit and *no* goal step ever offers a wrong exit. The goal asks for orange and there is exactly one orange, two purples and exactly two exist, and so on. Supply equals demand colour-for-colour, so reading the goal tells you the answer. Its traps are just "don't make a mix you were never asked for", which a player avoids by not merging randomly.
+
+**Why Yellow core is good:** the yellows (the colour you need for both green and orange) are buried in the centre, ringed by blue. Blues are surplus: there are more blues than the blue goal needs, so some must be spent making purple, and *which* blue goes where matters. Green is easy (yellow touches blue everywhere), but orange needs a yellow to travel out to a red corner without touching blue on the way, so you must clear blues out of the way first, usually by turning them into purples for the top goal. Wrong-candidate exits exist (10% of goal steps).
+
+### Rules
+
+1. **Surplus / decoys.** For each goal colour, give the board more candidate pieces than the goal needs (or several ways to mix it), so that choosing *which* piece satisfies the goal is a real decision. Supply == demand per colour ⇒ forced play.
+2. **Bury the key colour.** Put the scarce colour the goals depend on in the middle, surrounded by a colour that spoils it on contact (yellow ringed by blue: any accidental touch turns it green).
+3. **Require intermediate mixes.** Make the player spend blockers by mixing them into something a goal *does* want (purples), so clearing a path and scoring are the same action.
+4. **Measure, don't guess.** Before shipping, report: trap edges, first-move traps vs winners, % goal steps with a wrong-but-legal exit (aim ≥ 15%), % forced goal steps (aim ≤ 50%), avg winning branch. A level with 0% wrong-exit steps is easy/medium however many opening traps it has.
+5. **Plausible-but-wrong first moves.** Count first moves that look productive (merge into a colour that appears in a goal, or an exit of a goal colour) but are traps. These, not random bad merges, are what make a level feel clever.
+6. Stored `difficulty_tier` overrides `LevelDifficulty.rate()` (1 easy, 2 medium, 3 hard, 4 very hard, 5 extreme); set it by hand from these numbers.
+
+### Scarab (very hard, Dewfall sort 740) vs Pansy
+
+Scarab (8x8, 17 pieces, min 17 moves, tier 4) is a symmetric blue/yellow beetle. Goals: top `Y1 > B1 > Y1 > B1 > G1 > Y2 > B2`, bottom `G2 > Y2 > B1`.
+
+| Metric | Pansy (hard) | Scarab (very hard) |
+|---|---|---|
+| Reachable / solvable states | 10183 / 331 (3.3%) | 18381 / 240 (1.3%) |
+| Distinct solutions | 280,799,136 | 60,632 |
+| First move: accepted / traps | 42 / 22 | 34 / 22 |
+| Trap edges out of solvable states | 2,122 | 3,354 |
+| Avg accepted / winning moves per solvable state | 14.3 / 7.9 | 17.0 / 2.9 |
+| Goal steps with an exit / single-option / wrong-but-legal exit | 311 / 104 / 68 (22%) | 225 / 85 / 64 (28%) |
+| Random-legal-move win chance | 0.03% | <0.005% |
+
+What changed: both blue and yellow are surplus (each is needed pure on the top goal *and* as an ingredient of the three required greens), the greens are a required mix whose yellows sit in the wing interior behind blue, and the two goals interleave (the top wants a green mid-sequence, the bottom opens with two greens), so the order in which you spend yellows matters across both edges, not just "keep yellows pure".
+
+## What made Scarab work
+
+Neil's playtest: **visuals 8–9/10, difficulty 8–9/10, "hit the mark perfectly"** (Pansy was visuals 8, difficulty 5.5–6). The formula, now reused for the whole *Nebula Menagerie* chapter (Dewfall, `UI_GROUP_NEBULA_MENAGERIE`):
+
+1. **A creature or object you can name at a glance.** Mirror-symmetric, ~16–17 pieces on 8x8, every piece a meaningful part (head, wing, claw, tentacle). Pick subjects with a strong silhouette: abstract "flowers" read worse than a bug, an owl face or a crab. Check it in a real in-game render: piece outlines separate same-colour neighbours, but large same-colour areas still read as one blob.
+2. **Two surplus primaries.** Each is needed pure on one goal *and* as the ingredient of a mix, so choosing which piece to spend is the puzzle.
+3. **At least one required secondary whose ingredient is buried** (Scarab: three greens whose yellows sit inside the wings behind blue).
+4. **Interlocking goal sequences on two edges.** A mix is wanted mid-sequence on one edge while the other edge opens with it, so the spending order matters across both.
+5. **Targets** (measured with the full state-graph analysis): about 15–20 moves; ≤ ~3 winning moves per solvable state; < ~100k distinct solutions; > 25% of goal steps offering a wrong-but-legal exit; most first moves traps.
+
+| Metric | Scarab | Night owl | Moon jelly | Rock crab |
+|---|---|---|---|---|
+| Pieces / min moves | 17 / 17 | 16 / 16 | 16 / 16 | 16 / 16 |
+| Colours | B Y | R B Y | R B Y | R B Y |
+| States / solvable | 18381 / 240 | 7089 / 86 | 11859 / 106 | 4965 / 114 |
+| Distinct solutions | 60,632 | 2,352 | 13,824 | 40,704 |
+| First moves / traps | 34 / 22 | 35 / 23 | 32 / 18 | 28 / 16 |
+| Avg winning moves per solvable state | 2.92 | 2.88 | 2.93 | 2.44 |
+| Goal steps with wrong-but-legal exit | 28% | 33% | 41% | 32% |
+
+## Structural levels
+
+Neil's geometric levels (towers, pyramids, stamps, ladders), measured the same way as the creature levels. Levels too big for a full search got 1,500 random-legal-move playouts instead: "mc" is the share of random players who win, and "branch" is the average number of accepted moves.
+
+| Level | Size / pieces | States / solvable | Solutions | 1st moves / traps | Avg accepted / winning | Forced exits | Wrong-exit | Verdict |
+|---|---|---|---|---|---|---|---|---|
+| Block tower | 8x8 / 16 | 14392 / 3536 | 1.7e10 | 50 / 6 | 14.4 / 9.7 | 89% | 6% | Great silhouette, loose play: one edge, almost any order works |
+| connected blocks 2 | 8x8 / 8 | 181 / 19 | 20 | 28 / 18 | 14.2 / 1.6 | 82% | 5% | Tight but short; supply equals demand |
+| Pyramid scheme (10x8) | 10x8 / 8 | 376 / 120 | 37k | 32 / 16 | 10.4 / 5.6 | 29% | 14% | Best of the small ones: four short goal lists, real choices, too short |
+| Stampers | 12x15 / 12 | 881 / 204 | 1.4e7 | 46 / 19 | 15.2 / 9.5 | 77% | 11% | Readable stamps; too many winning options |
+| Step to the H | 12x12 / 9 | 354 / 186 | 2.9e5 | 32 / 9 | 7.6 / 5.4 | 66% | 0% | Easy: no wrong exits |
+| Building blocks | 8x8 / 7 | 19 / 13 | 9 | 3 / 1 | 1.5 / 1.4 | 58% | 8% | Standard blocks that cannot mix; 67% random win |
+| Step 2 | 16x16 / 17 | too big | – | – | branch 16.5 | – | – | mc 9.5%: big, but forgiving |
+| Block party v2, Square doubles (+squared), Cut a path | 16–19 wide / 24–25 | too big | – | – | branch 21–26 | – | – | mc 0–0.3%: hard by size and bookkeeping (P7, P8, P5 runs) |
+| Pyramid scheme (16x16), The striped Pyramid, Quatterns | 16x16 / 36–52 | too big | – | – | branch 40–45 | – | – | mc 0%: huge, not clever |
+| Block shot | 8x8 / 64 | too big | – | – | branch 5 | – | – | 64 non-mixing singles, four 7–19-step lists: pure sequencing |
+
+**What works:** a deliberate, symmetric shape that reads instantly (Block tower, Stampers, the small Pyramid scheme), and more than one open edge with short goal lists.
+
+**What doesn't:**
+- Single-edge towers whose goal accepts nearly any order (Block tower has 9.7 winning moves per position and only 6% wrong exits).
+- Supply that exactly equals demand (connected blocks 2).
+- Giants whose difficulty is long repeated counts like "P8" and a huge state space rather than decisions. The extreme giants feel long, not clever.
+- Standard (non-mixing) blocks, which remove the colour decisions altogether.
+
+### Ziggurat (Rift Geometry, last level; tier 4)
+
+A stepped pyramid with the Scarab formula applied. The gold core and inner gold blocks are ringed by blue pillars, posts and a blue base; two red steps make the purples. Goals: top P1 > Y1 > B2, bottom G1 > B2 > Y1 > B1 > P1 > Y2 > B2.
+
+| Metric | Ziggurat | Scarab |
+|---|---|---|
+| Pieces / min moves | 17 / 17 | 17 / 17 |
+| States / solvable | 9555 / 508 | 18381 / 240 |
+| Distinct solutions | 8,712,704 | 60,632 |
+| First moves / traps | 26 / 16 | 34 / 22 |
+| Avg accepted / winning per solvable state | 9.4 / 3.06 | 17.0 / 2.92 |
+| Goal steps with wrong-but-legal exit | 44% | 28% |
+
+The colours and goals came from a solver-guided climb over a hand-drawn, mirror-symmetric ziggurat. The colours are kept symmetric so the pattern stays deliberate. The large solution count comes mostly from the mirror (the left and right halves are interchangeable) and from independent moves that can be played in either order.

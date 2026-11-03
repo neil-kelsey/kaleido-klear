@@ -583,6 +583,12 @@ msgstr "Puzzles du jour"
 msgid "UI_DAILY_PUZZLE"
 msgstr "Puzzle %d"
 
+msgid "UI_DAILY_STREAK"
+msgstr "Série %d · Record %d"
+
+msgid "UI_DAILY_STREAK_HINT"
+msgstr "Terminez un puzzle pour garder votre série !"
+
 msgid "UI_DAILY_EMPTY"
 msgstr "Aucun puzzle du jour."
 
@@ -892,6 +898,12 @@ msgstr "Niveaux personnalisés"
 msgid "UI_GROUP_COMPUTER_GENERATED"
 msgstr "Généré par ordinateur"
 
+msgid "UI_GROUP_NEBULA_MENAGERIE"
+msgstr "Ménagerie de la nébuleuse"
+
+msgid "UI_GROUP_EVENT_HORIZON"
+msgstr "Horizon des événements"
+
 msgid "UI_DIFFICULTY_EASY"
 msgstr "Facile"
 
@@ -921,3 +933,15 @@ msgstr "—"
 
 msgid "UI_PLAY_LEVEL"
 msgstr "Jouer"
+
+msgid "UI_LEVEL_SINGULARITY"
+msgstr "Singularité"
+
+msgid "UI_LEVEL_PAINTED_LADY"
+msgstr "Belle-Dame"
+
+msgid "UI_LEVEL_TOADSTOOL"
+msgstr "Amanite"
+
+msgid "UI_LEVEL_RUNG_BY_RUNG"
+msgstr "Barreau par barreau"
