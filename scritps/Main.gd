@@ -50,12 +50,15 @@ var _edge_back := EdgeBack.new()
 var _tile_pointer_ids: Dictionary = {}
 var _intro_playing := false
 var _won_level := false
+## An interstitial is on screen; ignore further navigation taps until it closes.
+var _ad_pending := false
 var _daily_recorded := false
 var _intro_tween: Tween = null
 var _run_started_msec: int = 0
 
 
 func _ready() -> void:
+	Ads.ads_removed_changed.connect(_sync_remove_ads_button)
 	var viewport_size := get_viewport_rect().size
 	camera.position = viewport_size * 0.5
 	camera.make_current()
@@ -716,7 +719,43 @@ func _goal_spotlight_rect() -> Rect2:
 
 
 func _go_to_level_select() -> void:
+	## Returning to the menu after a win is a natural break for an interstitial.
+	if _won_level and _try_interstitial(_change_to_return_scene):
+		return
+	_change_to_return_scene()
+
+
+func _change_to_return_scene() -> void:
 	get_tree().change_scene_to_file(GameSession.get_return_scene())
+
+
+## Ad gate context for Ads.try_show_interstitial (tutorial / daily never show ads).
+func _ad_context() -> Dictionary:
+	return {
+		"tutorial": LevelCatalog.is_tutorial_dimension(_resolve_section_index(_current_level)),
+		"daily": GameSession.is_daily_play(_current_level),
+		"in_play": not _won_level,
+	}
+
+
+## Returns true if an ad is now showing; `then` runs after it closes.
+func _try_interstitial(then: Callable) -> bool:
+	if _ad_pending:
+		return true
+	if GameSession.playtest_mode or GameSession.audit_play or _current_level == null:
+		return false
+	if Ads.try_show_interstitial(_ad_context(), func() -> void:
+		_ad_pending = false
+		then.call()
+	):
+		_ad_pending = true
+		return true
+	return false
+
+
+func _sync_remove_ads_button(_removed: bool = false) -> void:
+	if kleared_overlay != null and kleared_overlay.remove_ads_button != null and Ads.ads_removed:
+		kleared_overlay.remove_ads_button.visible = false
 
 
 func _go_to_level_creator() -> void:
@@ -862,7 +901,10 @@ func _on_level_cleared(remaining_lives: int) -> void:
 		has_next_section = LevelCatalog.has_next_section(_current_level)
 	if kleared_overlay != null:
 		kleared_overlay.show_result(stars, section_complete, has_next_section)
+		_sync_remove_ads_button()
 		kleared_overlay.play()
+	if not GameSession.audit_play:
+		Ads.notify_level_cleared()
 	_update_undo_button()
 
 
@@ -905,6 +947,12 @@ func _on_next_level_pressed() -> void:
 		return
 	if _leave_audit_play():
 		return
+	if _won_level and _try_interstitial(_advance_to_next_level):
+		return
+	_advance_to_next_level()
+
+
+func _advance_to_next_level() -> void:
 	var next_level := GameSession.get_next_level(_current_level)
 	if next_level != null:
 		GameSession.set_level(next_level)
@@ -919,8 +967,7 @@ func _on_next_level_pressed() -> void:
 
 
 func _on_remove_ads_pressed() -> void:
-	# Placeholder until ad integration is added.
-	print("Remove ads tapped")
+	Ads.purchase_remove_ads()
 
 
 func _on_share_pressed() -> void:

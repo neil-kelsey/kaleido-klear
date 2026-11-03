@@ -28,6 +28,11 @@ enum ResetKind { NONE, PROGRESS, TUTORIALS }
 @onready var reset_progress_button: MenuActionButton = %ResetProgressButton
 @onready var coming_soon_label: Label = %ComingSoonLabel
 @onready var reset_confirm_modal: Control = %ResetConfirmModal
+@onready var ads_title: Label = %AdsTitle
+@onready var remove_ads_settings_button: MenuActionButton = %RemoveAdsSettingsButton
+@onready var restore_purchases_button: MenuActionButton = %RestorePurchasesButton
+@onready var privacy_settings_button: MenuActionButton = %PrivacySettingsButton
+@onready var ads_status_label: Label = %AdsStatusLabel
 
 var _updating_language_option := false
 var _pending_reset: ResetKind = ResetKind.NONE
@@ -44,6 +49,12 @@ func _ready() -> void:
 	UiTheme.style_section_subtitle(preferences_title)
 	UiTheme.style_section_subtitle(data_title)
 	UiTheme.style_section_subtitle(developer_title)
+	UiTheme.style_section_subtitle(ads_title)
+	UiTheme.style_menu_hint(ads_status_label)
+	Ads.ads_removed_changed.connect(func(_r: bool) -> void: _sync_ads_section())
+	Ads.privacy_options_changed.connect(_sync_ads_section)
+	Ads.store_status.connect(_on_ads_store_status)
+	_sync_ads_section()
 	UiTheme.style_settings_row_label(language_label)
 	UiTheme.style_settings_option_field(language_option)
 	UiTheme.style_settings_row_label(sound_label)
@@ -131,6 +142,13 @@ func _apply_translations() -> void:
 	reset_tutorials_button.set_label(tr("UI_RESET_TUTORIALS"))
 	reset_progress_button.set_label(tr("UI_RESET_PROGRESS"))
 	coming_soon_label.text = tr("UI_COMING_SOON")
+	if ads_title != null:
+		ads_title.text = tr("UI_SETTINGS_ADS")
+		UiTheme.style_section_subtitle(ads_title)
+	remove_ads_settings_button.set_label(tr("UI_REMOVE_ADS"))
+	restore_purchases_button.set_label(tr("UI_RESTORE_PURCHASES"))
+	privacy_settings_button.set_label(tr("UI_PRIVACY_SETTINGS"))
+	_sync_ads_section()
 	_populate_language_option()
 	_sync_title_badge()
 
@@ -218,3 +236,36 @@ func handle_back() -> void:
 		_pending_reset = ResetKind.NONE
 		return
 	_on_back_button_pressed()
+
+
+# --- Ads / Remove ads ---------------------------------------------------------
+
+var _ads_status_key := ""
+
+
+func _sync_ads_section() -> void:
+	if remove_ads_settings_button == null:
+		return
+	remove_ads_settings_button.visible = not Ads.ads_removed
+	privacy_settings_button.visible = Ads.is_privacy_options_required()
+	if Ads.ads_removed and _ads_status_key.is_empty():
+		_ads_status_key = "UI_ADS_REMOVED"
+	ads_status_label.visible = not _ads_status_key.is_empty()
+	ads_status_label.text = tr(_ads_status_key) if not _ads_status_key.is_empty() else ""
+
+
+func _on_ads_store_status(key: String) -> void:
+	_ads_status_key = key
+	_sync_ads_section()
+
+
+func _on_remove_ads_settings_button_pressed() -> void:
+	Ads.purchase_remove_ads()
+
+
+func _on_restore_purchases_button_pressed() -> void:
+	Ads.restore_purchases()
+
+
+func _on_privacy_settings_button_pressed() -> void:
+	Ads.show_privacy_options()

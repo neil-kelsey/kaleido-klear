@@ -47,3 +47,11 @@ export_credentials.cfg
 
 # Godot crash / logs
 *.log
+
+# Ads/billing plugin binaries ARE source (Android export needs them); see docs/ads.md.
+!addons/admob/android/bin/
+!addons/admob/android/bin/**
+!addons/GodotGooglePlayBilling/bin/
+!addons/GodotGooglePlayBilling/bin/**
+# Poing auto-downloads iOS binaries on headless runs; Android-only project.
+addons/admob/ios/bin/
