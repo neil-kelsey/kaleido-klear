@@ -18,12 +18,14 @@ const MENU_SIDE_MARGIN_RATIO := 0.15
 @onready var level_select_button: MenuActionButton = %LevelSelectButton
 @onready var settings_button: MenuActionButton = %SettingsButton
 @onready var exit_confirm_modal: Control = %ExitConfirmModal
-@onready var starfield: TextureRect = %Starfield
+@onready var star_map: Control = %StarMap
 
-## Same night-sky backdrop used behind levels (SectionBackdrop), re-centred on the K logo.
-const STARFIELD_DIM := 0.12
-var _star_mat: ShaderMaterial
-var _star_time := 0.0
+## Same baked planisphere the Dimensions screen draws (DimensionMap / StarChartBaker),
+## with its radial centre (world 0,0) pinned behind the K logo.
+const STAR_MAP_SCALE_PER_412PX := 0.85
+const STAR_MAP_OPACITY := 0.9
+const DIMENSION_MAP_SCRIPT := preload("res://scritps/ui/DimensionMap.gd")
+var _star_map_tex: Texture2D
 
 const STREAK_GOLD := Color(1.0, 0.78, 0.30, 1.0)
 var _streak_badge: PanelContainer
@@ -33,25 +35,36 @@ var _streak_count: Label
 func _ready() -> void:
 	_apply_translations()
 	_build_streak_badge()
-	_star_mat = NebulaEffect.apply_backdrop(starfield)
-	_star_mat.set_shader_parameter("dim", STARFIELD_DIM)
-	set_process(true)
+	_star_map_tex = load(DIMENSION_MAP_SCRIPT.STAR_CHART_PATH) as Texture2D
+	star_map.draw.connect(_draw_star_map)
+	brand_icon.item_rect_changed.connect(star_map.queue_redraw)
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	await get_tree().process_frame
 	_on_viewport_resized()
 
 
-func _process(delta: float) -> void:
-	if _star_mat == null:
+func _draw_star_map() -> void:
+	if _star_map_tex == null:
 		return
-	_star_time += delta
-	var sz := starfield.size
-	_star_mat.set_shader_parameter("time_sec", _star_time)
-	_star_mat.set_shader_parameter("rect_size", sz)
-	_star_mat.set_shader_parameter("brightness", 1.12 * (0.99 + 0.01 * sin(_star_time * 0.25)))
-	if brand_icon != null and sz.x > 0.0 and sz.y > 0.0:
-		var c := brand_icon.get_global_rect().get_center() - starfield.get_global_rect().position
-		_star_mat.set_shader_parameter("focus_uv", Vector2(c.x / sz.x, c.y / sz.y))
+	var strip: Rect2 = DIMENSION_MAP_SCRIPT.STRIP_WORLD
+	var tex_size := _star_map_tex.get_size()
+	var s := star_map.size.x / 412.0 * STAR_MAP_SCALE_PER_412PX
+	## Chart pixel of the planisphere's radial centre (world origin).
+	var hub_px := (Vector2.ZERO - strip.position) * (tex_size / strip.size)
+	var centre := brand_icon.get_global_rect().get_center() - star_map.get_global_rect().position
+	var draw_size := strip.size * s
+	var origin := centre - hub_px * (draw_size / tex_size)
+	star_map.draw_texture_rect(_star_map_tex, Rect2(origin, draw_size), false, Color(1, 1, 1, STAR_MAP_OPACITY))
+	## The baked strip stops a little below its hub; feather that edge into the page colour.
+	var bottom := origin.y + draw_size.y
+	if bottom < star_map.size.y:
+		var fade := 140.0 * s
+		var bg: Color = DIMENSION_MAP_SCRIPT.CHART_BG
+		var clear := Color(bg.r, bg.g, bg.b, 0.0)
+		star_map.draw_polygon(
+			PackedVector2Array([Vector2(0, bottom - fade), Vector2(star_map.size.x, bottom - fade), Vector2(star_map.size.x, bottom + 1), Vector2(0, bottom + 1)]),
+			PackedColorArray([clear, clear, bg, bg])
+		)
 
 
 func _notification(what: int) -> void:
@@ -122,6 +135,7 @@ func _on_viewport_resized() -> void:
 	_place_streak_badge.call_deferred()
 	_apply_side_margins()
 	_fit_brand_titles()
+	star_map.queue_redraw.call_deferred()
 
 
 func _apply_side_margins() -> void:

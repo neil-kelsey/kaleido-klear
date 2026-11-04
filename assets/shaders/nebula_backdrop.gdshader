@@ -7,10 +7,6 @@ uniform vec2 tex_size = vec2(1024.0, 384.0);
 uniform float brightness = 1.0;
 uniform float time_sec = 0.0;
 uniform float ink = 0.045; // how much nebula colour leaks through
-// Where the nebula's centre lands on screen (0..1). Default = screen centre (unchanged for levels).
-uniform vec2 focus_uv = vec2(0.5, 0.5);
-// Optional extra dim toward the edges / overall (0 = off). Landing page only.
-uniform float dim = 0.0;
 
 float hash21(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -23,10 +19,7 @@ vec2 cover_uv(vec2 uv) {
 	vec2 tex = max(tex_size, vec2(1.0));
 	float s = max(screen.x / tex.x, screen.y / tex.y);
 	vec2 sized = tex * s;
-	// Over-scale so the texture still covers the screen when its centre is shifted to focus_uv.
-	vec2 off = abs(focus_uv - 0.5) * 2.0;
-	sized *= 1.0 + max(off.x, off.y);
-	return (uv * screen - screen * focus_uv) / sized + 0.5;
+	return (uv * screen - screen * 0.5) / sized + 0.5;
 }
 
 float starfield(vec2 uv, float t) {
@@ -62,6 +55,5 @@ void fragment() {
 	vec3 col = mix(night, neb, ink);
 	col += vec3(0.92, 0.94, 1.0) * starfield(UV, time_sec) * 0.42;
 	col *= brightness;
-	col *= 1.0 - dim;
 	COLOR = vec4(col, 1.0);
 }
