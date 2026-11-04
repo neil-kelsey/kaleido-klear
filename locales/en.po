@@ -1045,3 +1045,21 @@ msgstr "Sluice Canal"
 msgid "UI_LEVEL_TWIN_MERIDIAN"
 msgstr "Twin Meridian"
 
+
+msgid "UI_LEVEL_AROUND_THE_CLOCK"
+msgstr "Around the Clock"
+
+msgid "UI_LEVEL_STAR_STAIRWAY"
+msgstr "Star Stairway"
+
+msgid "UI_LEVEL_DOMINO_RAINBOW"
+msgstr "Domino Rainbow"
+
+msgid "UI_LEVEL_THERE_AND_BACK"
+msgstr "There and Back"
+
+msgid "UI_LEVEL_WHIRLPOOL"
+msgstr "Whirlpool"
+
+msgid "UI_LEVEL_TWICE_AROUND_THE_CLOCK"
+msgstr "Twice Around the Clock"

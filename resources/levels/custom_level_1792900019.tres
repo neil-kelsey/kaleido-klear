@@ -79,7 +79,7 @@ locale_display_names = {
 "pirate": "Sluice Ditch"
 }
 section_index = 2
-sort_index = 19
+sort_index = 25
 columns = 8
 rows = 8
 multi_goal_mode = true

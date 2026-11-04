@@ -1045,3 +1045,21 @@ msgstr "Sluice Ditch"
 msgid "UI_LEVEL_TWIN_MERIDIAN"
 msgstr "Twin Meridian"
 
+
+msgid "UI_LEVEL_AROUND_THE_CLOCK"
+msgstr "Round the Ship's Clock"
+
+msgid "UI_LEVEL_STAR_STAIRWAY"
+msgstr "Stairway to the Crow's Nest"
+
+msgid "UI_LEVEL_DOMINO_RAINBOW"
+msgstr "Rainbow o' Dominoes"
+
+msgid "UI_LEVEL_THERE_AND_BACK"
+msgstr "There an' Back Again"
+
+msgid "UI_LEVEL_WHIRLPOOL"
+msgstr "Maelstrom"
+
+msgid "UI_LEVEL_TWICE_AROUND_THE_CLOCK"
+msgstr "Twice Round the Ship's Clock"
