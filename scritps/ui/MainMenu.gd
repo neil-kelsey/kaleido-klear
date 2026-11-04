@@ -18,6 +18,12 @@ const MENU_SIDE_MARGIN_RATIO := 0.15
 @onready var level_select_button: MenuActionButton = %LevelSelectButton
 @onready var settings_button: MenuActionButton = %SettingsButton
 @onready var exit_confirm_modal: Control = %ExitConfirmModal
+@onready var starfield: TextureRect = %Starfield
+
+## Same night-sky backdrop used behind levels (SectionBackdrop), re-centred on the K logo.
+const STARFIELD_DIM := 0.12
+var _star_mat: ShaderMaterial
+var _star_time := 0.0
 
 const STREAK_GOLD := Color(1.0, 0.78, 0.30, 1.0)
 var _streak_badge: PanelContainer
@@ -27,9 +33,25 @@ var _streak_count: Label
 func _ready() -> void:
 	_apply_translations()
 	_build_streak_badge()
+	_star_mat = NebulaEffect.apply_backdrop(starfield)
+	_star_mat.set_shader_parameter("dim", STARFIELD_DIM)
+	set_process(true)
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	await get_tree().process_frame
 	_on_viewport_resized()
+
+
+func _process(delta: float) -> void:
+	if _star_mat == null:
+		return
+	_star_time += delta
+	var sz := starfield.size
+	_star_mat.set_shader_parameter("time_sec", _star_time)
+	_star_mat.set_shader_parameter("rect_size", sz)
+	_star_mat.set_shader_parameter("brightness", 1.12 * (0.99 + 0.01 * sin(_star_time * 0.25)))
+	if brand_icon != null and sz.x > 0.0 and sz.y > 0.0:
+		var c := brand_icon.get_global_rect().get_center() - starfield.get_global_rect().position
+		_star_mat.set_shader_parameter("focus_uv", Vector2(c.x / sz.x, c.y / sz.y))
 
 
 func _notification(what: int) -> void:
