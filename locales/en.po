@@ -1063,3 +1063,33 @@ msgstr "Whirlpool"
 
 msgid "UI_LEVEL_TWICE_AROUND_THE_CLOCK"
 msgstr "Twice Around the Clock"
+
+msgid "UI_LEVEL_SPECTRUM_STACK"
+msgstr "Spectrum Stack"
+
+msgid "UI_LEVEL_RAINBOW_ARCH"
+msgstr "Rainbow Arch"
+
+msgid "UI_LEVEL_RAINBOW_HEART"
+msgstr "Rainbow Heart"
+
+msgid "UI_LEVEL_PARADIDDLE"
+msgstr "Paradiddle"
+
+msgid "UI_LEVEL_MORSE_BEACON"
+msgstr "Morse Beacon"
+
+msgid "UI_LEVEL_RAINBOW_CHEVRON"
+msgstr "Rainbow Chevron"
+
+msgid "UI_LEVEL_RAINBOW_DIAMOND"
+msgstr "Rainbow Diamond"
+
+msgid "UI_LEVEL_COUNTER_CLOCKWISE"
+msgstr "Counter-Clockwise"
+
+msgid "UI_LEVEL_HALF_PAST"
+msgstr "Half Past"
+
+msgid "UI_LEVEL_SLOW_COUNTER_CLOCK"
+msgstr "Slow Counter-Clock"

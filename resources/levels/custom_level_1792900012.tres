@@ -109,7 +109,7 @@ locale_display_names = {
 "pirate": "Dusk'o Vault"
 }
 section_index = 2
-sort_index = 18
+sort_index = 28
 columns = 10
 rows = 10
 multi_goal_mode = true

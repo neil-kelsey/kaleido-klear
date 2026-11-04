@@ -64,7 +64,7 @@ locale_display_names = {
 "pirate": "Shoal Wyrm"
 }
 section_index = 2
-sort_index = 15
+sort_index = 25
 columns = 8
 rows = 8
 multi_goal_mode = true
