@@ -94,7 +94,7 @@ locale_display_names = {
 "pirate": "Needle Mast"
 }
 section_index = 2
-sort_index = 32
+sort_index = 41
 columns = 5
 rows = 14
 multi_goal_mode = true

@@ -1093,3 +1093,30 @@ msgstr "Half Past"
 
 msgid "UI_LEVEL_SLOW_COUNTER_CLOCK"
 msgstr "Lazy Widdershins"
+
+msgid "UI_LEVEL_HORSESHOE_FOLD"
+msgstr "Horseshoe Fold"
+
+msgid "UI_LEVEL_SERPENT_BEND"
+msgstr "Serpent Bend"
+
+msgid "UI_LEVEL_ONION_FOLD"
+msgstr "Onion Fold"
+
+msgid "UI_LEVEL_TAB_KEY"
+msgstr "Tab Key"
+
+msgid "UI_LEVEL_RIGHT_PARADE"
+msgstr "Right Parade"
+
+msgid "UI_LEVEL_MATRYOSHKA"
+msgstr "Matryoshka"
+
+msgid "UI_LEVEL_DEEP_PEEL"
+msgstr "Deep Peel"
+
+msgid "UI_LEVEL_COMET_SPIRAL"
+msgstr "Comet Spiral"
+
+msgid "UI_LEVEL_MIRROR_PARADE"
+msgstr "Mirror Parade"

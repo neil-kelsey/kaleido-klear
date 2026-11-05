@@ -59,7 +59,7 @@ locale_display_names = {
 "pirate": "Kraken Gate"
 }
 section_index = 2
-sort_index = 27
+sort_index = 36
 columns = 8
 rows = 8
 multi_goal_mode = true
