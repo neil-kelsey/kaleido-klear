@@ -5,6 +5,10 @@ class_name LevelGenRules
 ## - No tiny finger-unfriendly pieces: every clearable block is at least MIN_CELLS.
 ## - No empty playable cells: every cell is either occupied or disabled.
 ## - Disabled cells (holes) count as complexity — prefer full fills for easy levels.
+## - Do not certify an exit from the first cell that crosses an edge. A connected
+##   shape must clear the whole path, including the far side of a concave pocket.
+##   Generators that peel or stamp "this piece can leave" must use
+##   PuzzleSim.shape_can_fully_exit / LevelSolver, which share Board's rule.
 
 const MIN_CELLS := 3
 

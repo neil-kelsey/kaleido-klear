@@ -11,6 +11,7 @@ const SECTION_DIM1 := 0
 const MIN_CELLS := 3
 const ATTEMPTS_PER_LEVEL := 80
 const LevelSolverScript := preload("res://scritps/tools/LevelSolver.gd")
+const PuzzleSimScript := preload("res://scritps/tools/PuzzleSim.gd")
 const LevelDifficultyScript := preload("res://scritps/tools/LevelDifficulty.gd")
 const LevelGenRulesScript := preload("res://scritps/tools/LevelGenRules.gd")
 
@@ -1000,44 +1001,12 @@ func _can_exit(
 	cols: int,
 	rows: int
 ) -> bool:
-	var current: Array[Vector2i] = []
-	var own: Dictionary = {}
-	for cell in cells:
-		current.append(cell)
-		own[cell] = true
-	for _step in cols + rows + 2:
-		var blocked := false
-		var oob := false
-		var next_cells: Array[Vector2i] = []
-		for cell in current:
-			var n: Vector2i = cell + dir
-			next_cells.append(n)
-			if disabled.has(n) or (occupied.has(n) and not own.has(n)):
-				blocked = true
-			elif n.x < 0 or n.y < 0 or n.x >= cols or n.y >= rows:
-				oob = true
-		if blocked:
-			return false
-		if oob:
-			return _would_exit_edge(next_cells, dir, cols, rows)
-		own.clear()
-		current = next_cells
-		for cell in current:
-			own[cell] = true
-	return false
-
-
-func _would_exit_edge(next_cells: Array[Vector2i], dir: Vector2i, cols: int, rows: int) -> bool:
-	for cell in next_cells:
-		if dir == Vector2i.LEFT and cell.x < 0:
-			return true
-		if dir == Vector2i.UP and cell.y < 0:
-			return true
-		if dir == Vector2i.RIGHT and cell.x >= cols:
-			return true
-		if dir == Vector2i.DOWN and cell.y >= rows:
-			return true
-	return false
+	## Same full-path rule as PuzzleSim.shape_can_fully_exit. The first cell to
+	## cross an edge is not enough: the rest of a concave piece must clear too.
+	var blocked: Dictionary = occupied.duplicate()
+	for cell in disabled.keys():
+		blocked[cell] = true
+	return PuzzleSimScript.shape_can_fully_exit(cells, dir, blocked, cols, rows)
 
 
 func _depth_from_edge(empty: Dictionary, cols: int, rows: int, edge: int) -> Dictionary:

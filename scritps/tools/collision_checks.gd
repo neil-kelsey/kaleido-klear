@@ -29,6 +29,9 @@ func _process(_delta: float) -> bool:
 	_check_bump_does_not_pass()
 	_check_merge()
 	_check_concave_pocket()
+	_check_other_axes()
+	_check_wall_blocks_exit()
+	_check_exit_certification()
 	_check_paradiddle()
 	_check_board_agrees()
 	print("collision_checks: %d passed, %d failed" % [_passes, _fails])
@@ -100,6 +103,95 @@ func _check_concave_pocket() -> void:
 	_add(open, Vector2i(0, 0), Block.TileColor.RED, Block.BlockKind.STANDARD, frame)
 	var cleared: Dictionary = sim.apply_move(sim.load_config(open), 0, Vector2i.LEFT)
 	_check(int(cleared.outcome) == PuzzleSimScript.Outcome.SCORE, "empty frame can still leave")
+
+
+func _check_other_axes() -> void:
+	# Right: far arm is on the left, pocket sits in the gap, exit is right.
+	_assert_pocket_blocks(Vector2i.RIGHT, Vector2i(1, 0), [
+		Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0),
+		Vector2i(0, 1), Vector2i(4, 1),
+		Vector2i(0, 2), Vector2i(4, 2),
+	], Vector2i(2, 1), "right")
+	# Down: far bar is the top, pocket is one row below it, bottom is the exit edge.
+	_assert_pocket_blocks(Vector2i.DOWN, Vector2i(0, 0), [
+		Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0),
+		Vector2i(0, 1), Vector2i(4, 1),
+		Vector2i(0, 2), Vector2i(4, 2),
+	], Vector2i(2, 2), "down")
+	# Up: far bar is the bottom, pocket is one row above it, top is the exit edge.
+	_assert_pocket_blocks(Vector2i.UP, Vector2i(0, 0), [
+		Vector2i(0, 0), Vector2i(4, 0),
+		Vector2i(0, 1), Vector2i(4, 1),
+		Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(4, 2),
+	], Vector2i(2, 0), "up")
+
+
+func _assert_pocket_blocks(
+	direction: Vector2i,
+	anchor: Vector2i,
+	frame: Array,
+	pocket: Vector2i,
+	label: String
+) -> void:
+	var level := _board(6, 3)
+	_goal_on(level, direction, Block.TileColor.RED)
+	_add(level, anchor, Block.TileColor.RED, Block.BlockKind.STANDARD, frame)
+	_add(level, pocket, Block.TileColor.BLUE, Block.BlockKind.STANDARD, [Vector2i.ZERO])
+	var sim = PuzzleSimScript.new()
+	var blocked: Dictionary = sim.apply_move(sim.load_config(level), 0, direction)
+	_check(int(blocked.outcome) != PuzzleSimScript.Outcome.SCORE, "%s frame does not exit through its pocket" % label)
+	var open := _board(6, 3)
+	_goal_on(open, direction, Block.TileColor.RED)
+	_add(open, anchor, Block.TileColor.RED, Block.BlockKind.STANDARD, frame)
+	var cleared: Dictionary = sim.apply_move(sim.load_config(open), 0, direction)
+	_check(int(cleared.outcome) == PuzzleSimScript.Outcome.SCORE, "empty %s frame can still leave" % label)
+
+
+func _check_wall_blocks_exit() -> void:
+	var level := _board(6, 3)
+	_goal_on(level, Vector2i.LEFT, Block.TileColor.RED)
+	level.disabled_cells = [Vector2i(1, 1)] as Array[Vector2i]
+	# Cells (0,1) and (3,1). First step left puts (0,1) off the board; the next step hits the wall.
+	_add(level, Vector2i(0, 1), Block.TileColor.RED, Block.BlockKind.STANDARD, [Vector2i(0, 0), Vector2i(3, 0)])
+	var sim = PuzzleSimScript.new()
+	var result: Dictionary = sim.apply_move(sim.load_config(level), 0, Vector2i.LEFT)
+	_check(int(result.outcome) == PuzzleSimScript.Outcome.FAIL, "a wall on the rest of the exit path blocks the leave")
+	var open := _board(6, 3)
+	_goal_on(open, Vector2i.LEFT, Block.TileColor.RED)
+	_add(open, Vector2i(0, 1), Block.TileColor.RED, Block.BlockKind.STANDARD, [Vector2i(0, 0), Vector2i(3, 0)])
+	var cleared: Dictionary = sim.apply_move(sim.load_config(open), 0, Vector2i.LEFT)
+	_check(int(cleared.outcome) == PuzzleSimScript.Outcome.SCORE, "the same split piece leaves when the wall is gone")
+
+
+func _check_exit_certification() -> void:
+	var frame: Array[Vector2i] = [
+		Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0),
+		Vector2i(0, 1), Vector2i(4, 1),
+		Vector2i(0, 2), Vector2i(4, 2),
+	]
+	var pocket := {Vector2i(2, 1): true}
+	_check(
+		not PuzzleSimScript.shape_can_fully_exit(frame, Vector2i.LEFT, pocket, 6, 4),
+		"certifier rejects a left exit through a pocket"
+	)
+	_check(
+		PuzzleSimScript.shape_can_fully_exit(frame, Vector2i.LEFT, {}, 6, 4),
+		"certifier allows the same frame when the pocket is empty"
+	)
+	var bar: Array[Vector2i] = [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)]
+	_check(
+		PuzzleSimScript.shape_can_fully_exit(bar, Vector2i.DOWN, {}, 3, 3),
+		"certifier allows a straight bar off its edge"
+	)
+	var gen = load("res://scritps/tools/generate_twinkle_drift_levels.gd").new()
+	_check(
+		not gen._can_exit(frame, Vector2i.LEFT, pocket, {}, 6, 4),
+		"Twinkle peel check rejects a pass-through exit"
+	)
+	_check(
+		gen._can_exit(bar, Vector2i.DOWN, {}, {}, 3, 3),
+		"Twinkle peel check still allows a straight exit"
+	)
 
 
 func _check_paradiddle() -> void:
@@ -210,12 +302,26 @@ func _board(columns: int, rows: int) -> LevelConfig:
 
 
 func _goal_left(level: LevelConfig, color: int) -> void:
+	_goal_on(level, Vector2i.LEFT, color)
+
+
+func _goal_on(level: LevelConfig, direction: Vector2i, color: int) -> void:
 	var phase := GoalPhase.new()
 	phase.color = color as Block.TileColor
 	phase.count = 1
 	var phases: Array[GoalPhase] = [phase]
-	level.goal_left_phases = phases
-	level.goal_left_enabled = true
+	if direction == Vector2i.LEFT:
+		level.goal_left_phases = phases
+		level.goal_left_enabled = true
+	elif direction == Vector2i.RIGHT:
+		level.goal_right_phases = phases
+		level.goal_right_enabled = true
+	elif direction == Vector2i.UP:
+		level.goal_top_phases = phases
+		level.goal_top_enabled = true
+	else:
+		level.goal_bottom_phases = phases
+		level.goal_bottom_enabled = true
 
 
 func _add(level: LevelConfig, pos: Vector2i, color: int, kind: int, cells: Array) -> void:

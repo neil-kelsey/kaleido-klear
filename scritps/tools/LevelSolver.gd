@@ -4,6 +4,8 @@ class_name LevelSolver
 ## BFS solvability search over PuzzleSim states.
 ## Only SCORE / SLIDE / MERGE advance the search. FAIL (life-loss bumps) never
 ## help clear a level once bounce-home rules are correct, so they are skipped.
+## An exit is a score only when the whole rigid shape can leave without passing
+## through another piece or a wall. See PuzzleSim.shape_can_fully_exit.
 
 const PuzzleSimScript := preload("res://scritps/tools/PuzzleSim.gd")
 

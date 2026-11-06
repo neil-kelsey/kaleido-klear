@@ -536,6 +536,8 @@ func _can_place_shape(shape_cells: Array[Vector2i], anchor: Vector2i, ignore_blo
 	return true
 
 
+## One anchor only. A partial crossing is OUT_OF_BOUNDS here and is not an exit.
+## Exit clearance is `_compute_slide`.
 func _placement_result(block: Block, anchor: Vector2i) -> PlacementResult:
 	var saw_oob := false
 	for offset in block.shape_cells:

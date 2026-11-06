@@ -285,6 +285,52 @@ func legal_actions(state: SimState) -> Array[Dictionary]:
 	return actions
 
 
+## True only when `cells` can translate by `dir` until every cell is off the
+## `cols`×`rows` board. `blocked` is other pieces, walls, and disabled cells.
+## A step that puts some cells off the board and leaves the rest in open space
+## is not an exit: the rest of the shape still has to clear.
+static func shape_can_fully_exit(
+	cells: Array,
+	dir: Vector2i,
+	blocked: Dictionary,
+	cols: int,
+	rows: int
+) -> bool:
+	var current: Array[Vector2i] = []
+	var own: Dictionary = {}
+	for cell in cells:
+		var v := cell as Vector2i
+		current.append(v)
+		own[v] = true
+	if current.is_empty():
+		return false
+	var limit := cols + rows + current.size() + 4
+	for _step in limit:
+		var next: Array[Vector2i] = []
+		var hit := false
+		var any_on := false
+		var any_off := false
+		for cell in current:
+			var n: Vector2i = cell + dir
+			next.append(n)
+			var outside := n.x < 0 or n.y < 0 or n.x >= cols or n.y >= rows
+			if outside:
+				any_off = true
+				continue
+			any_on = true
+			if blocked.has(n) and not own.has(n):
+				hit = true
+		if hit:
+			return false
+		if any_off and not any_on:
+			return true
+		own.clear()
+		for n in next:
+			own[n] = true
+		current = next
+	return false
+
+
 func _compute_slide(state: SimState, block: SimBlock, start: Vector2i, direction: Vector2i) -> Dictionary:
 	## Same exit rule as Board._compute_slide: the whole shape must clear the
 	## board. A partial crossing is not an exit when a later step would overlap
@@ -356,6 +402,8 @@ func _placement_kind(state: SimState, block: SimBlock, anchor: Vector2i) -> int:
 	return _PLACE_OK
 
 
+## One anchor only. PARTIAL off-board is reported as OUT_OF_BOUNDS here; that is
+## not an exit. Exit clearance is `_compute_slide` / `shape_can_fully_exit`.
 func _placement(state: SimState, block: SimBlock, anchor: Vector2i) -> Placement:
 	var saw_oob := false
 	for offset in block.cells:
