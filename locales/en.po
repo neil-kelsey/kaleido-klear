@@ -1070,9 +1070,6 @@ msgstr "Spectrum Stack"
 msgid "UI_LEVEL_RAINBOW_ARCH"
 msgstr "Rainbow Arch"
 
-msgid "UI_LEVEL_RAINBOW_HEART"
-msgstr "Rainbow Heart"
-
 msgid "UI_LEVEL_PARADIDDLE"
 msgstr "Paradiddle"
 

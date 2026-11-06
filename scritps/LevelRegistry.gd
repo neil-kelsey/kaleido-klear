@@ -119,7 +119,6 @@ const LEVEL_PATHS: PackedStringArray = [
 	"res://resources/levels/custom_level_1792900026.tres",
 	"res://resources/levels/custom_level_1792900027.tres",
 	"res://resources/levels/custom_level_1792900028.tres",
-	"res://resources/levels/custom_level_1792900029.tres",
 	"res://resources/levels/custom_level_1792900030.tres",
 	"res://resources/levels/custom_level_1792900031.tres",
 	"res://resources/levels/custom_level_1792900032.tres",

@@ -1070,9 +1070,6 @@ msgstr "Stack o' Spectrum"
 msgid "UI_LEVEL_RAINBOW_ARCH"
 msgstr "Rainbow Archway"
 
-msgid "UI_LEVEL_RAINBOW_HEART"
-msgstr "Rainbow Heart"
-
 msgid "UI_LEVEL_PARADIDDLE"
 msgstr "Paradiddle Beat"
 

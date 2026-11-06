@@ -245,23 +245,26 @@ func apply_move(state: SimState, block_index: int, direction: Vector2i) -> Dicti
 		## no puzzle-state change, so the solver ignores it.
 		return {"ok": false, "outcome": Outcome.NONE, "state": next}
 
+	var exit_blocked := bool(slide.get("exit_blocked", false))
 	if target == start_pos:
 		if next_result == Placement.BLOCKED:
-			var blocker_i := _blocking_index(next, moving, next_anchor, direction)
-			if blocker_i >= 0 and _can_merge(moving, next.blocks[blocker_i] as SimBlock):
-				_merge_into(next, block_index, blocker_i)
-				return {"ok": true, "outcome": Outcome.MERGE, "state": next}
+			if not exit_blocked:
+				var blocker_i := _blocking_index(next, moving, next_anchor, direction)
+				if blocker_i >= 0 and _can_merge(moving, next.blocks[blocker_i] as SimBlock):
+					_merge_into(next, block_index, blocker_i)
+					return {"ok": true, "outcome": Outcome.MERGE, "state": next}
 			next.lives -= 1
 			moving.pos = start_pos
 			return {"ok": next.lives > 0, "outcome": Outcome.FAIL, "state": next}
 		return {"ok": false, "outcome": Outcome.NONE, "state": next}
 
 	if next_result == Placement.BLOCKED:
-		var blocker_j := _blocking_index(next, moving, next_anchor, direction)
-		if blocker_j >= 0 and _can_merge(moving, next.blocks[blocker_j] as SimBlock):
-			moving.pos = target
-			_merge_into(next, block_index, blocker_j)
-			return {"ok": true, "outcome": Outcome.MERGE, "state": next}
+		if not exit_blocked:
+			var blocker_j := _blocking_index(next, moving, next_anchor, direction)
+			if blocker_j >= 0 and _can_merge(moving, next.blocks[blocker_j] as SimBlock):
+				moving.pos = target
+				_merge_into(next, block_index, blocker_j)
+				return {"ok": true, "outcome": Outcome.MERGE, "state": next}
 		## Collision bounce: return home + lose a life (do not stay at edge).
 		next.lives -= 1
 		moving.pos = start_pos
@@ -282,20 +285,125 @@ func legal_actions(state: SimState) -> Array[Dictionary]:
 	return actions
 
 
+## True only when `cells` can translate by `dir` until every cell is off the
+## `cols`×`rows` board. `blocked` is other pieces, walls, and disabled cells.
+## A step that puts some cells off the board and leaves the rest in open space
+## is not an exit: the rest of the shape still has to clear.
+static func shape_can_fully_exit(
+	cells: Array,
+	dir: Vector2i,
+	blocked: Dictionary,
+	cols: int,
+	rows: int
+) -> bool:
+	var current: Array[Vector2i] = []
+	var own: Dictionary = {}
+	for cell in cells:
+		var v := cell as Vector2i
+		current.append(v)
+		own[v] = true
+	if current.is_empty():
+		return false
+	var limit := cols + rows + current.size() + 4
+	for _step in limit:
+		var next: Array[Vector2i] = []
+		var hit := false
+		var any_on := false
+		var any_off := false
+		for cell in current:
+			var n: Vector2i = cell + dir
+			next.append(n)
+			var outside := n.x < 0 or n.y < 0 or n.x >= cols or n.y >= rows
+			if outside:
+				any_off = true
+				continue
+			any_on = true
+			if blocked.has(n) and not own.has(n):
+				hit = true
+		if hit:
+			return false
+		if any_off and not any_on:
+			return true
+		own.clear()
+		for n in next:
+			own[n] = true
+		current = next
+	return false
+
+
 func _compute_slide(state: SimState, block: SimBlock, start: Vector2i, direction: Vector2i) -> Dictionary:
+	## Same exit rule as Board._compute_slide: the whole shape must clear the
+	## board. A partial crossing is not an exit when a later step would overlap
+	## another piece (concave frames sweeping their pocket).
 	var target := start
 	var next_anchor := target + direction
-	while _placement(state, block, next_anchor) == Placement.OK:
-		target = next_anchor
-		next_anchor = target + direction
+	var saw_partial := false
+	var limit := columns + rows + block.cells.size() + 4
+	var steps := 0
+	while steps < limit:
+		steps += 1
+		var kind := _placement_kind(state, block, next_anchor)
+		if kind == _PLACE_OK:
+			target = next_anchor
+			next_anchor += direction
+			continue
+		if kind == _PLACE_PARTIAL:
+			saw_partial = true
+			next_anchor += direction
+			continue
+		if kind == _PLACE_OFF:
+			return {
+				"target": target,
+				"next_anchor": next_anchor,
+				"next_result": Placement.OUT_OF_BOUNDS,
+				"goal_edge": _goal_for_direction(direction),
+				"exit_blocked": false,
+			}
+		return {
+			"target": target,
+			"next_anchor": next_anchor,
+			"next_result": Placement.BLOCKED,
+			"goal_edge": _goal_for_direction(direction),
+			"exit_blocked": saw_partial,
+		}
 	return {
 		"target": target,
 		"next_anchor": next_anchor,
-		"next_result": _placement(state, block, next_anchor),
+		"next_result": Placement.BLOCKED,
 		"goal_edge": _goal_for_direction(direction),
+		"exit_blocked": true,
 	}
 
 
+const _PLACE_OK := 0
+const _PLACE_OFF := 1
+const _PLACE_PARTIAL := 2
+const _PLACE_BLOCKED := 3
+
+
+func _placement_kind(state: SimState, block: SimBlock, anchor: Vector2i) -> int:
+	var any_on := false
+	var any_off := false
+	for offset in block.cells:
+		var cell := anchor + offset
+		if disabled.has(cell):
+			return _PLACE_BLOCKED
+		if not _in_bounds(cell):
+			any_off = true
+			continue
+		any_on = true
+		var owner := _occupant(state, cell)
+		if owner != null and owner != block:
+			return _PLACE_BLOCKED
+	if any_off and not any_on:
+		return _PLACE_OFF
+	if any_off:
+		return _PLACE_PARTIAL
+	return _PLACE_OK
+
+
+## One anchor only. PARTIAL off-board is reported as OUT_OF_BOUNDS here; that is
+## not an exit. Exit clearance is `_compute_slide` / `shape_can_fully_exit`.
 func _placement(state: SimState, block: SimBlock, anchor: Vector2i) -> Placement:
 	var saw_oob := false
 	for offset in block.cells:
