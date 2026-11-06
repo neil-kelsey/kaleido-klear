@@ -867,6 +867,8 @@ func _get_reachable_merge_targets(source: Block) -> Array[Block]:
 		if slide.next_result != PlacementResult.BLOCKED_BY_BLOCK:
 			continue
 
+		if bool(slide.get("exit_blocked", false)):
+			continue
 		var blocker := _blocking_block_at(source, slide.next_anchor, direction)
 		if blocker == null or blocker.block_kind != Block.BlockKind.MERGE:
 			continue
@@ -1165,9 +1167,13 @@ func _commit_move(block: Block, start_pos: Vector2i, direction: Vector2i, speed:
 		_screen_edge_bounce_animated(block, start_pos, target, direction, speed, from_visual)
 		return
 
+	var exit_blocked := bool(slide.get("exit_blocked", false))
 	if target == start_pos:
 		if next_result == PlacementResult.BLOCKED_BY_BLOCK:
-			if _try_merge_collision(block, start_pos, next_anchor, direction, speed, from_visual):
+			if (
+				not exit_blocked
+				and _try_merge_collision(block, start_pos, next_anchor, direction, speed, from_visual)
+			):
 				return
 			_push_undo_snapshot()
 			Sfx.play_bump()
@@ -1178,7 +1184,10 @@ func _commit_move(block: Block, start_pos: Vector2i, direction: Vector2i, speed:
 		return
 
 	if next_result == PlacementResult.BLOCKED_BY_BLOCK:
-		if _try_merge_collision(block, target, next_anchor, direction, speed, from_visual):
+		if (
+			not exit_blocked
+			and _try_merge_collision(block, target, next_anchor, direction, speed, from_visual)
+		):
 			return
 		_bounce_block_animated(block, start_pos, target, speed, from_visual)
 		return
@@ -1309,19 +1318,74 @@ func _merge_blocks_animated(
 
 
 func _compute_slide(block: Block, start_pos: Vector2i, direction: Vector2i) -> Dictionary:
+	## A piece leaves only if its whole shape can keep translating off the board.
+	## Stopping at the first cell that crosses the edge let a concave frame exit
+	## while its far side still had to sweep through pieces sitting in the pocket
+	## (Paradiddle's red U). Mirror of PuzzleSim._compute_slide.
 	var target := start_pos
 	var next_anchor := target + direction
-
-	while _placement_result(block, next_anchor) == PlacementResult.OK:
-		target = next_anchor
-		next_anchor = target + direction
-
+	var saw_partial := false
+	var limit := grid_columns + grid_rows + block.shape_cells.size() + 4
+	var steps := 0
+	while steps < limit:
+		steps += 1
+		var kind := _placement_kind(block, next_anchor)
+		if kind == _PLACE_OK:
+			target = next_anchor
+			next_anchor += direction
+			continue
+		if kind == _PLACE_PARTIAL:
+			saw_partial = true
+			next_anchor += direction
+			continue
+		if kind == _PLACE_OFF:
+			return {
+				"target": target,
+				"next_anchor": next_anchor,
+				"next_result": PlacementResult.OUT_OF_BOUNDS,
+				"goal_edge": _goal_for_direction(direction),
+				"exit_blocked": false,
+			}
+		return {
+			"target": target,
+			"next_anchor": next_anchor,
+			"next_result": PlacementResult.BLOCKED_BY_BLOCK,
+			"goal_edge": _goal_for_direction(direction),
+			"exit_blocked": saw_partial,
+		}
 	return {
 		"target": target,
 		"next_anchor": next_anchor,
-		"next_result": _placement_result(block, next_anchor),
+		"next_result": PlacementResult.BLOCKED_BY_BLOCK,
 		"goal_edge": _goal_for_direction(direction),
+		"exit_blocked": true,
 	}
+
+
+const _PLACE_OK := 0
+const _PLACE_OFF := 1
+const _PLACE_PARTIAL := 2
+const _PLACE_BLOCKED := 3
+
+
+func _placement_kind(block: Block, anchor: Vector2i) -> int:
+	var any_on := false
+	var any_off := false
+	for offset in block.shape_cells:
+		var cell := anchor + offset
+		if _is_cell_disabled(cell):
+			return _PLACE_BLOCKED
+		if not _is_in_bounds(cell):
+			any_off = true
+			continue
+		any_on = true
+		if cell_occupant.has(cell) and cell_occupant[cell] != block:
+			return _PLACE_BLOCKED
+	if any_off and not any_on:
+		return _PLACE_OFF
+	if any_off:
+		return _PLACE_PARTIAL
+	return _PLACE_OK
 
 
 func _move_block_animated(
