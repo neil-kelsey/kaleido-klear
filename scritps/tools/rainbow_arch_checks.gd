@@ -141,9 +141,58 @@ func _process(_delta: float) -> bool:
 	_check(bool(solved.solvable) and int(solved.min_moves) == 5, "LevelSolver min moves is 5")
 	_check(solver_letters == "DDDDD", "LevelSolver path is DDDDD (got %s)" % solver_letters)
 
+	_check_rainbow_heart_removed()
+
 	print("rainbow_arch_checks: %d passed, %d failed" % [_passes, _fails])
 	quit(1 if _fails > 0 else 0)
 	return true
+
+
+## Rainbow Heart (custom_level_1792900029) is out of the playable set.
+## Neighbour level ids and sort indexes stay put so saved progress still matches.
+func _check_rainbow_heart_removed() -> void:
+	const HEART_PATH := "res://resources/levels/custom_level_1792900029.tres"
+	const HEART_ID := "custom_level_1792900029"
+	_check(not ResourceLoader.exists(HEART_PATH), "Rainbow Heart resource is not loadable")
+	_check(
+		not FileAccess.file_exists(ProjectSettings.globalize_path(HEART_PATH)),
+		"Rainbow Heart file is deleted"
+	)
+	var registered := false
+	var arch_registered := false
+	var paradiddle_registered := false
+	for path in LevelRegistry.LEVEL_PATHS:
+		if path == HEART_PATH:
+			registered = true
+		elif path == "res://resources/levels/custom_level_1792900028.tres":
+			arch_registered = true
+		elif path == "res://resources/levels/custom_level_1792900030.tres":
+			paradiddle_registered = true
+	_check(not registered, "Rainbow Heart is not in LevelRegistry")
+	_check(arch_registered and paradiddle_registered, "Rainbow Arch and Paradiddle stay registered")
+
+	var catalog: Node = root.get_node("LevelCatalog")
+	catalog.reload_levels()
+	var heart_listed := false
+	var arch_listed := false
+	var paradiddle_sort := -1
+	var stack_sort := -1
+	for level in catalog.get_all_levels():
+		if level.level_id == HEART_ID or level.display_name == "Rainbow Heart":
+			heart_listed = true
+		if level.level_id == "custom_level_1792900028":
+			arch_listed = true
+			_check(level.display_name == "Rainbow Arch" and level.sort_index == 5, "Rainbow Arch stays sort 5")
+		elif level.level_id == "custom_level_1792900027":
+			stack_sort = level.sort_index
+		elif level.level_id == "custom_level_1792900030":
+			paradiddle_sort = level.sort_index
+		elif level.level_id == "custom_level_1792900031":
+			_check(level.display_name == "Morse Beacon" and level.sort_index == 8, "Morse Beacon stays sort 8")
+	_check(not heart_listed, "Rainbow Heart is absent from the playable list")
+	_check(arch_listed, "Rainbow Arch still loads in the list")
+	_check(stack_sort == 4, "Spectrum Stack keeps its id and sort index 4")
+	_check(paradiddle_sort == 7, "Paradiddle keeps its id and sort index 7")
 
 
 func _enumerate(config: LevelConfig) -> Dictionary:
