@@ -96,6 +96,8 @@ class SimState:
 
 var columns: int = 5
 var rows: int = 5
+## Unused board cells. Scenery only: they never block movement or exits.
+## WALL pieces are the only static blockers. Kept for reference/rendering parity.
 var disabled: Dictionary = {} ## Vector2i -> true
 var goal_enabled: Array[bool] = [true, true, true, false]
 var goal_colors: Array[int] = [0, 2, 1, 3]
@@ -286,7 +288,8 @@ func legal_actions(state: SimState) -> Array[Dictionary]:
 
 
 ## True only when `cells` can translate by `dir` until every cell is off the
-## `cols`×`rows` board. `blocked` is other pieces, walls, and disabled cells.
+## `cols`×`rows` board. `blocked` is other pieces and WALL pieces only
+## (unused board cells are not obstacles).
 ## A step that puts some cells off the board and leaves the rest in open space
 ## is not an exit: the rest of the shape still has to clear.
 static func shape_can_fully_exit(
@@ -386,8 +389,6 @@ func _placement_kind(state: SimState, block: SimBlock, anchor: Vector2i) -> int:
 	var any_off := false
 	for offset in block.cells:
 		var cell := anchor + offset
-		if disabled.has(cell):
-			return _PLACE_BLOCKED
 		if not _in_bounds(cell):
 			any_off = true
 			continue
@@ -408,8 +409,6 @@ func _placement(state: SimState, block: SimBlock, anchor: Vector2i) -> Placement
 	var saw_oob := false
 	for offset in block.cells:
 		var cell := anchor + offset
-		if disabled.has(cell):
-			return Placement.BLOCKED
 		if not _in_bounds(cell):
 			saw_oob = true
 		else:
@@ -438,7 +437,7 @@ func _blocking_index(state: SimState, moving: SimBlock, next_anchor: Vector2i, d
 	var order: Array[int] = []
 	for offset in moving.cells:
 		var cell := next_anchor + offset
-		if not _in_bounds(cell) or disabled.has(cell):
+		if not _in_bounds(cell):
 			continue
 		for i in state.blocks.size():
 			var other: SimBlock = state.blocks[i]

@@ -6,9 +6,11 @@ The generator rules (fill every cell, no empty space) make the boring squares th
 
 ## How a move actually works
 
-A piece slides as one solid rigid shape until it hits something. It cannot stop in an open gap. It also cannot pass through another piece, a wall, or a disabled cell at any step of that slide.
+A piece slides as one solid rigid shape until it hits something. It cannot stop in an open gap. It also cannot pass through another piece or a wall at any step of that slide.
 
-Leaving the board is the same rule, not a shortcut. The piece is removed only when every cell can keep translating off that edge without landing on anything solid. The first cell to cross the edge is not an exit. A concave piece, a frame, or a wrap still occupies its far side: if that side would sweep through a piece sitting in the pocket, or through a wall, the exit is blocked and the piece bounces home. This is the rule in `Board` (play and swipe hints), `PuzzleSim` / `LevelSolver` (certification), and the Twinkle Drift generator's peel check.
+**Unused cells are not walls.** A level may leave some squares unused (`disabled_cells`). They are scenery only and have no gameplay effect: pieces slide across them, can stop on them, and exits pass over them. If a square must block movement, place a **wall piece** there (block kind `WALL`). Never use an unused cell as a blocker. This holds in `Board`, `PuzzleSim` / `LevelSolver`, every generator, and the checks in `scritps/tools/collision_checks.gd`.
+
+Leaving the board is the same rule, not a shortcut. The piece is removed only when every cell can keep translating off that edge without landing on anything solid (another piece or a wall piece; unused cells are not solid). The first cell to cross the edge is not an exit. A concave piece, a frame, or a wrap still occupies its far side: if that side would sweep through a piece sitting in the pocket, or through a wall, the exit is blocked and the piece bounces home. This is the rule in `Board` (play and swipe hints), `PuzzleSim` / `LevelSolver` (certification), and the Twinkle Drift generator's peel check.
 
 Only two moves change the board:
 

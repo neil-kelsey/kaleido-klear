@@ -1003,9 +1003,12 @@ func _can_exit(
 ) -> bool:
 	## Same full-path rule as PuzzleSim.shape_can_fully_exit. The first cell to
 	## cross an edge is not enough: the rest of a concave piece must clear too.
-	var blocked: Dictionary = occupied.duplicate()
-	for cell in disabled.keys():
-		blocked[cell] = true
+	## Unused (disabled) cells are not obstacles; only pieces and walls in
+	## `occupied` block. `disabled` is kept in the signature for callers.
+	var blocked: Dictionary = {}
+	for cell in occupied.keys():
+		if not disabled.has(cell):
+			blocked[cell] = true
 	return PuzzleSimScript.shape_can_fully_exit(cells, dir, blocked, cols, rows)
 
 

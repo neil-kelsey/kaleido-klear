@@ -529,8 +529,6 @@ func _can_place_shape(shape_cells: Array[Vector2i], anchor: Vector2i, ignore_blo
 		var cell := anchor + offset
 		if not _is_in_bounds(cell):
 			return false
-		if _is_cell_disabled(cell):
-			return false
 		if cell_occupant.has(cell) and cell_occupant[cell] != ignore_block:
 			return false
 	return true
@@ -542,8 +540,6 @@ func _placement_result(block: Block, anchor: Vector2i) -> PlacementResult:
 	var saw_oob := false
 	for offset in block.shape_cells:
 		var cell := anchor + offset
-		if _is_cell_disabled(cell):
-			return PlacementResult.BLOCKED_BY_BLOCK
 		if not _is_in_bounds(cell):
 			saw_oob = true
 		elif cell_occupant.has(cell) and cell_occupant[cell] != block:
@@ -554,6 +550,8 @@ func _placement_result(block: Block, anchor: Vector2i) -> PlacementResult:
 	return PlacementResult.OK
 
 
+## Unused cell: drawn as a faint gap, but it has no gameplay effect. Pieces slide
+## across and stop on unused cells freely. Use a WALL piece to block a square.
 func _is_cell_disabled(cell: Vector2i) -> bool:
 	return _disabled_cells.has(cell)
 
@@ -1375,8 +1373,6 @@ func _placement_kind(block: Block, anchor: Vector2i) -> int:
 	var any_off := false
 	for offset in block.shape_cells:
 		var cell := anchor + offset
-		if _is_cell_disabled(cell):
-			return _PLACE_BLOCKED
 		if not _is_in_bounds(cell):
 			any_off = true
 			continue

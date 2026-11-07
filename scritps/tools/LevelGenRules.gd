@@ -4,7 +4,9 @@ class_name LevelGenRules
 ## Shared constraints for automated level creation / curation.
 ## - No tiny finger-unfriendly pieces: every clearable block is at least MIN_CELLS.
 ## - No empty playable cells: every cell is either occupied or disabled.
-## - Disabled cells (holes) count as complexity — prefer full fills for easy levels.
+## - Disabled cells are UNUSED squares only: scenery with no gameplay effect.
+##   Pieces slide across them and exits pass over them. To block a square, place
+##   a WALL piece. Never rely on an unused cell to stop a piece.
 ## - Do not certify an exit from the first cell that crosses an edge. A connected
 ##   shape must clear the whole path, including the far side of a concave pocket.
 ##   Generators that peel or stamp "this piece can leave" must use

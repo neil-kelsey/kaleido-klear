@@ -22,7 +22,6 @@ static func rate(config: LevelConfig, min_moves: int = -1) -> Dictionary:
 			merge_count += 1
 		shape_cells += _cell_count(config, i)
 
-	var hole_count := config.disabled_cells.size()
 	var goal_edges := 0
 	if config.goal_left_enabled:
 		goal_edges += 1
@@ -41,16 +40,16 @@ static func rate(config: LevelConfig, min_moves: int = -1) -> Dictionary:
 	score += float(maxi(shape_cells - block_count * 3, 0)) * 0.25
 	score += float(wall_count) * 2.5
 	score += float(merge_count) * 3.5
-	## Holes (disabled cells) are an intentional complexity lever vs filling with shapes.
-	score += float(hole_count) * 2.0
 	score += float(maxi(goal_edges - 1, 0)) * 0.6
 	if config.multi_goal_mode:
 		score += 4.0
 	if min_moves >= 0:
 		score += float(min_moves) * 0.45
 
-	## Full solid boards (no holes) stay easier than carved boards of the same size.
-	if hole_count == 0 and block_count > 0:
+	## Unused board cells (disabled_cells) are scenery with no gameplay effect, so
+	## they never change the score. The 0.85 scale every board used to get when it
+	## had no unused cells now applies to all boards, keeping existing scores.
+	if block_count > 0:
 		score *= 0.85
 
 	var tier := 1

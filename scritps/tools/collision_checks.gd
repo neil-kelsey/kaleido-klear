@@ -31,9 +31,12 @@ func _process(_delta: float) -> bool:
 	_check_concave_pocket()
 	_check_other_axes()
 	_check_wall_blocks_exit()
+	_check_unused_cells_do_not_block()
 	_check_exit_certification()
 	_check_paradiddle()
 	_check_board_agrees()
+	_check_needle_spire()
+	_check_unused_cells_do_not_score()
 	print("collision_checks: %d passed, %d failed" % [_passes, _fails])
 	quit(1 if _fails > 0 else 0)
 	return true
@@ -148,19 +151,86 @@ func _assert_pocket_blocks(
 
 
 func _check_wall_blocks_exit() -> void:
+	## A WALL piece is the only static blocker.
 	var level := _board(6, 3)
 	_goal_on(level, Vector2i.LEFT, Block.TileColor.RED)
-	level.disabled_cells = [Vector2i(1, 1)] as Array[Vector2i]
 	# Cells (0,1) and (3,1). First step left puts (0,1) off the board; the next step hits the wall.
 	_add(level, Vector2i(0, 1), Block.TileColor.RED, Block.BlockKind.STANDARD, [Vector2i(0, 0), Vector2i(3, 0)])
+	_add(level, Vector2i(1, 1), Block.TileColor.RED, Block.BlockKind.WALL, [Vector2i.ZERO])
 	var sim = PuzzleSimScript.new()
 	var result: Dictionary = sim.apply_move(sim.load_config(level), 0, Vector2i.LEFT)
-	_check(int(result.outcome) == PuzzleSimScript.Outcome.FAIL, "a wall on the rest of the exit path blocks the leave")
+	_check(int(result.outcome) == PuzzleSimScript.Outcome.FAIL, "a wall piece on the rest of the exit path blocks the leave")
 	var open := _board(6, 3)
 	_goal_on(open, Vector2i.LEFT, Block.TileColor.RED)
 	_add(open, Vector2i(0, 1), Block.TileColor.RED, Block.BlockKind.STANDARD, [Vector2i(0, 0), Vector2i(3, 0)])
 	var cleared: Dictionary = sim.apply_move(sim.load_config(open), 0, Vector2i.LEFT)
 	_check(int(cleared.outcome) == PuzzleSimScript.Outcome.SCORE, "the same split piece leaves when the wall is gone")
+
+
+func _check_unused_cells_do_not_block() -> void:
+	## Unused board cells (disabled_cells) are scenery only. Same moves as the
+	## wall test, but with an unused cell where the wall was: nothing blocks.
+	var level := _board(6, 3)
+	_goal_on(level, Vector2i.LEFT, Block.TileColor.RED)
+	level.disabled_cells = [Vector2i(1, 1)] as Array[Vector2i]
+	_add(level, Vector2i(0, 1), Block.TileColor.RED, Block.BlockKind.STANDARD, [Vector2i(0, 0), Vector2i(3, 0)])
+	var sim = PuzzleSimScript.new()
+	var exited: Dictionary = sim.apply_move(sim.load_config(level), 0, Vector2i.LEFT)
+	_check(int(exited.outcome) == PuzzleSimScript.Outcome.SCORE, "an unused cell does not block a full-shape exit")
+	# Plain slide across an unused cell, stopping against a real piece beyond it.
+	var slide := _board(6, 3)
+	slide.disabled_cells = [Vector2i(2, 1)] as Array[Vector2i]
+	_add(slide, Vector2i(0, 1), Block.TileColor.RED, Block.BlockKind.MERGE, [Vector2i.ZERO])
+	_add(slide, Vector2i(5, 1), Block.TileColor.BLUE, Block.BlockKind.MERGE, [Vector2i.ZERO])
+	var moved: Dictionary = sim.apply_move(sim.load_config(slide), 0, Vector2i.RIGHT)
+	_check(
+		int(moved.outcome) == PuzzleSimScript.Outcome.MERGE
+		and moved.state.blocks[0].occupied() == [Vector2i(4, 1), Vector2i(5, 1)],
+		"a piece slides across an unused cell and merges at the real piece"
+	)
+	# Stops on an unused cell when the real piece is right after it.
+	var stop := _board(6, 3)
+	stop.disabled_cells = [Vector2i(3, 1)] as Array[Vector2i]
+	_add(stop, Vector2i(0, 1), Block.TileColor.RED, Block.BlockKind.MERGE, [Vector2i.ZERO])
+	_add(stop, Vector2i(4, 1), Block.TileColor.BLUE, Block.BlockKind.MERGE, [Vector2i.ZERO])
+	var parked: Dictionary = sim.apply_move(sim.load_config(stop), 0, Vector2i.RIGHT)
+	_check(
+		int(parked.outcome) == PuzzleSimScript.Outcome.MERGE
+		and Vector2i(3, 1) in parked.state.blocks[0].occupied(),
+		"a merged piece can occupy an unused cell"
+	)
+	# Real pieces in a pocket still block, even with unused cells around.
+	var pocket := _board(6, 3)
+	_goal_on(pocket, Vector2i.LEFT, Block.TileColor.RED)
+	pocket.disabled_cells = [Vector2i(1, 1)] as Array[Vector2i]
+	_add(pocket, Vector2i(0, 1), Block.TileColor.RED, Block.BlockKind.STANDARD, [Vector2i(0, 0), Vector2i(3, 0)])
+	_add(pocket, Vector2i(2, 1), Block.TileColor.BLUE, Block.BlockKind.STANDARD, [Vector2i.ZERO])
+	var stuck: Dictionary = sim.apply_move(sim.load_config(pocket), 0, Vector2i.LEFT)
+	_check(int(stuck.outcome) == PuzzleSimScript.Outcome.FAIL, "a real piece in the path still blocks next to unused cells")
+	# Board parity.
+	var board = load("res://scenes/board.tscn").instantiate()
+	root.add_child(board)
+	board.load_level(level)
+	var b0 = board.placed_blocks[0]
+	var r0: Dictionary = board._compute_slide(b0, b0.grid_pos, Vector2i.LEFT)
+	_check(int(r0.get("next_result", -1)) == 1 and not bool(r0.get("exit_blocked", true)), "Board: unused cell does not block the exit")
+	var walled := _board(6, 3)
+	_goal_on(walled, Vector2i.LEFT, Block.TileColor.RED)
+	_add(walled, Vector2i(0, 1), Block.TileColor.RED, Block.BlockKind.STANDARD, [Vector2i(0, 0), Vector2i(3, 0)])
+	_add(walled, Vector2i(1, 1), Block.TileColor.RED, Block.BlockKind.WALL, [Vector2i.ZERO])
+	board.load_level(walled)
+	var b1 = board.placed_blocks[0]
+	var r1: Dictionary = board._compute_slide(b1, b1.grid_pos, Vector2i.LEFT)
+	_check(int(r1.get("next_result", -1)) != 1, "Board: a wall piece blocks the same exit")
+	board.load_level(slide)
+	var b2 = board.placed_blocks[0]
+	var r2: Dictionary = board._compute_slide(b2, b2.grid_pos, Vector2i.RIGHT)
+	_check(r2.get("target") == Vector2i(4, 1), "Board: slide crosses the unused cell to the real piece")
+	board.queue_free()
+	_check(
+		PuzzleSimScript.shape_can_fully_exit([Vector2i(0, 1), Vector2i(3, 1)], Vector2i.LEFT, {}, 6, 3),
+		"certifier ignores unused cells (they are never in the blocked set)"
+	)
 
 
 func _check_exit_certification() -> void:
@@ -258,6 +328,76 @@ func _check_board_agrees() -> void:
 		"Board lets the repaired Paradiddle red piece leave left"
 	)
 	board.queue_free()
+
+
+## Needle Spire: the user's move. Blue (0,9) + yellow (3,9) merge into a green
+## that wraps the unused cell at (3,10). Unused cells are not obstacles, so the
+## green leaves right into the green goal. The rows 7-8 green square does too.
+func _check_needle_spire() -> void:
+	var level: LevelConfig = load("res://resources/levels/custom_level_1792900016.tres")
+	var sim = PuzzleSimScript.new()
+	var start = sim.load_config(level)
+	var wrap: Dictionary = sim.apply_move(start, 11, Vector2i.LEFT)
+	_check(int(wrap.outcome) == PuzzleSimScript.Outcome.MERGE, "Needle Spire lower yellow merges into the blue")
+	var green_i: int = wrap.state.blocks.size() - 1
+	_check(int(wrap.state.blocks[green_i].color) == Block.TileColor.GREEN, "Needle Spire lower merge is green")
+	var out_wrap: Dictionary = sim.apply_move(wrap.state, green_i, Vector2i.RIGHT)
+	_check(int(out_wrap.outcome) == PuzzleSimScript.Outcome.SCORE, "Needle Spire lower green crosses the unused cell into the right goal")
+	var square: Dictionary = sim.apply_move(start, 8, Vector2i.RIGHT)
+	_check(int(square.outcome) == PuzzleSimScript.Outcome.MERGE, "Needle Spire rows 7-8 yellow merges into the blue")
+	var out: Dictionary = sim.apply_move(square.state, square.state.blocks.size() - 1, Vector2i.RIGHT)
+	_check(int(out.outcome) == PuzzleSimScript.Outcome.SCORE, "rows 7-8 green square exits right into the green goal")
+	var path_ok := _replay_wins(level, NEEDLE_SPIRE_SOLUTION)
+	_check(path_ok, "Needle Spire recorded 16-move solution replays to a win with 3 lives")
+
+	var shaped := _board(5, 14)
+	shaped.disabled_cells = level.disabled_cells.duplicate()
+	_goal_on(shaped, Vector2i.RIGHT, Block.TileColor.GREEN)
+	_add(shaped, Vector2i(0, 9), Block.TileColor.GREEN, Block.BlockKind.MERGE, [
+		Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0),
+		Vector2i(1, 1), Vector2i(2, 1), Vector2i(4, 1),
+	])
+	var board = load("res://scenes/board.tscn").instantiate()
+	root.add_child(board)
+	board.load_level(shaped)
+	var g = board.placed_blocks[0]
+	var r: Dictionary = board._compute_slide(g, g.grid_pos, Vector2i.RIGHT)
+	_check(int(r.get("next_result", -1)) == 1 and not bool(r.get("exit_blocked", true)), "Board lets the Needle Spire lower green leave right")
+	board.queue_free()
+
+
+func _check_unused_cells_do_not_score() -> void:
+	## Unused cells are scenery: the same board scores the same with or without them.
+	var level: LevelConfig = load("res://resources/levels/custom_level_1792900016.tres")
+	var bare := level.duplicate(true) as LevelConfig
+	bare.disabled_cells = [] as Array[Vector2i]
+	var a: Dictionary = LevelDifficulty.rate(level, 16)
+	var b: Dictionary = LevelDifficulty.rate(bare, 16)
+	_check(
+		is_equal_approx(float(a.score), float(b.score)) and int(a.tier) == int(b.tier),
+		"difficulty score ignores unused cells (%s vs %s)" % [a.score, b.score]
+	)
+
+
+## [block_index, direction] in the order the simulator indexes pieces at each step.
+const NEEDLE_SPIRE_SOLUTION := [
+	[15, Vector2i.DOWN], [14, Vector2i.UP], [13, Vector2i.LEFT], [1, Vector2i.LEFT],
+	[2, Vector2i.LEFT], [1, Vector2i.LEFT], [7, Vector2i.DOWN], [7, Vector2i.UP],
+	[7, Vector2i.RIGHT], [0, Vector2i.RIGHT], [0, Vector2i.UP], [1, Vector2i.RIGHT],
+	[3, Vector2i.RIGHT], [0, Vector2i.RIGHT], [0, Vector2i.UP], [0, Vector2i.UP],
+]
+
+
+func _replay_wins(level: LevelConfig, steps: Array) -> bool:
+	var sim = PuzzleSimScript.new()
+	var state = sim.load_config(level)
+	for step in steps:
+		var result: Dictionary = sim.apply_move(state, int(step[0]), step[1] as Vector2i)
+		var o := int(result.outcome)
+		if not bool(result.ok) or o == PuzzleSimScript.Outcome.FAIL or o == PuzzleSimScript.Outcome.NONE:
+			return false
+		state = result.state
+	return state.is_won() and state.lives == 3
 
 
 func _play_letters(level: LevelConfig, steps: Array) -> String:
