@@ -1045,3 +1045,6 @@ msgstr "Canal d'écluse"
 msgid "UI_LEVEL_TWIN_MERIDIAN"
 msgstr "Double méridien"
 
+
+msgid "UI_GROUP_TIDEPOOL_GLYPHS"
+msgstr "Glyphes des mares"

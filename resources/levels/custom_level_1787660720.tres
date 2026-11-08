@@ -72,4 +72,4 @@ group_title_key = "UI_GROUP_MOONLACE_WALLS"
 verified_solvable = true
 min_moves = 8
 difficulty_score = 0.0
-difficulty_tier = 1
+difficulty_tier = 2

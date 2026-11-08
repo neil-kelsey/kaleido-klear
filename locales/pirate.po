@@ -1117,3 +1117,6 @@ msgstr "Comet Spiral"
 
 msgid "UI_LEVEL_MIRROR_PARADE"
 msgstr "Mirror Parade"
+
+msgid "UI_GROUP_TIDEPOOL_GLYPHS"
+msgstr "Tidepool Scribbles"

@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_141o4"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_7gpss"]
+
+[sub_resource type="Resource" id="Resource_qxaru"]
+script = ExtResource("1_141o4")
+color = 1
+
+[sub_resource type="Resource" id="Resource_gt27l"]
+script = ExtResource("1_141o4")
+color = 4
+
+[sub_resource type="Resource" id="Resource_h8pym"]
+script = ExtResource("1_141o4")
+color = 1
+
+[sub_resource type="Resource" id="Resource_4oqyn"]
+script = ExtResource("1_141o4")
+color = 5
+
+[resource]
+script = ExtResource("2_7gpss")
+level_id = "custom_level_1793100005"
+display_name = "Mushroom"
+locale_display_names = {
+"en": "Mushroom",
+"fr": "Champignon",
+"pirate": "Mushroom"
+}
+section_index = 2
+sort_index = 1050
+rows = 6
+multi_goal_mode = true
+goal_top_phases = Array[ExtResource("1_141o4")]([SubResource("Resource_gt27l"), SubResource("Resource_h8pym"), SubResource("Resource_4oqyn")])
+goal_right_phases = Array[ExtResource("1_141o4")]([SubResource("Resource_qxaru")])
+goal_left_enabled = false
+block_positions = Array[Vector2i]([Vector2i(5, 1), Vector2i(0, 1), Vector2i(4, 3), Vector2i(3, 4), Vector2i(2, 2), Vector2i(2, 0), Vector2i(3, 1), Vector2i(4, 0)])
+block_colors = Array[int]([3, 2, 3, 0, 3, 2, 2, 0])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(2, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 3), Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8"])
+group_title_key = "UI_GROUP_TIDEPOOL_GLYPHS"
+verified_solvable = true
+min_moves = 8
+difficulty_score = 52.870000000000005
+difficulty_tier = 2
