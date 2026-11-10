@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## Checks the 40 Tidepool Glyphs levels (Comet Shallows, section 2):
-## - every level is in LevelRegistry, in the right section/group, 5 Easy / 16 Medium / 11 Hard / 8 Very Hard;
+## - every level is in LevelRegistry, in the right section/group, 5 Easy / 16 Medium / 12 Hard / 7 Very Hard;
 ## - piece rules (>= 3 cells, connected, no overlap, walls are WALL pieces);
 ## - nothing can leave on the first swipe;
 ## - the recorded winning line wins in PuzzleSim AND on the real Board scene
@@ -54,7 +54,7 @@ func _sim_sig(st) -> Array:
 	return out
 
 
-const EXPECTED_TIERS := {1: 5, 2: 16, 3: 11, 4: 8}
+const EXPECTED_TIERS := {1: 5, 2: 16, 3: 12, 4: 7}
 
 
 func _run() -> void:

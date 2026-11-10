@@ -1120,3 +1120,6 @@ msgstr "Mirror Parade"
 
 msgid "UI_GROUP_TIDEPOOL_GLYPHS"
 msgstr "Tidepool Scribbles"
+
+msgid "UI_GROUP_HARBOR_CURIOS"
+msgstr "Harbor Oddments"

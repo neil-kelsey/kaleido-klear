@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_7014c"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_xte6j"]
+
+[sub_resource type="Resource" id="Resource_oemnu"]
+script = ExtResource("1_7014c")
+color = 4
+
+[sub_resource type="Resource" id="Resource_oth65"]
+script = ExtResource("1_7014c")
+color = 2
+
+[sub_resource type="Resource" id="Resource_blob6"]
+script = ExtResource("1_7014c")
+color = 3
+
+[sub_resource type="Resource" id="Resource_3xxdy"]
+script = ExtResource("1_7014c")
+color = 2
+count = 2
+
+[sub_resource type="Resource" id="Resource_7nr4k"]
+script = ExtResource("1_7014c")
+color = 5
+
+[resource]
+script = ExtResource("2_xte6j")
+level_id = "custom_level_1793200035"
+display_name = "Letter M"
+locale_display_names = {
+"en": "Letter M",
+"fr": "Lettre M",
+"pirate": "Letter M"
+}
+section_index = 2
+sort_index = 2350
+multi_goal_mode = true
+goal_top_phases = Array[ExtResource("1_7014c")]([SubResource("Resource_blob6"), SubResource("Resource_3xxdy"), SubResource("Resource_7nr4k")])
+goal_right_phases = Array[ExtResource("1_7014c")]([SubResource("Resource_oemnu"), SubResource("Resource_oth65")])
+goal_left_enabled = false
+block_positions = Array[Vector2i]([Vector2i(0, 2), Vector2i(4, 2), Vector2i(0, 0), Vector2i(5, 0), Vector2i(0, 4), Vector2i(6, 4), Vector2i(0, 6), Vector2i(6, 6)])
+block_colors = Array[int]([0, 0, 2, 2, 3, 3, 2, 2])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(3, 1), Vector2i(3, 0), Vector2i(2, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(2, 1), Vector2i(3, 1)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(2, 2), Vector2i(2, 1), Vector2i(1, 1), Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8"])
+group_title_key = "UI_GROUP_HARBOR_CURIOS"
+verified_solvable = true
+min_moves = 8
+difficulty_score = 58.14
+difficulty_tier = 4

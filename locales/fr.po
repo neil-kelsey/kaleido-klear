@@ -1048,3 +1048,6 @@ msgstr "Double méridien"
 
 msgid "UI_GROUP_TIDEPOOL_GLYPHS"
 msgstr "Glyphes des mares"
+
+msgid "UI_GROUP_HARBOR_CURIOS"
+msgstr "Curiosités du port"

@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Tidepool Glyphs: 40 picture levels in Comet Shallows (section 2), 5 Easy / 16 Medium / 11 Hard / 8 Very Hard
+## Tidepool Glyphs: 40 picture levels in Comet Shallows (section 2), 5 Easy / 16 Medium / 12 Hard / 7 Very Hard
 ## (Easy, Medium, Hard, Very Hard). Layouts, colours, goals and one recorded
 ## winning line live in tidepool_glyphs_levels.json. They came from a
 ## solver-guided search over hand-drawn silhouettes (letters, numbers, sea life,

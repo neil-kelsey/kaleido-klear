@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_08qxb"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_6ckc1"]
+
+[sub_resource type="Resource" id="Resource_313wc"]
+script = ExtResource("1_08qxb")
+color = 5
+
+[sub_resource type="Resource" id="Resource_csweh"]
+script = ExtResource("1_08qxb")
+
+[sub_resource type="Resource" id="Resource_twu06"]
+script = ExtResource("1_08qxb")
+color = 4
+
+[sub_resource type="Resource" id="Resource_ttlr4"]
+script = ExtResource("1_08qxb")
+
+[sub_resource type="Resource" id="Resource_s4tkp"]
+script = ExtResource("1_08qxb")
+color = 5
+
+[sub_resource type="Resource" id="Resource_50e0j"]
+script = ExtResource("1_08qxb")
+color = 1
+
+[sub_resource type="Resource" id="Resource_gaty4"]
+script = ExtResource("1_08qxb")
+color = 5
+
+[sub_resource type="Resource" id="Resource_6p4ua"]
+script = ExtResource("1_08qxb")
+
+[sub_resource type="Resource" id="Resource_ukuq6"]
+script = ExtResource("1_08qxb")
+color = 3
+
+[resource]
+script = ExtResource("2_6ckc1")
+level_id = "custom_level_1793200039"
+display_name = "Piano"
+locale_display_names = {
+"en": "Piano",
+"fr": "Piano",
+"pirate": "Piano"
+}
+section_index = 2
+sort_index = 2390
+columns = 12
+rows = 6
+multi_goal_mode = true
+goal_top_phases = Array[ExtResource("1_08qxb")]([SubResource("Resource_gaty4"), SubResource("Resource_6p4ua"), SubResource("Resource_ukuq6")])
+goal_right_phases = Array[ExtResource("1_08qxb")]([SubResource("Resource_twu06"), SubResource("Resource_ttlr4"), SubResource("Resource_s4tkp"), SubResource("Resource_50e0j")])
+goal_bottom_phases = Array[ExtResource("1_08qxb")]([SubResource("Resource_313wc"), SubResource("Resource_csweh")])
+goal_left_enabled = false
+goal_bottom_enabled = true
+block_positions = Array[Vector2i]([Vector2i(8, 0), Vector2i(9, 1), Vector2i(8, 4), Vector2i(6, 5), Vector2i(6, 3), Vector2i(4, 4), Vector2i(6, 1), Vector2i(1, 4), Vector2i(5, 0), Vector2i(4, 2), Vector2i(0, 0), Vector2i(2, 1), Vector2i(1, 3), Vector2i(0, 1)])
+block_colors = Array[int]([3, 2, 0, 3, 0, 0, 3, 0, 3, 2, 0, 0, 0, 3])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(3, 0), Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2), Vector2i(0, 1), Vector2i(2, 1), Vector2i(2, 2)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(3, 0), Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(3, 0), Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(4, 1), Vector2i(3, 1), Vector2i(2, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(4, 0), Vector2i(3, 0)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 0), Vector2i(1, 0)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9", "Shape 10", "Shape 11", "Shape 12", "Shape 13", "Shape 14"])
+group_title_key = "UI_GROUP_HARBOR_CURIOS"
+verified_solvable = true
+min_moves = 14
+difficulty_score = 86.62
+difficulty_tier = 4

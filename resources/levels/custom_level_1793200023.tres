@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_k4unp"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_xpynd"]
+
+[sub_resource type="Resource" id="Resource_ffhqa"]
+script = ExtResource("1_k4unp")
+color = 1
+
+[sub_resource type="Resource" id="Resource_1jykd"]
+script = ExtResource("1_k4unp")
+color = 5
+
+[sub_resource type="Resource" id="Resource_p3h7c"]
+script = ExtResource("1_k4unp")
+color = 2
+count = 2
+
+[sub_resource type="Resource" id="Resource_ngfhn"]
+script = ExtResource("1_k4unp")
+color = 2
+
+[sub_resource type="Resource" id="Resource_kpoae"]
+script = ExtResource("1_k4unp")
+color = 4
+
+[sub_resource type="Resource" id="Resource_oksrp"]
+script = ExtResource("1_k4unp")
+color = 1
+
+[sub_resource type="Resource" id="Resource_12ji3"]
+script = ExtResource("1_k4unp")
+
+[sub_resource type="Resource" id="Resource_8iry0"]
+script = ExtResource("1_k4unp")
+color = 1
+
+[resource]
+script = ExtResource("2_xpynd")
+level_id = "custom_level_1793200023"
+display_name = "Dragon"
+locale_display_names = {
+"en": "Dragon",
+"fr": "Dragon",
+"pirate": "Dragon"
+}
+section_index = 2
+sort_index = 2230
+columns = 12
+multi_goal_mode = true
+goal_left_phases = Array[ExtResource("1_k4unp")]([SubResource("Resource_ffhqa"), SubResource("Resource_1jykd"), SubResource("Resource_p3h7c")])
+goal_top_phases = Array[ExtResource("1_k4unp")]([SubResource("Resource_oksrp"), SubResource("Resource_12ji3"), SubResource("Resource_8iry0")])
+goal_right_phases = Array[ExtResource("1_k4unp")]([SubResource("Resource_ngfhn"), SubResource("Resource_kpoae")])
+block_positions = Array[Vector2i]([Vector2i(0, 4), Vector2i(1, 3), Vector2i(2, 5), Vector2i(2, 2), Vector2i(4, 6), Vector2i(3, 0), Vector2i(5, 1), Vector2i(6, 5), Vector2i(4, 3), Vector2i(6, 3), Vector2i(7, 2), Vector2i(9, 1), Vector2i(7, 3), Vector2i(10, 2)])
+block_colors = Array[int]([3, 2, 2, 2, 3, 2, 3, 0, 2, 0, 0, 2, 2, 3])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(2, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(2, 0), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(1, 2), Vector2i(1, 1), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(2, 1), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(1, 2), Vector2i(1, 1), Vector2i(1, 0)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9", "Shape 10", "Shape 11", "Shape 12", "Shape 13", "Shape 14"])
+group_title_key = "UI_GROUP_HARBOR_CURIOS"
+verified_solvable = true
+min_moves = 14
+difficulty_score = 89.42
+difficulty_tier = 3
