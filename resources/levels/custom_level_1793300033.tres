@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_f7cla"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_1l3eo"]
+
+[sub_resource type="Resource" id="Resource_k75o7"]
+script = ExtResource("1_f7cla")
+color = 5
+
+[sub_resource type="Resource" id="Resource_3r30l"]
+script = ExtResource("1_f7cla")
+color = 4
+
+[sub_resource type="Resource" id="Resource_g153e"]
+script = ExtResource("1_f7cla")
+color = 3
+
+[sub_resource type="Resource" id="Resource_mim2w"]
+script = ExtResource("1_f7cla")
+color = 5
+
+[sub_resource type="Resource" id="Resource_7p5pa"]
+script = ExtResource("1_f7cla")
+color = 1
+
+[sub_resource type="Resource" id="Resource_g2f05"]
+script = ExtResource("1_f7cla")
+
+[resource]
+script = ExtResource("2_1l3eo")
+level_id = "custom_level_1793300033"
+display_name = "Strawberry"
+locale_display_names = {
+"en": "Strawberry",
+"fr": "Fraise",
+"pirate": "Strawberry"
+}
+section_index = 3
+sort_index = 1330
+columns = 9
+multi_goal_mode = true
+goal_right_phases = Array[ExtResource("1_f7cla")]([SubResource("Resource_3r30l"), SubResource("Resource_g153e"), SubResource("Resource_mim2w"), SubResource("Resource_7p5pa"), SubResource("Resource_g2f05")])
+goal_bottom_phases = Array[ExtResource("1_f7cla")]([SubResource("Resource_k75o7")])
+goal_left_enabled = false
+goal_top_enabled = false
+goal_bottom_enabled = true
+block_positions = Array[Vector2i]([Vector2i(3, 0), Vector2i(0, 1), Vector2i(0, 4), Vector2i(2, 4), Vector2i(3, 6), Vector2i(2, 3), Vector2i(5, 4), Vector2i(5, 0), Vector2i(4, 1), Vector2i(6, 3)])
+block_colors = Array[int]([2, 0, 3, 3, 0, 0, 3, 2, 3, 0])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(2, 1), Vector2i(1, 1), Vector2i(1, 2), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(2, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(1, 2), Vector2i(1, 1), Vector2i(2, 1), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(2, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 2), Vector2i(2, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 1), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(0, 0), Vector2i(2, 0), Vector2i(2, 1)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9", "Shape 10"])
+group_title_key = "UI_GROUP_MEADOW_CHARMS"
+verified_solvable = true
+min_moves = 10
+difficulty_score = 68.3
+difficulty_tier = 2

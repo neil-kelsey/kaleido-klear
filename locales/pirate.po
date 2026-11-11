@@ -868,6 +868,15 @@ msgstr "Only the mixed colour fits that mark — a crimson block won’t sail in
 msgid "UI_TUTORIAL_COLOUR_MIX_ONCE"
 msgstr "Once two blocks have mixed, that new block won’t mix again."
 
+msgid "UI_TUTORIAL_COLOUR_MIX_PREVIEW"
+msgstr "Press and hold a block to preview the colours it'll brew."
+
+msgid "UI_TUTORIAL_COLOUR_MIX_SCORE"
+msgstr "Brew the right colour, then shove it to its mark."
+
+msgid "UI_TUTORIAL_ARROWS"
+msgstr "Arrows show where a block can sail. No arrow, no move."
+
 msgid "UI_SECTION_4"
 msgstr "Ion Leys"
 
@@ -1123,3 +1132,6 @@ msgstr "Tidepool Scribbles"
 
 msgid "UI_GROUP_HARBOR_CURIOS"
 msgstr "Harbor Oddments"
+
+msgid "UI_GROUP_MEADOW_CHARMS"
+msgstr "Meadow Trinkets"

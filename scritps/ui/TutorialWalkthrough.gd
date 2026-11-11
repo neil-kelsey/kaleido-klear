@@ -34,6 +34,11 @@ const SCRIPTS := {
 				"icons": [{"kind": "swipe", "a": 2, "height": 150}],
 			},
 			{
+				"text_key": "UI_TUTORIAL_ARROWS",
+				"spotlight": "board",
+				"clip": "res://assets/tutorials/arrows.ogv",
+			},
+			{
 				"text_key": "UI_TUTORIAL_BASIC_GOALS",
 				"spotlight": "goal_edges",
 				"icons": [{"kind": "goals", "height": 240}],
@@ -50,23 +55,14 @@ const SCRIPTS := {
 		"title_key": "UI_GROUP_COLOUR_MIX",
 		"steps": [
 			{
-				"text_key": "UI_TUTORIAL_COLOUR_MIX_BLEND",
+				"text_key": "UI_TUTORIAL_COLOUR_MIX_PREVIEW",
 				"spotlight": "board",
-				"icons": [
-					{"kind": "merge", "a": 0, "b": 3, "r": 5, "height": 112},
-					{"kind": "merge", "a": 3, "b": 2, "r": 1, "height": 112},
-					{"kind": "merge", "a": 0, "b": 2, "r": 4, "height": 112},
-				],
+				"clip": "res://assets/tutorials/colour_mix_preview.ogv",
 			},
 			{
-				"text_key": "UI_TUTORIAL_COLOUR_MIX_GOALS",
+				"text_key": "UI_TUTORIAL_COLOUR_MIX_SCORE",
 				"spotlight": "goal_edges",
-				"icons": [{"kind": "mismatch", "a": 0, "r": 5, "height": 124}],
-			},
-			{
-				"text_key": "UI_TUTORIAL_COLOUR_MIX_ONCE",
-				"spotlight": "board",
-				"icons": [{"kind": "nomerge", "a": 5, "b": 1, "height": 124}],
+				"clip": "res://assets/tutorials/colour_mix_score.ogv",
 			},
 		],
 	},
@@ -123,6 +119,7 @@ var _ring: Panel
 var _card: PanelContainer
 var _title: Label
 var _body: Label
+var _clip: TutorialClip
 var _icon_box: VBoxContainer
 var _next_button: MenuActionButton
 
@@ -251,6 +248,10 @@ func _build() -> void:
 	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	vbox.add_child(_title)
 
+	_clip = TutorialClip.new()
+	_clip.visible = false
+	vbox.add_child(_clip)
+
 	_body = Label.new()
 	_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -307,7 +308,14 @@ func _apply_step_copy() -> void:
 	var step: Dictionary = steps[_step_index]
 	_title.text = tr(str(_script.get("title_key", "")))
 	_body.text = tr(str(step.get("text_key", "")))
-	_rebuild_icons(step.get("icons", []))
+	var clip_path := str(step.get("clip", ""))
+	if _clip != null:
+		_clip.set_stream_path(clip_path)
+	## Clip replaces the old diagram icons on that step.
+	if clip_path.is_empty():
+		_rebuild_icons(step.get("icons", []))
+	else:
+		_rebuild_icons([])
 	var last := _step_index >= steps.size() - 1
 	_next_button.set_label(tr("UI_TUTORIAL_GOT_IT" if last else "UI_TUTORIAL_NEXT"))
 
@@ -381,6 +389,7 @@ func _place_card(hole: Rect2, vp: Vector2) -> void:
 	var inner_w := maxf(max_w - CARD_PAD_X * 2.0, 1.0)
 	_title.custom_minimum_size.x = inner_w
 	_body.custom_minimum_size.x = inner_w
+	_fit_clip_size(inner_w, vp, top_pad, bottom_pad)
 	_card.custom_minimum_size.x = max_w
 	_card.reset_size()
 	var h := _card.get_combined_minimum_size().y
@@ -410,6 +419,28 @@ func _place_card(hole: Rect2, vp: Vector2) -> void:
 	_card.offset_bottom = -(vp.y - (top + h))
 	_card.offset_top = _card.offset_bottom - h
 	_card.size = Vector2(max_w, h)
+
+
+func _fit_clip_size(inner_w: float, vp: Vector2, top_pad: float, bottom_pad: float) -> void:
+	if _clip == null or not _clip.visible:
+		if _clip != null:
+			_clip.custom_minimum_size = Vector2.ZERO
+		return
+	var aspect := _clip.content_aspect()
+	var desired := inner_w / aspect
+	## Leave room for title, caption, button, padding, and a little air above.
+	var reserved := (
+		CARD_PAD_Y * 2.0
+		+ TITLE_FONT_SIZE * 1.3
+		+ BODY_FONT_SIZE * 2.6
+		+ 128.0
+		+ 28.0 * 3.0
+		+ top_pad
+		+ bottom_pad
+		+ 24.0
+	)
+	var max_h := maxf(vp.y - reserved, 260.0)
+	_clip.custom_minimum_size = Vector2(inner_w, minf(desired, max_h))
 
 
 func _spotlight_rect() -> Rect2:

@@ -868,6 +868,15 @@ msgstr "Only the mixed colour fits that goal — a red block will not go into an
 msgid "UI_TUTORIAL_COLOUR_MIX_ONCE"
 msgstr "Once two blocks have mixed, that new block will not mix again."
 
+msgid "UI_TUTORIAL_COLOUR_MIX_PREVIEW"
+msgstr "Press and hold a block to preview its colour mixes."
+
+msgid "UI_TUTORIAL_COLOUR_MIX_SCORE"
+msgstr "Mix the right colour, then move it to its goal."
+
+msgid "UI_TUTORIAL_ARROWS"
+msgstr "Arrows show where a block can move. No arrow, no move."
+
 msgid "UI_SECTION_4"
 msgstr "Ion Meadows"
 
@@ -1123,3 +1132,6 @@ msgstr "Tidepool Glyphs"
 
 msgid "UI_GROUP_HARBOR_CURIOS"
 msgstr "Harbor Curios"
+
+msgid "UI_GROUP_MEADOW_CHARMS"
+msgstr "Meadow Charms"

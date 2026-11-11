@@ -1,0 +1,59 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_xd2q3"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_g204l"]
+
+[sub_resource type="Resource" id="Resource_jpku8"]
+script = ExtResource("1_xd2q3")
+color = 5
+
+[sub_resource type="Resource" id="Resource_gb5kp"]
+script = ExtResource("1_xd2q3")
+color = 2
+
+[sub_resource type="Resource" id="Resource_e5c2t"]
+script = ExtResource("1_xd2q3")
+color = 5
+
+[sub_resource type="Resource" id="Resource_b3ohv"]
+script = ExtResource("1_xd2q3")
+color = 1
+
+[sub_resource type="Resource" id="Resource_m6wp8"]
+script = ExtResource("1_xd2q3")
+color = 1
+
+[sub_resource type="Resource" id="Resource_16v30"]
+script = ExtResource("1_xd2q3")
+color = 3
+
+[resource]
+script = ExtResource("2_g204l")
+level_id = "custom_level_1793300031"
+display_name = "Snowflake"
+locale_display_names = {
+"en": "Snowflake",
+"fr": "Flocon",
+"pirate": "Snowflake"
+}
+section_index = 3
+sort_index = 1310
+columns = 9
+rows = 7
+multi_goal_mode = true
+goal_top_phases = Array[ExtResource("1_xd2q3")]([SubResource("Resource_m6wp8"), SubResource("Resource_16v30")])
+goal_bottom_phases = Array[ExtResource("1_xd2q3")]([SubResource("Resource_jpku8"), SubResource("Resource_gb5kp"), SubResource("Resource_e5c2t"), SubResource("Resource_b3ohv")])
+goal_left_enabled = false
+goal_right_enabled = false
+goal_bottom_enabled = true
+block_positions = Array[Vector2i]([Vector2i(3, 4), Vector2i(5, 4), Vector2i(2, 0), Vector2i(5, 0), Vector2i(4, 3), Vector2i(3, 1), Vector2i(1, 3), Vector2i(5, 3), Vector2i(0, 2), Vector2i(6, 2)])
+block_colors = Array[int]([0, 0, 3, 3, 3, 2, 3, 3, 2, 2])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(1, 1), Vector2i(2, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(2, 1)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9", "Shape 10"])
+group_title_key = "UI_GROUP_MEADOW_CHARMS"
+verified_solvable = true
+min_moves = 10
+difficulty_score = 64.64
+difficulty_tier = 2

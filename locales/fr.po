@@ -868,6 +868,15 @@ msgstr "Seule la couleur mélangée correspond à ce but — un bloc rouge n’e
 msgid "UI_TUTORIAL_COLOUR_MIX_ONCE"
 msgstr "Une fois deux blocs mélangés, le nouveau bloc ne se mélangera plus."
 
+msgid "UI_TUTORIAL_COLOUR_MIX_PREVIEW"
+msgstr "Appuyez et maintenez un bloc pour prévisualiser ses mélanges de couleurs."
+
+msgid "UI_TUTORIAL_COLOUR_MIX_SCORE"
+msgstr "Mélangez la bonne couleur, puis déplacez-la vers son but."
+
+msgid "UI_TUTORIAL_ARROWS"
+msgstr "Les flèches indiquent où un bloc peut aller. Pas de flèche, pas de mouvement."
+
 msgid "UI_SECTION_4"
 msgstr "Prairies d'ions"
 
@@ -1051,3 +1060,6 @@ msgstr "Glyphes des mares"
 
 msgid "UI_GROUP_HARBOR_CURIOS"
 msgstr "Curiosités du port"
+
+msgid "UI_GROUP_MEADOW_CHARMS"
+msgstr "Charmes des prés"
