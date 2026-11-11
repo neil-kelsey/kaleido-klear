@@ -203,23 +203,32 @@ func _ensure_section_backdrop() -> void:
 
 
 func _sync_safe_hud() -> void:
-	var insets := UiTheme.viewport_safe_insets(get_viewport())
+	_apply_safe_hud(UiTheme.viewport_safe_insets(get_viewport()))
+
+
+func _apply_safe_hud(insets: Vector4) -> void:
+	## Goal bars always sit flush on the literal screen edges (top, bottom,
+	## left, right) — never inset by the status bar / camera cutout. Board
+	## scoring already aims at the true viewport edge, so an inset bar made
+	## blocks look like they passed through it. Only the HUD (lives, help,
+	## bottom buttons) and the playfield respect the safe-area insets.
+	var bar := float(GoalBorder.BAR_WIDTH)
 	if goal_border_top != null:
-		goal_border_top.offset_top = insets.y
-		goal_border_top.offset_bottom = insets.y + float(GoalBorder.BAR_WIDTH)
+		goal_border_top.offset_top = 0.0
+		goal_border_top.offset_bottom = bar
 	if goal_border_bottom != null:
-		goal_border_bottom.offset_top = -float(GoalBorder.BAR_WIDTH) - insets.w
-		goal_border_bottom.offset_bottom = -insets.w
+		goal_border_bottom.offset_top = -bar
+		goal_border_bottom.offset_bottom = 0.0
 	if goal_border_left != null:
-		goal_border_left.offset_left = insets.x
-		goal_border_left.offset_right = insets.x + float(GoalBorder.BAR_WIDTH)
-		goal_border_left.offset_top = insets.y
-		goal_border_left.offset_bottom = -insets.w
+		goal_border_left.offset_left = 0.0
+		goal_border_left.offset_right = bar
+		goal_border_left.offset_top = 0.0
+		goal_border_left.offset_bottom = 0.0
 	if goal_border_right != null:
-		goal_border_right.offset_left = -float(GoalBorder.BAR_WIDTH) - insets.z
-		goal_border_right.offset_right = -insets.z
-		goal_border_right.offset_top = insets.y
-		goal_border_right.offset_bottom = -insets.w
+		goal_border_right.offset_left = -bar
+		goal_border_right.offset_right = 0.0
+		goal_border_right.offset_top = 0.0
+		goal_border_right.offset_bottom = 0.0
 
 	if lives_hud != null:
 		lives_hud.set_top_chrome(insets.y)

@@ -6,9 +6,9 @@ class_name TutorialClip
 const BG := Color(2.0 / 255.0, 2.0 / 255.0, 4.0 / 255.0, 1.0)
 const RADIUS := 20
 const CLIP_SIZES := {
-	"res://assets/tutorials/colour_mix_preview.ogv": Vector2(1040, 720),
-	"res://assets/tutorials/colour_mix_score.ogv": Vector2(1080, 1216),
-	"res://assets/tutorials/arrows.ogv": Vector2(1080, 1100),
+	"res://assets/tutorials/colour_mix_preview.ogv": Vector2(1080, 804),
+	"res://assets/tutorials/colour_mix_score.ogv": Vector2(1080, 956),
+	"res://assets/tutorials/arrows.ogv": Vector2(1080, 1166),
 }
 
 var content_size: Vector2 = Vector2(1080, 840)
