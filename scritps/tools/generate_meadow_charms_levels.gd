@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Meadow Charms: 40 picture levels in Ion Meadows (section 3), 40 Medium (pitched at the medium/hard boundary)
+## Meadow Charms: 40 picture levels in Ion Meadows (section 3), 39 Medium / 1 Hard (pitched at the medium/hard boundary)
 ## (Easy, Medium, Hard, Very Hard). Layouts, colours, goals and one recorded
 ## winning line live in meadow_charms_levels.json. They came from a
 ## solver-guided search over hand-drawn silhouettes (animals, plants, vehicles and everyday

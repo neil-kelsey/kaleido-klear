@@ -50,4 +50,4 @@ group_title_key = "UI_GROUP_MEADOW_CHARMS"
 verified_solvable = true
 min_moves = 9
 difficulty_score = 60.44
-difficulty_tier = 2
+difficulty_tier = 3

@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## Checks the 40 Meadow Charms levels (Ion Meadows, section 3):
-## - every level is in LevelRegistry, in the right section/group, all 40 Medium (pitched medium-hard);
+## - every level is in LevelRegistry, in the right section/group, 39 Medium / 1 Hard (pitched medium-hard);
 ## - piece rules (>= 3 cells, connected, no overlap, walls are WALL pieces);
 ## - nothing can leave on the first swipe;
 ## - the recorded winning line wins in PuzzleSim AND on the real Board scene
@@ -54,7 +54,7 @@ func _sim_sig(st) -> Array:
 	return out
 
 
-const EXPECTED_TIERS := {1: 0, 2: 40, 3: 0, 4: 0}
+const EXPECTED_TIERS := {1: 0, 2: 39, 3: 1, 4: 0}
 
 
 func _run() -> void:
