@@ -1,0 +1,62 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_pws47"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_3wquo"]
+
+[sub_resource type="Resource" id="Resource_opock"]
+script = ExtResource("1_pws47")
+color = 5
+
+[sub_resource type="Resource" id="Resource_pgblg"]
+script = ExtResource("1_pws47")
+
+[sub_resource type="Resource" id="Resource_2dg0v"]
+script = ExtResource("1_pws47")
+color = 5
+
+[sub_resource type="Resource" id="Resource_5417e"]
+script = ExtResource("1_pws47")
+color = 2
+
+[sub_resource type="Resource" id="Resource_s8eb6"]
+script = ExtResource("1_pws47")
+color = 3
+
+[sub_resource type="Resource" id="Resource_kopda"]
+script = ExtResource("1_pws47")
+color = 5
+
+[sub_resource type="Resource" id="Resource_f84k1"]
+script = ExtResource("1_pws47")
+color = 1
+
+[resource]
+script = ExtResource("2_3wquo")
+level_id = "custom_level_1793400044"
+display_name = "Car"
+locale_display_names = {
+"en": "Car",
+"fr": "Voiture",
+"pirate": "Car"
+}
+section_index = 3
+sort_index = 2440
+columns = 11
+rows = 6
+multi_goal_mode = true
+goal_right_phases = Array[ExtResource("1_pws47")]([SubResource("Resource_s8eb6"), SubResource("Resource_kopda"), SubResource("Resource_f84k1")])
+goal_bottom_phases = Array[ExtResource("1_pws47")]([SubResource("Resource_opock"), SubResource("Resource_pgblg"), SubResource("Resource_2dg0v"), SubResource("Resource_5417e")])
+goal_left_enabled = false
+goal_top_enabled = false
+goal_bottom_enabled = true
+block_positions = Array[Vector2i]([Vector2i(3, 0), Vector2i(6, 0), Vector2i(4, 1), Vector2i(6, 2), Vector2i(8, 1), Vector2i(3, 2), Vector2i(2, 1), Vector2i(1, 4), Vector2i(8, 3), Vector2i(9, 2), Vector2i(0, 2)])
+block_colors = Array[int]([0, 3, 2, 0, 0, 3, 2, 3, 3, 0, 3])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 2), Vector2i(0, 2), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9", "Shape 10", "Shape 11"])
+group_title_key = "UI_GROUP_HEDGEROW_TREASURES"
+verified_solvable = true
+min_moves = 11
+difficulty_score = 69.45
+difficulty_tier = 2

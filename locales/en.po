@@ -1135,3 +1135,6 @@ msgstr "Harbor Curios"
 
 msgid "UI_GROUP_MEADOW_CHARMS"
 msgstr "Meadow Charms"
+
+msgid "UI_GROUP_HEDGEROW_TREASURES"
+msgstr "Hedgerow Treasures"

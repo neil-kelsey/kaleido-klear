@@ -1135,3 +1135,6 @@ msgstr "Harbor Oddments"
 
 msgid "UI_GROUP_MEADOW_CHARMS"
 msgstr "Meadow Trinkets"
+
+msgid "UI_GROUP_HEDGEROW_TREASURES"
+msgstr "Hedgerow Plunder"

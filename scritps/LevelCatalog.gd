@@ -636,22 +636,29 @@ func is_last_level_in_section(level: LevelConfig) -> bool:
 
 
 func has_next_section(current: LevelConfig) -> bool:
-	if current == null:
-		return false
-	var context: Dictionary = find_level_context(current.level_id)
-	if context.is_empty():
-		return false
-	return context.section_index + 1 < SECTIONS.size()
+	## True only when there is a real, playable level to move on to. An empty
+	## stub dimension (no levels yet) or a locked one is not a "next section".
+	return get_first_level_of_next_section(current) != null
 
 
 func get_first_level_of_next_section(current: LevelConfig) -> LevelConfig:
+	## First level of the next main-path dimension, or null when there isn't one
+	## the player can actually play (end of content, empty stub, locked, or the
+	## next slot is a side branch such as Tutorial).
 	if current == null:
 		return null
 	var context: Dictionary = find_level_context(current.level_id)
 	if context.is_empty():
 		return null
-	var next_section_index: int = context.section_index + 1
+	var section_index: int = int(context.section_index)
+	if is_dimension_side_branch(section_index):
+		return null
+	var next_section_index: int = section_index + 1
 	if next_section_index >= SECTIONS.size():
+		return null
+	if is_dimension_side_branch(next_section_index):
+		return null
+	if not is_dimension_unlocked(next_section_index):
 		return null
 	var section_levels := get_section_levels(next_section_index)
 	if section_levels.is_empty():

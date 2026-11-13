@@ -134,11 +134,19 @@ func play() -> void:
 		_reveal_results()
 
 
-func show_result(stars: int, section_complete: bool = false, has_next_section: bool = false) -> void:
+func show_result(
+	stars: int,
+	section_complete: bool = false,
+	has_next_section: bool = false,
+	end_of_content: bool = false
+) -> void:
 	_playtest_mode = false
 	_set_standard_layout(true)
 	if GameSession.audit_play:
 		next_level_button.label_text = tr("UI_BACK_TO_LEVEL_AUDIT")
+	elif end_of_content:
+		## Nothing left to play yet: don't offer Next, send them back to dimensions.
+		next_level_button.label_text = tr("UI_BACK_TO_LEVEL_SELECT")
 	elif section_complete:
 		if has_next_section:
 			next_level_button.label_text = tr("UI_PLAY_NEXT_SECTION")

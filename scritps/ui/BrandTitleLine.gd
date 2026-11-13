@@ -183,7 +183,12 @@ func _refresh() -> void:
 	_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	## The scene can be swapped out mid-refresh (e.g. bouncing to the map).
+	if not is_inside_tree():
+		return
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	await get_tree().process_frame
 	if is_instance_valid(_viewport):
 		_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED

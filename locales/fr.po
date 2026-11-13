@@ -1063,3 +1063,6 @@ msgstr "Curiosités du port"
 
 msgid "UI_GROUP_MEADOW_CHARMS"
 msgstr "Charmes des prés"
+
+msgid "UI_GROUP_HEDGEROW_TREASURES"
+msgstr "Trésors des haies"

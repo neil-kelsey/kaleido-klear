@@ -72,6 +72,11 @@ func _ready() -> void:
 		board.load_level(selected_level)
 
 	_current_level = board.level_config
+	if _current_level == null:
+		## Never show an empty board: with no level to play, go back to dimensions.
+		push_warning("Main: no level to load; returning to dimensions.")
+		_go_to_dimension_map.call_deferred()
+		return
 	GameSession.focus_dimension_level(_current_level)
 	_apply_section_theme()
 	_apply_goal_borders(_current_level)
@@ -903,13 +908,15 @@ func _on_level_cleared(remaining_lives: int) -> void:
 		)
 	var section_complete := false
 	var has_next_section := false
+	var end_of_content := false
 	if not GameSession.active_level_playlist.is_empty():
 		section_complete = GameSession.is_last_in_playlist(_current_level)
 	else:
 		section_complete = LevelCatalog.is_last_level_in_section(_current_level)
 		has_next_section = LevelCatalog.has_next_section(_current_level)
+		end_of_content = _is_campaign_end_of_content(_current_level)
 	if kleared_overlay != null:
-		kleared_overlay.show_result(stars, section_complete, has_next_section)
+		kleared_overlay.show_result(stars, section_complete, has_next_section, end_of_content)
 		_sync_remove_ads_button()
 		kleared_overlay.play()
 	if not GameSession.audit_play:
@@ -967,12 +974,38 @@ func _advance_to_next_level() -> void:
 		GameSession.set_level(next_level)
 		get_tree().change_scene_to_file(GAME_SCENE)
 		return
-	if GameSession.active_level_playlist.is_empty() and LevelCatalog.has_next_section(_current_level):
+	if GameSession.active_level_playlist.is_empty():
 		var first_level := LevelCatalog.get_first_level_of_next_section(_current_level)
-		GameSession.set_level(first_level)
-		get_tree().change_scene_to_file(GAME_SCENE)
-		return
+		if first_level != null:
+			GameSession.set_level(first_level)
+			get_tree().change_scene_to_file(GAME_SCENE)
+			return
+		if _is_campaign_end_of_content(_current_level):
+			_go_to_dimension_map()
+			return
+	## Dailies (one-level playlist) and Tutorial go back where they came from.
 	get_tree().change_scene_to_file(GameSession.get_return_scene())
+
+
+## Last playable campaign level: no next level in this dimension and no
+## playable next dimension. Tutorial (side branch) keeps its own Continue flow.
+func _is_campaign_end_of_content(level: LevelConfig) -> bool:
+	if level == null or not GameSession.active_level_playlist.is_empty():
+		return false
+	var context: Dictionary = LevelCatalog.find_level_context(level.level_id)
+	if context.is_empty():
+		return false
+	if LevelCatalog.is_tutorial_dimension(int(context.section_index)):
+		return false
+	if GameSession.get_next_level(level) != null:
+		return false
+	return LevelCatalog.get_first_level_of_next_section(level) == null
+
+
+func _go_to_dimension_map() -> void:
+	## Same reverse dive the dimension screen's back button plays.
+	GameSession.pending_map_zoom_out = true
+	get_tree().change_scene_to_file(LEVEL_SELECT_SCENE)
 
 
 func _on_remove_ads_pressed() -> void:
