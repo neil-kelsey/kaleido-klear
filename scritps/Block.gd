@@ -70,6 +70,7 @@ var _merge_blend_from_moving: Color = Color.WHITE
 var _merge_blend_stationary_cells: Array[Vector2i] = []
 var _merge_blend_moving_cells: Array[Vector2i] = []
 var _merge_impact_offset: Vector2 = Vector2.ZERO
+var _region_cache: Dictionary = {}
 var _drag_focus: bool = false
 
 
@@ -420,78 +421,235 @@ func _grid_vertex_to_pixel(vertex: Vector2i, half: float, cell_size: float) -> V
 	return Vector2(vertex.x * cell_size - half, vertex.y * cell_size - half)
 
 
-func _add_boundary_edge(
-	edge_map: Dictionary,
+## Every closed boundary loop of a cell set: the outline plus one loop per
+## enclosed hole (a merge can wrap two shapes around an empty square, as on
+## Squirrel). Edges run with the filled side on their right (y-down), so outer
+## loops have positive signed area and hole loops negative. A vertex can start
+## two edges (a hole corner or a diagonal pinch). The old tracer kept one edge per
+## vertex in a dictionary, so depending on cell order it lost the outline and drew
+## only the hole. Here every edge is kept and each vertex takes the sharpest
+## right turn, which keeps loops tight around the filled cells.
+func _boundary_loops(cells: Dictionary) -> Array:
+	var outgoing: Dictionary = {}
+	var edges: Array = []
+	for cell_offset: Vector2i in cells.keys():
+		var ox: int = cell_offset.x
+		var oy: int = cell_offset.y
+		if not cells.has(cell_offset + Vector2i(0, -1)):
+			_add_boundary_edge_multi(outgoing, edges, Vector2i(ox, oy), Vector2i(ox + 1, oy), cell_offset, "north")
+		if not cells.has(cell_offset + Vector2i(1, 0)):
+			_add_boundary_edge_multi(outgoing, edges, Vector2i(ox + 1, oy), Vector2i(ox + 1, oy + 1), cell_offset, "east")
+		if not cells.has(cell_offset + Vector2i(0, 1)):
+			_add_boundary_edge_multi(outgoing, edges, Vector2i(ox + 1, oy + 1), Vector2i(ox, oy + 1), cell_offset, "south")
+		if not cells.has(cell_offset + Vector2i(-1, 0)):
+			_add_boundary_edge_multi(outgoing, edges, Vector2i(ox, oy + 1), Vector2i(ox, oy), cell_offset, "west")
+
+	# Deterministic start order so the result never depends on cell order.
+	edges.sort_custom(func(e1: Dictionary, e2: Dictionary) -> bool:
+		var f1: Vector2i = e1["from_v"]
+		var f2: Vector2i = e2["from_v"]
+		if f1.x != f2.x:
+			return f1.x < f2.x
+		if f1.y != f2.y:
+			return f1.y < f2.y
+		var t1: Vector2i = e1["to_v"]
+		var t2: Vector2i = e2["to_v"]
+		if t1.x != t2.x:
+			return t1.x < t2.x
+		return t1.y < t2.y
+	)
+
+	var used: Dictionary = {}
+	var loops: Array = []
+	for start_edge: Dictionary in edges:
+		if used.has(start_edge):
+			continue
+		var loop: Array = []
+		var edge: Dictionary = start_edge
+		for _step in edges.size() + 1:
+			used[edge] = true
+			loop.append(edge)
+			var to_v: Vector2i = edge["to_v"]
+			if to_v == start_edge["from_v"]:
+				break
+			var dir: Vector2i = to_v - Vector2i(edge["from_v"])
+			var next_edge: Dictionary = {}
+			var best_rank := 99
+			for candidate: Dictionary in outgoing.get(to_v, []):
+				if used.has(candidate):
+					continue
+				var cdir: Vector2i = Vector2i(candidate["to_v"]) - to_v
+				var rank := _turn_rank(dir, cdir)
+				if rank < best_rank:
+					best_rank = rank
+					next_edge = candidate
+			if next_edge.is_empty():
+				break
+			edge = next_edge
+		if loop.size() >= 4 and Vector2i(loop[-1]["to_v"]) == Vector2i(loop[0]["from_v"]):
+			loops.append(loop)
+	return loops
+
+
+func _add_boundary_edge_multi(
+	outgoing: Dictionary,
+	edges: Array,
 	from_vertex: Vector2i,
 	to_vertex: Vector2i,
 	cell: Vector2i,
 	side: String
 ) -> void:
-	edge_map[from_vertex] = {"to": to_vertex, "cell": cell, "side": side}
+	var edge := {"from_v": from_vertex, "to_v": to_vertex, "cell": cell, "side": side}
+	edges.append(edge)
+	if not outgoing.has(from_vertex):
+		outgoing[from_vertex] = []
+	outgoing[from_vertex].append(edge)
 
 
-func _chain_boundary_edges(cells: Dictionary) -> Array:
-	var edge_map: Dictionary = {}
+## 0 = right turn (y-down), 1 = straight, 2 = left turn, 3 = reverse.
+static func _turn_rank(dir: Vector2i, next_dir: Vector2i) -> int:
+	if next_dir == Vector2i(-dir.y, dir.x):
+		return 0
+	if next_dir == dir:
+		return 1
+	if next_dir == Vector2i(dir.y, -dir.x):
+		return 2
+	return 3
 
-	for cell_offset: Vector2i in cells.keys():
-		var ox: int = cell_offset.x
-		var oy: int = cell_offset.y
-		if not cells.has(cell_offset + Vector2i(0, -1)):
-			_add_boundary_edge(
-				edge_map,
-				Vector2i(ox, oy),
-				Vector2i(ox + 1, oy),
-				cell_offset,
-				"north"
-			)
-		if not cells.has(cell_offset + Vector2i(1, 0)):
-			_add_boundary_edge(
-				edge_map,
-				Vector2i(ox + 1, oy),
-				Vector2i(ox + 1, oy + 1),
-				cell_offset,
-				"east"
-			)
-		if not cells.has(cell_offset + Vector2i(0, 1)):
-			_add_boundary_edge(
-				edge_map,
-				Vector2i(ox + 1, oy + 1),
-				Vector2i(ox, oy + 1),
-				cell_offset,
-				"south"
-			)
-		if not cells.has(cell_offset + Vector2i(-1, 0)):
-			_add_boundary_edge(
-				edge_map,
-				Vector2i(ox, oy + 1),
-				Vector2i(ox, oy),
-				cell_offset,
-				"west"
-			)
 
-	if edge_map.is_empty():
-		return []
+static func _loop_signed_area(loop: Array) -> float:
+	var area := 0.0
+	for edge: Dictionary in loop:
+		var a: Vector2i = edge["from_v"]
+		var b: Vector2i = edge["to_v"]
+		area += float(a.x * b.y - b.x * a.y)
+	return area * 0.5
 
-	var start := Vector2i(2147483647, 2147483647)
-	for from_vertex: Vector2i in edge_map.keys():
-		if from_vertex.x < start.x or (from_vertex.x == start.x and from_vertex.y < start.y):
-			start = from_vertex
 
-	var loop: Array = []
-	var current: Vector2i = start
-	for _step in edge_map.size() + 1:
-		var data: Dictionary = edge_map[current]
-		loop.append({
-			"from_v": current,
-			"to_v": data["to"],
-			"cell": data["cell"],
-			"side": data["side"],
-		})
-		current = data["to"]
-		if current == start:
-			break
+## Simple (hole-free) polygons covering the shape, inset by `inset` pixels.
+## Holes are cut out by splitting the shape into vertical bands through each
+## hole, so every polygon can go straight to draw_colored_polygon. A shape
+## without holes gives exactly one polygon, as before.
+func _shape_region_polygons(
+	cells: Dictionary,
+	half: float,
+	cell_size: float,
+	inset: float,
+	round_radius: float
+) -> Array[PackedVector2Array]:
+	var cache_key := "%s|%s|%s|%s|%s" % [_cells_cache_key(cells), half, cell_size, inset, round_radius]
+	if _region_cache.has(cache_key):
+		return _region_cache[cache_key]
 
-	return loop
+	var result: Array[PackedVector2Array] = []
+	var outers: Array[PackedVector2Array] = []
+	var holes: Array[PackedVector2Array] = []
+	var hole_cut_xs: Array[float] = []
+	for loop in _boundary_loops(cells):
+		var polygon := _build_outer_polygon(loop, half, cell_size)
+		if _loop_signed_area(loop) > 0.0:
+			for body in _inset_polygon(polygon, inset):
+				outers.append(_round_convex_corners(body, round_radius) if round_radius > 0.0 else body)
+		else:
+			polygon.reverse()
+			for grown in _inset_polygon(polygon, -inset):
+				holes.append(_round_convex_corners(grown, round_radius, true) if round_radius > 0.0 else grown)
+			var first_cell: Vector2i = loop[0]["cell"]
+			var hole_cell := _hole_cell_for_loop(loop, cells)
+			if hole_cell != Vector2i(2147483647, 2147483647):
+				first_cell = hole_cell
+			hole_cut_xs.append(first_cell.x * cell_size)
+
+	if holes.is_empty():
+		result = outers
+	else:
+		hole_cut_xs.sort()
+		var min_x := INF
+		var max_x := -INF
+		var min_y := INF
+		var max_y := -INF
+		for polygon in outers:
+			for point in polygon:
+				min_x = minf(min_x, point.x)
+				max_x = maxf(max_x, point.x)
+				min_y = minf(min_y, point.y)
+				max_y = maxf(max_y, point.y)
+		var bounds: Array[float] = [min_x - 1.0]
+		for x in hole_cut_xs:
+			if x > bounds[-1] + 0.5 and x < max_x:
+				bounds.append(x)
+		bounds.append(max_x + 1.0)
+		for band_index in bounds.size() - 1:
+			var x0: float = bounds[band_index]
+			var x1: float = bounds[band_index + 1]
+			var band := PackedVector2Array([
+				Vector2(x0, min_y - 1.0),
+				Vector2(x1, min_y - 1.0),
+				Vector2(x1, max_y + 1.0),
+				Vector2(x0, max_y + 1.0),
+			])
+			for outer in outers:
+				var pieces: Array = []
+				for piece in Geometry2D.intersect_polygons(outer, band):
+					if not Geometry2D.is_polygon_clockwise(piece):
+						pieces.append(piece)
+				for hole in holes:
+					var next_pieces: Array = []
+					for piece in pieces:
+						for clipped in Geometry2D.clip_polygons(piece, hole):
+							if not Geometry2D.is_polygon_clockwise(clipped):
+								next_pieces.append(clipped)
+					pieces = next_pieces
+				for piece in pieces:
+					if piece.size() >= 3:
+						result.append(piece)
+
+	if _region_cache.size() > 32:
+		_region_cache.clear()
+	_region_cache[cache_key] = result
+	return result
+
+
+## Centre column of a hole: the empty cell on the inner side of the hole
+## loop's first edge, so the band cut runs through the middle of the hole.
+func _hole_cell_for_loop(loop: Array, cells: Dictionary) -> Vector2i:
+	for edge: Dictionary in loop:
+		var cell: Vector2i = edge["cell"]
+		var side: String = edge["side"]
+		var empty := cell
+		match side:
+			"north":
+				empty = cell + Vector2i(0, -1)
+			"east":
+				empty = cell + Vector2i(1, 0)
+			"south":
+				empty = cell + Vector2i(0, 1)
+			"west":
+				empty = cell + Vector2i(-1, 0)
+		if not cells.has(empty):
+			return empty
+	return Vector2i(2147483647, 2147483647)
+
+
+func _cells_cache_key(cells: Dictionary) -> String:
+	var parts: Array[String] = []
+	for cell: Vector2i in cells.keys():
+		parts.append("%d,%d" % [cell.x, cell.y])
+	parts.sort()
+	return ";".join(parts)
+
+
+## Inset (positive) or grow (negative) a counter-clockwise-in-Godot polygon,
+## keeping only outer results.
+func _inset_polygon(polygon: PackedVector2Array, inset: float) -> Array[PackedVector2Array]:
+	var out: Array[PackedVector2Array] = []
+	if is_zero_approx(inset):
+		out.append(polygon)
+		return out
+	for candidate in Geometry2D.offset_polygon(polygon, -inset, Geometry2D.JOIN_MITER):
+		if not Geometry2D.is_polygon_clockwise(candidate) and candidate.size() >= 3:
+			out.append(candidate)
+	return out
 
 
 func _cells_set_from_offsets(offsets: Array[Vector2i]) -> Dictionary:
@@ -507,17 +665,6 @@ func _build_outer_polygon(edge_loop: Array, half: float, cell_size: float) -> Pa
 		var edge: Dictionary = edge_variant
 		polygon.append(_grid_vertex_to_pixel(edge["from_v"], half, cell_size))
 	return polygon
-
-
-func _build_body_polygon(outer_polygon: PackedVector2Array, margin: float) -> PackedVector2Array:
-	var inset_polygons := Geometry2D.offset_polygon(
-		outer_polygon,
-		-margin,
-		Geometry2D.JOIN_MITER
-	)
-	if inset_polygons.is_empty():
-		return outer_polygon
-	return inset_polygons[0]
 
 
 func _merge_corner_radius() -> float:
@@ -586,7 +733,11 @@ static func _draw_rounded_rect_filled(
 		canvas.draw_colored_polygon(points, color)
 
 
-func _round_convex_corners(polygon: PackedVector2Array, radius: float) -> PackedVector2Array:
+func _round_convex_corners(
+	polygon: PackedVector2Array,
+	radius: float,
+	round_concave: bool = false
+) -> PackedVector2Array:
 	var count := polygon.size()
 	if count < 3 or radius <= 0.0:
 		return polygon
@@ -610,6 +761,9 @@ func _round_convex_corners(polygon: PackedVector2Array, radius: float) -> Packed
 		var out_dir := out_edge / out_len
 		var cross := in_dir.x * out_dir.y - in_dir.y * out_dir.x
 		var is_convex := cross > 0.0 if ccw else cross < 0.0
+		if round_concave:
+			# Hole outlines: the piece's convex corners are the hole's concave ones.
+			is_convex = not is_convex and absf(cross) > 0.001
 		if not is_convex:
 			rounded.append(curr)
 			continue
@@ -634,12 +788,6 @@ func _round_convex_corners(polygon: PackedVector2Array, radius: float) -> Packed
 	return rounded
 
 
-func _merge_body_polygon(body_polygon: PackedVector2Array) -> PackedVector2Array:
-	if block_kind != BlockKind.MERGE:
-		return body_polygon
-	return _round_convex_corners(body_polygon, _merge_corner_radius())
-
-
 func _polygon_area(polygon: PackedVector2Array) -> float:
 	var count := polygon.size()
 	if count < 3:
@@ -654,27 +802,20 @@ func _polygon_area(polygon: PackedVector2Array) -> float:
 
 
 func _moving_blend_overlay(
-	full_body: PackedVector2Array,
+	body_polygons: Array[PackedVector2Array],
 	half: float,
 	cell_size: float
-) -> PackedVector2Array:
-	var moving_loop := _chain_boundary_edges(_cells_set_from_offsets(_merge_blend_moving_cells))
-	if moving_loop.is_empty():
-		return PackedVector2Array()
-
-	var moving_outer := _build_outer_polygon(moving_loop, half, cell_size)
-	var clipped := Geometry2D.intersect_polygons(full_body, moving_outer)
-	if clipped.is_empty():
-		return PackedVector2Array()
-
-	var largest := clipped[0]
-	var largest_area := absf(_polygon_area(largest))
-	for polygon in clipped:
-		var area := absf(_polygon_area(polygon))
-		if area > largest_area:
-			largest = polygon
-			largest_area = area
-	return largest
+) -> Array[PackedVector2Array]:
+	var overlays: Array[PackedVector2Array] = []
+	var moving_regions := _shape_region_polygons(
+		_cells_set_from_offsets(_merge_blend_moving_cells), half, cell_size, 0.0, 0.0
+	)
+	for body in body_polygons:
+		for moving_outer in moving_regions:
+			for clipped in Geometry2D.intersect_polygons(body, moving_outer):
+				if clipped.size() >= 3 and not Geometry2D.is_polygon_clockwise(clipped):
+					overlays.append(clipped)
+	return overlays
 
 
 func _polygon_with_offset(polygon: PackedVector2Array, offset: Vector2) -> PackedVector2Array:
@@ -698,6 +839,20 @@ func _draw_drag_focus_border(body_polygon: PackedVector2Array) -> void:
 
 	var scroll := Time.get_ticks_msec() / 1000.0 * FOCUS_CHEVRON_SCROLL_SPEED
 	_draw_focus_chevrons_on_polygon(body_polygon, scroll)
+
+
+## Band clipping can leave hairline slivers (near-zero area or a doubled-back
+## point) that the triangulator rejects with an error. They are invisible, so skip.
+static func _drawable_sliver(poly: PackedVector2Array) -> bool:
+	if poly.size() < 3:
+		return false
+	var area := 0.0
+	for i in poly.size():
+		var j := (i + 1) % poly.size()
+		area += poly[i].x * poly[j].y - poly[j].x * poly[i].y
+	if absf(area) * 0.5 < 0.5:
+		return false
+	return not Geometry2D.triangulate_polygon(poly).is_empty()
 
 
 static func _draw_diagonal_bands_on_polygon(
@@ -754,7 +909,7 @@ static func _draw_diagonal_bands_on_polygon(
 			band_color.a = layer_alpha
 			var clipped: Array = Geometry2D.intersect_polygons(points, clip_polygon)
 			for poly in clipped:
-				if poly.size() >= 3:
+				if _drawable_sliver(poly):
 					canvas.draw_colored_polygon(poly, band_color)
 
 
@@ -818,7 +973,7 @@ func _draw_focus_chevrons_on_polygon(clip_polygon: PackedVector2Array, scroll: f
 		stripe_color.a = FOCUS_CHEVRON_ALPHA if index % 2 == 0 else FOCUS_CHEVRON_ALPHA * 0.2
 		var clipped: Array = Geometry2D.intersect_polygons(points, clip_polygon)
 		for poly in clipped:
-			if poly.size() >= 3:
+			if _drawable_sliver(poly):
 				draw_colored_polygon(poly, stripe_color)
 
 
@@ -829,27 +984,32 @@ func _draw() -> void:
 	var half := _cell_size / 2.0
 	var cell_size := float(_cell_size)
 	var margin := _cell_edge_margin()
-	var edge_loop := _chain_boundary_edges(_shape_cells_set())
-	if edge_loop.is_empty():
+	var cells := _shape_cells_set()
+	var tint_polygons := _shape_region_polygons(cells, half, cell_size, 0.0, 0.0)
+	if tint_polygons.is_empty():
 		return
 
-	var outer_polygon := _build_outer_polygon(edge_loop, half, cell_size)
-	var body_polygon := _merge_body_polygon(_build_body_polygon(outer_polygon, margin))
-	var nudged_body := _polygon_with_offset(body_polygon, _merge_impact_offset)
-	draw_colored_polygon(outer_polygon, _current_tint_color())
+	var corner_radius := _merge_corner_radius() if block_kind == BlockKind.MERGE else 0.0
+	var body_polygons := _shape_region_polygons(cells, half, cell_size, margin, corner_radius)
+	var tint_color := _current_tint_color()
+	for polygon in tint_polygons:
+		draw_colored_polygon(polygon, tint_color)
 
 	if is_merge_blending() and not _merge_blend_moving_cells.is_empty():
-		draw_colored_polygon(nudged_body, _merge_region_fill_color(_merge_fill_from))
-		var moving_overlay := _moving_blend_overlay(body_polygon, half, cell_size)
-		if not moving_overlay.is_empty():
-			draw_colored_polygon(
-				_polygon_with_offset(moving_overlay, _merge_impact_offset),
-				_merge_region_fill_color(_merge_blend_from_moving)
-			)
+		var from_fill := _merge_region_fill_color(_merge_fill_from)
+		for body in body_polygons:
+			draw_colored_polygon(_polygon_with_offset(body, _merge_impact_offset), from_fill)
+		var moving_fill := _merge_region_fill_color(_merge_blend_from_moving)
+		for overlay in _moving_blend_overlay(body_polygons, half, cell_size):
+			draw_colored_polygon(_polygon_with_offset(overlay, _merge_impact_offset), moving_fill)
 		return
 
 	var fill_color := _current_fill_color()
-	draw_colored_polygon(nudged_body, fill_color)
-	if block_kind == BlockKind.MERGE and not is_interaction_active():
-		_draw_merge_shine_on_polygon(self, nudged_body, fill_color, float(Time.get_ticks_msec()))
-	_draw_drag_focus_border(nudged_body)
+	var shine := block_kind == BlockKind.MERGE and not is_interaction_active()
+	var time_ms := float(Time.get_ticks_msec())
+	for body in body_polygons:
+		var nudged_body := _polygon_with_offset(body, _merge_impact_offset)
+		draw_colored_polygon(nudged_body, fill_color)
+		if shine:
+			_draw_merge_shine_on_polygon(self, nudged_body, fill_color, time_ms)
+		_draw_drag_focus_border(nudged_body)
