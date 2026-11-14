@@ -1069,3 +1069,6 @@ msgstr "Trésors des haies"
 
 msgid "UI_GROUP_COTTAGE_KEEPSAKES"
 msgstr "Souvenirs de chaumière"
+
+msgid "UI_GROUP_STARLIT_SOUVENIRS"
+msgstr "Souvenirs étoilés"

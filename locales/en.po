@@ -1141,3 +1141,6 @@ msgstr "Hedgerow Treasures"
 
 msgid "UI_GROUP_COTTAGE_KEEPSAKES"
 msgstr "Cottage Keepsakes"
+
+msgid "UI_GROUP_STARLIT_SOUVENIRS"
+msgstr "Starlit Souvenirs"

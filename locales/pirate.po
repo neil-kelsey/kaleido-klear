@@ -1141,3 +1141,6 @@ msgstr "Hedgerow Plunder"
 
 msgid "UI_GROUP_COTTAGE_KEEPSAKES"
 msgstr "Cottage Booty"
+
+msgid "UI_GROUP_STARLIT_SOUVENIRS"
+msgstr "Starlit Spoils"
