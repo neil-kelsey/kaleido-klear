@@ -144,14 +144,14 @@ func _run() -> void:
 		print("%s %s tier=%d moves=%d sim=WIN board=%s lives=%d" % [
 			"PASS" if ok else "FAIL", label, level.difficulty_tier, steps.size(),
 			"WIN" if ok else "NO", board.get_lives()])
-	## Placement: Ion Meadows lists Meadow Charms first, then this whole subsection in one block.
+	## Placement: Ion Meadows lists Meadow Charms, then this whole subsection in one block, then Cottage Keepsakes.
 	var order: Array[String] = []
 	var catalog = root.get_node("LevelCatalog")
 	for lv in catalog.get_section_levels(3):
 		var k := (lv as LevelConfig).group_title_key.strip_edges()
 		if order.is_empty() or order[-1] != k:
 			order.append(k)
-	if order != ["UI_GROUP_MEADOW_CHARMS", "UI_GROUP_HEDGEROW_TREASURES"]:
+	if order != ["UI_GROUP_MEADOW_CHARMS", "UI_GROUP_HEDGEROW_TREASURES", "UI_GROUP_COTTAGE_KEEPSAKES"]:
 		_fail("Ion Meadows chapter order is %s" % [order])
 	else:
 		print("Ion Meadows chapters: %s" % [order])

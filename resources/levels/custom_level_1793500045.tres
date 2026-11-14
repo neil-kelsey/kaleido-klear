@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_vuy6g"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_wyich"]
+
+[sub_resource type="Resource" id="Resource_0gmrk"]
+script = ExtResource("1_vuy6g")
+color = 5
+
+[sub_resource type="Resource" id="Resource_j8vt5"]
+script = ExtResource("1_vuy6g")
+color = 1
+
+[sub_resource type="Resource" id="Resource_5lq17"]
+script = ExtResource("1_vuy6g")
+color = 5
+
+[sub_resource type="Resource" id="Resource_pyhsw"]
+script = ExtResource("1_vuy6g")
+color = 4
+
+[sub_resource type="Resource" id="Resource_y1tq7"]
+script = ExtResource("1_vuy6g")
+
+[resource]
+script = ExtResource("2_wyich")
+level_id = "custom_level_1793500045"
+display_name = "Broccoli"
+locale_display_names = {
+"en": "Broccoli",
+"fr": "Brocoli",
+"pirate": "Broccoli"
+}
+section_index = 3
+sort_index = 2950
+columns = 9
+multi_goal_mode = true
+goal_left_phases = Array[ExtResource("1_vuy6g")]([SubResource("Resource_j8vt5"), SubResource("Resource_5lq17"), SubResource("Resource_pyhsw"), SubResource("Resource_y1tq7")])
+goal_bottom_phases = Array[ExtResource("1_vuy6g")]([SubResource("Resource_0gmrk")])
+goal_top_enabled = false
+goal_right_enabled = false
+goal_bottom_enabled = true
+block_positions = Array[Vector2i]([Vector2i(2, 0), Vector2i(1, 1), Vector2i(0, 2), Vector2i(7, 2), Vector2i(2, 6), Vector2i(5, 6), Vector2i(4, 4), Vector2i(2, 3), Vector2i(5, 3)])
+block_colors = Array[int]([0, 0, 3, 3, 0, 0, 3, 2, 2])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(2, 1), Vector2i(0, 1), Vector2i(4, 0), Vector2i(3, 0), Vector2i(3, 1), Vector2i(4, 1)]), Array[Vector2i]([Vector2i(3, 1), Vector2i(2, 1), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0), Vector2i(4, 1), Vector2i(5, 1), Vector2i(6, 1), Vector2i(6, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9"])
+group_title_key = "UI_GROUP_COTTAGE_KEEPSAKES"
+verified_solvable = true
+min_moves = 9
+difficulty_score = 64.64
+difficulty_tier = 2

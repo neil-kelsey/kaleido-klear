@@ -1138,3 +1138,6 @@ msgstr "Meadow Trinkets"
 
 msgid "UI_GROUP_HEDGEROW_TREASURES"
 msgstr "Hedgerow Plunder"
+
+msgid "UI_GROUP_COTTAGE_KEEPSAKES"
+msgstr "Cottage Booty"

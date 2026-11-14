@@ -1138,3 +1138,6 @@ msgstr "Meadow Charms"
 
 msgid "UI_GROUP_HEDGEROW_TREASURES"
 msgstr "Hedgerow Treasures"
+
+msgid "UI_GROUP_COTTAGE_KEEPSAKES"
+msgstr "Cottage Keepsakes"

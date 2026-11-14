@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_bi5xu"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_vfl6d"]
+
+[sub_resource type="Resource" id="Resource_h1uvm"]
+script = ExtResource("1_bi5xu")
+color = 1
+
+[sub_resource type="Resource" id="Resource_pjpn2"]
+script = ExtResource("1_bi5xu")
+
+[sub_resource type="Resource" id="Resource_v2yl4"]
+script = ExtResource("1_bi5xu")
+color = 5
+
+[sub_resource type="Resource" id="Resource_wd5rb"]
+script = ExtResource("1_bi5xu")
+color = 4
+
+[sub_resource type="Resource" id="Resource_6yg2c"]
+script = ExtResource("1_bi5xu")
+
+[sub_resource type="Resource" id="Resource_goidl"]
+script = ExtResource("1_bi5xu")
+color = 1
+
+[resource]
+script = ExtResource("2_vfl6d")
+level_id = "custom_level_1793500019"
+display_name = "Chick"
+locale_display_names = {
+"en": "Chick",
+"fr": "Poussin",
+"pirate": "Chick"
+}
+section_index = 3
+sort_index = 2690
+rows = 7
+multi_goal_mode = true
+goal_top_phases = Array[ExtResource("1_bi5xu")]([SubResource("Resource_goidl")])
+goal_right_phases = Array[ExtResource("1_bi5xu")]([SubResource("Resource_h1uvm"), SubResource("Resource_pjpn2"), SubResource("Resource_v2yl4"), SubResource("Resource_wd5rb"), SubResource("Resource_6yg2c")])
+goal_left_enabled = false
+block_positions = Array[Vector2i]([Vector2i(0, 4), Vector2i(5, 3), Vector2i(5, 5), Vector2i(5, 2), Vector2i(1, 3), Vector2i(2, 1), Vector2i(3, 0), Vector2i(2, 5), Vector2i(5, 0), Vector2i(3, 4)])
+block_colors = Array[int]([3, 2, 0, 0, 2, 3, 2, 0, 3, 0])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9", "Shape 10"])
+group_title_key = "UI_GROUP_COTTAGE_KEEPSAKES"
+verified_solvable = true
+min_moves = 10
+difficulty_score = 63.03
+difficulty_tier = 2

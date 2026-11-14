@@ -1066,3 +1066,6 @@ msgstr "Charmes des prés"
 
 msgid "UI_GROUP_HEDGEROW_TREASURES"
 msgstr "Trésors des haies"
+
+msgid "UI_GROUP_COTTAGE_KEEPSAKES"
+msgstr "Souvenirs de chaumière"
