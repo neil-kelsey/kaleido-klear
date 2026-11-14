@@ -52,4 +52,4 @@ group_title_key = "UI_GROUP_COTTAGE_KEEPSAKES"
 verified_solvable = true
 min_moves = 10
 difficulty_score = 65.88
-difficulty_tier = 2
+difficulty_tier = 3

@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## Checks the 50 Cottage Keepsakes levels (Ion Meadows, section 3, after Hedgerow Treasures):
-## - every level is in LevelRegistry, in the right section/group, tiers as listed in EXPECTED_TIERS, nothing above Medium so all can feed the daily pool;
+## - every level is in LevelRegistry, in the right section/group, tiers as listed in EXPECTED_TIERS, nothing above Medium except Football, Avocado and Number 9 (Hard, by request);
 ## - piece rules (>= 3 cells, connected, no overlap, walls are WALL pieces);
 ## - nothing can leave on the first swipe;
 ## - the recorded winning line wins in PuzzleSim AND on the real Board scene
@@ -54,7 +54,7 @@ func _sim_sig(st) -> Array:
 	return out
 
 
-const EXPECTED_TIERS := {1: 8, 2: 42, 3: 0, 4: 0}
+const EXPECTED_TIERS := {1: 8, 2: 39, 3: 3, 4: 0}
 
 
 func _run() -> void:
