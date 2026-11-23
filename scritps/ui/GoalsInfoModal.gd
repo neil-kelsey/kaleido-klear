@@ -6,6 +6,8 @@ signal closed
 @onready var title_label: Label = %TitleLabel
 @onready var close_button: Button = %CloseButton
 @onready var map_host: Control = %MapHost
+@onready var overlay: ColorRect = $Overlay
+@onready var panel: Control = $Center/Panel
 
 var _map: GoalsOverviewMap
 
@@ -13,6 +15,16 @@ var _map: GoalsOverviewMap
 func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	# Center is full-rect; ignore so taps on the dim backdrop reach Overlay,
+	# not the board. The panel still stops so a tap inside the modal stays put.
+	var center := get_node_or_null("Center") as Control
+	if center != null:
+		center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if overlay != null:
+		overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+		overlay.gui_input.connect(_on_overlay_gui_input)
+	if panel != null:
+		panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	UiTheme.style_close_button(close_button)
 	UiTheme.style_chart_modal_copy(title_label)
 	title_label.add_theme_font_size_override("font_size", 48)
@@ -56,5 +68,19 @@ func refresh_overview(goals_by_edge: Dictionary) -> void:
 
 
 func hide_modal() -> void:
+	if not visible:
+		return
 	visible = false
 	closed.emit()
+
+
+func _on_overlay_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
+			accept_event()
+			hide_modal()
+	elif event is InputEventScreenTouch:
+		if not (event as InputEventScreenTouch).pressed:
+			accept_event()
+			hide_modal()

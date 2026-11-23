@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_50fu4"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_w2ogu"]
+
+[sub_resource type="Resource" id="Resource_pqke2"]
+script = ExtResource("1_50fu4")
+color = 1
+
+[sub_resource type="Resource" id="Resource_oohn0"]
+script = ExtResource("1_50fu4")
+count = 2
+
+[sub_resource type="Resource" id="Resource_cyjqo"]
+script = ExtResource("1_50fu4")
+color = 5
+
+[sub_resource type="Resource" id="Resource_k3s3c"]
+script = ExtResource("1_50fu4")
+color = 4
+
+[sub_resource type="Resource" id="Resource_1yoq4"]
+script = ExtResource("1_50fu4")
+count = 3
+
+[resource]
+script = ExtResource("2_w2ogu")
+level_id = "custom_level_1793700063"
+display_name = "Puffin"
+locale_display_names = {
+"en": "Puffin",
+"fr": "Macareux",
+"pirate": "Puffin"
+}
+section_index = 5
+sort_index = 460
+columns = 11
+multi_goal_mode = true
+goal_left_phases = Array[ExtResource("1_50fu4")]([SubResource("Resource_pqke2"), SubResource("Resource_oohn0"), SubResource("Resource_cyjqo")])
+goal_top_phases = Array[ExtResource("1_50fu4")]([SubResource("Resource_k3s3c"), SubResource("Resource_1yoq4")])
+goal_right_enabled = false
+block_positions = Array[Vector2i]([Vector2i(0, 2), Vector2i(8, 3), Vector2i(6, 2), Vector2i(4, 0), Vector2i(3, 0), Vector2i(2, 1), Vector2i(6, 6), Vector2i(6, 3), Vector2i(4, 4), Vector2i(3, 5), Vector2i(2, 4)])
+block_colors = Array[int]([2, 0, 0, 0, 2, 0, 0, 3, 0, 0, 3])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(3, 0), Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(3, 1), Vector2i(2, 1), Vector2i(1, 1), Vector2i(0, 1), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(3, 2), Vector2i(2, 2)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 3), Vector2i(1, 2), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 2), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9", "Shape 10", "Shape 11"])
+group_title_key = "UI_GROUP_TEMPEST_RELIQUARY"
+verified_solvable = true
+min_moves = 11
+difficulty_score = 75.52
+difficulty_tier = 2

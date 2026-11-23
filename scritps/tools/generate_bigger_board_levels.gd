@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Tutorial Bigger Boards levels 2–5 (section 10, sort 220–250).
+## Tutorial Bigger Boards levels 2–5 (section 8, sort 220–250).
 ## Level 1 (test_bigger_bait_1, sort 210) is kept as-is and only verified.
 ## Run:
 ##   Godot --headless --path <project> -s res://scritps/tools/generate_bigger_board_levels.gd

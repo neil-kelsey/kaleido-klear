@@ -37,8 +37,8 @@ locale_display_names = {
 "fr": "Ananas",
 "pirate": "Pineapple"
 }
-section_index = 3
-sort_index = 2260
+section_index = 5
+sort_index = 400
 columns = 9
 rows = 9
 multi_goal_mode = true
@@ -53,7 +53,7 @@ block_shapes = Array[String](["single", "single", "single", "single", "single", 
 block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2])
 block_cell_patterns = [Array[Vector2i]([Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 2), Vector2i(2, 2), Vector2i(2, 3), Vector2i(2, 1), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(2, 2), Vector2i(1, 2), Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(1, 2), Vector2i(2, 2), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 2), Vector2i(2, 2)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2), Vector2i(2, 1), Vector2i(2, 2), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 0)])]
 block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9", "Shape 10", "Shape 11", "Shape 12"])
-group_title_key = "UI_GROUP_HEDGEROW_TREASURES"
+group_title_key = "UI_GROUP_TEMPEST_RELIQUARY"
 verified_solvable = true
 min_moves = 11
 difficulty_score = 77.39

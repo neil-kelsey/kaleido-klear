@@ -27,7 +27,7 @@ locale_display_names = {
 "en": "Spare key"
 }
 section_index = 0
-sort_index = 1020
+sort_index = 50
 columns = 13
 rows = 11
 multi_goal_mode = true

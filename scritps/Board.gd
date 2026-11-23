@@ -1064,14 +1064,18 @@ func _end_pointer(pointer_pos: Vector2) -> void:
 		_reset_pointer()
 		return
 
-	if release_speed < MIN_RELEASE_SPEED:
-		_snap_block_back(selected_block, drag_anchor_start, MIN_ANIM_SPEED)
-		_reset_pointer()
-		return
-
+	# A gentle swipe often comes to rest before lift (especially when pushing
+	# one block into a neighbour to mix). Velocity from the last two samples
+	# is then ~0, even though the block already visibly left its cell.
+	# Treat a clear along-axis pull as a swipe; keep MIN_RELEASE_SPEED as a
+	# way to accept short flicks. Hold-to-preview is unchanged: no axis lock
+	# until the pointer has moved DRAG_THRESHOLD.
 	var axis_vec := Vector2(drag_locked_axis)
-	if release_velocity.dot(axis_vec) < MIN_RELEASE_SPEED * 0.5:
-		_snap_block_back(selected_block, drag_anchor_start, release_speed)
+	var pulled := total_drag.dot(axis_vec)
+	var flicked := release_velocity.dot(axis_vec) >= MIN_RELEASE_SPEED * 0.5
+	var dragged_far := pulled >= maxf(DRAG_THRESHOLD, float(cell_size) * 0.22)
+	if not flicked and not dragged_far:
+		_snap_block_back(selected_block, drag_anchor_start, maxf(release_speed, MIN_ANIM_SPEED))
 		_reset_pointer()
 		return
 
@@ -1093,14 +1097,23 @@ func _get_release_velocity() -> Vector2:
 	if drag_samples.size() < 2:
 		return Vector2.ZERO
 
+	# The lift event is sampled at the last drag pose, so the final pair is
+	# often a 0–1 ms stationary tail. Walk back to a sample that actually moved.
 	var newest: Dictionary = drag_samples[-1]
-	var previous: Dictionary = drag_samples[-2]
-	var elapsed_ms: int = newest.time - previous.time
+	var i := drag_samples.size() - 2
+	while i > 0:
+		var dt_ms: int = int(newest.time) - int(drag_samples[i].time)
+		var moved: float = (newest.pos as Vector2).distance_to(drag_samples[i].pos)
+		if dt_ms > 0 and moved > 0.5:
+			break
+		i -= 1
+	var previous: Dictionary = drag_samples[i]
+	var elapsed_ms: int = int(newest.time) - int(previous.time)
 	if elapsed_ms <= 0:
 		return Vector2.ZERO
 
 	var elapsed_sec := elapsed_ms / 1000.0
-	return (newest.pos - previous.pos) / elapsed_sec
+	return ((newest.pos as Vector2) - (previous.pos as Vector2)) / elapsed_sec
 
 
 func _get_release_speed() -> float:
@@ -1116,14 +1129,15 @@ func _move_duration(speed: float, distance: float) -> float:
 func _snap_block_back(block: Block, anchor: Vector2i, speed: float) -> void:
 	var target_world := _anchor_to_world(anchor)
 	var distance := block.position.distance_to(target_world)
+	# Re-register immediately so a follow-up swipe is not eaten by is_busy
+	# (handle_input_event returns early while a cancel tween is playing).
+	block.grid_pos = anchor
+	_register_block_cells(block)
+	block.z_index = 0
 	if distance < 1.0:
 		block.position = target_world
-		block.grid_pos = anchor
-		_register_block_cells(block)
-		block.z_index = 0
 		return
 
-	is_busy = true
 	var tween := create_tween()
 	tween.tween_property(
 		block,
@@ -1131,12 +1145,6 @@ func _snap_block_back(block: Block, anchor: Vector2i, speed: float) -> void:
 		target_world,
 		_move_duration(speed, distance)
 	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(func():
-		block.grid_pos = anchor
-		_register_block_cells(block)
-		block.z_index = 0
-		is_busy = false
-	)
 
 
 func _commit_move(block: Block, start_pos: Vector2i, direction: Vector2i, speed: float) -> void:

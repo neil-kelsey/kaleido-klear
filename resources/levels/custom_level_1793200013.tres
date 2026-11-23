@@ -29,7 +29,7 @@ locale_display_names = {
 "pirate": "Kite"
 }
 section_index = 2
-sort_index = 2130
+sort_index = 400
 columns = 7
 multi_goal_mode = true
 goal_left_phases = Array[ExtResource("1_mbr77")]([SubResource("Resource_6qmxh"), SubResource("Resource_f0neh")])

@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## Checks the 50 Hedgerow Treasures levels (Ion Meadows, section 3, after Meadow Charms):
-## - every level is in LevelRegistry, in the right section/group, tiers as listed in EXPECTED_TIERS, nothing above Medium so all can feed the daily pool;
+## - every level is in LevelRegistry, in their campaign_layout.json placement, tiers as listed in EXPECTED_TIERS, nothing above Medium so all can feed the daily pool;
 ## - piece rules (>= 3 cells, connected, no overlap, walls are WALL pieces);
 ## - nothing can leave on the first swipe;
 ## - the recorded winning line wins in PuzzleSim AND on the real Board scene
@@ -13,6 +13,7 @@ extends SceneTree
 const Gen := preload("res://scritps/tools/generate_hedgerow_treasures_levels.gd")
 const PuzzleSimScript := preload("res://scritps/tools/PuzzleSim.gd")
 const LevelGenRulesScript := preload("res://scritps/tools/LevelGenRules.gd")
+const CampaignLayoutScript := preload("res://scritps/tools/CampaignLayout.gd")
 
 var _fails := 0
 
@@ -76,8 +77,9 @@ func _run() -> void:
 		if level == null:
 			_fail("%s does not load" % label)
 			continue
-		if level.section_index != 3 or level.group_title_key != "UI_GROUP_HEDGEROW_TREASURES":
-			_fail("%s wrong section/group" % label)
+		var place_err := CampaignLayoutScript.matches(level)
+		if place_err != "":
+			_fail("%s %s" % [label, place_err])
 		if level.difficulty_tier != int(spec.tier):
 			_fail("%s tier %d != %d" % [label, level.difficulty_tier, int(spec.tier)])
 		tiers[level.difficulty_tier] = int(tiers.get(level.difficulty_tier, 0)) + 1
@@ -144,17 +146,6 @@ func _run() -> void:
 		print("%s %s tier=%d moves=%d sim=WIN board=%s lives=%d" % [
 			"PASS" if ok else "FAIL", label, level.difficulty_tier, steps.size(),
 			"WIN" if ok else "NO", board.get_lives()])
-	## Placement: Ion Meadows lists Meadow Charms, then this whole subsection in one block, then Cottage Keepsakes.
-	var order: Array[String] = []
-	var catalog = root.get_node("LevelCatalog")
-	for lv in catalog.get_section_levels(3):
-		var k := (lv as LevelConfig).group_title_key.strip_edges()
-		if order.is_empty() or order[-1] != k:
-			order.append(k)
-	if order != ["UI_GROUP_MEADOW_CHARMS", "UI_GROUP_HEDGEROW_TREASURES", "UI_GROUP_COTTAGE_KEEPSAKES"]:
-		_fail("Ion Meadows chapter order is %s" % [order])
-	else:
-		print("Ion Meadows chapters: %s" % [order])
 	for t in [1, 2, 3, 4]:
 		if int(tiers[t]) != int(EXPECTED_TIERS[t]):
 			_fail("tier %d has %d levels" % [t, int(tiers[t])])

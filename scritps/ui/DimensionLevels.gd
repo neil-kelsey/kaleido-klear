@@ -114,17 +114,19 @@ func _ready() -> void:
 		back_button.accent_color = _theme_color
 	_levels = LevelCatalog.get_section_levels(_dimension_index)
 	_paging_enabled = _should_enable_paging()
-	print(
-		"[DimensionLevels] start dim=%s levels=%s paging=%s" % [
-			_dimension_index, _levels.size(), _paging_enabled
-		]
-	)
+	if OS.is_debug_build():
+		print(
+			"[DimensionLevels] start dim=%s levels=%s paging=%s" % [
+				_dimension_index, _levels.size(), _paging_enabled
+			]
+		)
 	_star_chart_tex = load(STAR_CHART_PATH) as Texture2D
 	if _star_chart_tex == null:
 		push_warning("Missing baked level star chart at %s — run bake_level_star_chart.gd" % STAR_CHART_PATH)
 
 	_nebula_mat = NebulaEffect.apply_backdrop(nebula_bg)
-	print("[DimensionLevels] backdrop +%sms" % _elapsed_ms())
+	if OS.is_debug_build():
+		print("[DimensionLevels] backdrop +%sms" % _elapsed_ms())
 	set_process(true)
 	_ensure_chart_sprite()
 
@@ -155,14 +157,16 @@ func _ready() -> void:
 	## a good layout. On Android the size is already valid — a long wait is a
 	## black screen.
 	var waited := await _await_valid_viewport()
-	print("[DimensionLevels] viewport ready after %s frames +%sms size=%s" % [
-		waited, _elapsed_ms(), get_viewport_rect().size
-	])
+	if OS.is_debug_build():
+		print("[DimensionLevels] viewport ready after %s frames +%sms size=%s" % [
+			waited, _elapsed_ms(), get_viewport_rect().size
+		])
 	_rebuild_map()
 	_restore_level_focus(GameSession.consume_dimension_level_focus(_dimension_index))
 	_sync_title_to_chart_pole()
 	GameSession.fade_scene_wipe_out(0.32)
-	print("[DimensionLevels] first layout +%sms" % _elapsed_ms())
+	if OS.is_debug_build():
+		print("[DimensionLevels] first layout +%sms" % _elapsed_ms())
 
 
 func _notification(what: int) -> void:
@@ -232,9 +236,10 @@ func _on_viewport_resized() -> void:
 	if vp.distance_to(_last_vp_size) < 1.0:
 		return
 	_resize_rebuilds += 1
-	print("[DimensionLevels] resize #%s %s -> %s +%sms" % [
-		_resize_rebuilds, _last_vp_size, vp, _elapsed_ms()
-	])
+	if OS.is_debug_build():
+		print("[DimensionLevels] resize #%s %s -> %s +%sms" % [
+			_resize_rebuilds, _last_vp_size, vp, _elapsed_ms()
+		])
 	_last_vp_size = vp
 	var keep := _page_index
 	_rebuild_map()
@@ -265,7 +270,8 @@ func _rebuild_map() -> void:
 	_sync_chart_sprite()
 	_sync_title_to_chart_pole()
 	_cache_level_progress()
-	print("[DimensionLevels] rebuild +%sms levels=%s" % [_elapsed_ms(), _levels.size()])
+	if OS.is_debug_build():
+		print("[DimensionLevels] rebuild +%sms levels=%s" % [_elapsed_ms(), _levels.size()])
 	queue_redraw()
 
 
@@ -296,7 +302,8 @@ func _cache_level_progress() -> void:
 		if not dim_unlocked or level == null:
 			_level_unlocked[i] = false
 			continue
-		_level_unlocked[i] = true if i <= 0 else _level_stars[i - 1] > 0
+		## Same rules as GameSession (sequential, plus existing-star migration).
+		_level_unlocked[i] = GameSession.is_level_unlocked(level)
 
 
 func _content_width() -> float:
@@ -825,9 +832,10 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 			FaVector.draw_lock(item, center, dsize * 0.34)
 	if not _first_draw_logged:
 		_first_draw_logged = true
-		print("[DimensionLevels] first diamonds draw +%sms visible=%s / %s" % [
-			_elapsed_ms(), drawn, count
-		])
+		if OS.is_debug_build():
+			print("[DimensionLevels] first diamonds draw +%sms visible=%s / %s" % [
+				_elapsed_ms(), drawn, count
+			])
 
 
 func _ensure_chart_sprite() -> void:

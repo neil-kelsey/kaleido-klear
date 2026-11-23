@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Bigger Boards tutorial levels 3-5 (section 10, sort 230/240/250).
+## Bigger Boards tutorial levels 3-5 (section 8, sort 230/240/250).
 ## Frozen layouts + colours + goal phases found by a randomised playthrough
 ## search and verified with LevelSolver. Every piece is a MERGE block so the
 ## first useful move is a mix, never a score. Levels 1-2 are left untouched.

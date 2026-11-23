@@ -32,7 +32,7 @@ locale_display_names = {
 "pirate": "Feather"
 }
 section_index = 4
-sort_index = 100
+sort_index = 180
 columns = 11
 rows = 7
 multi_goal_mode = true

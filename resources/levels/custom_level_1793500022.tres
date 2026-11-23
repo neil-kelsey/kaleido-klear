@@ -32,8 +32,8 @@ locale_display_names = {
 "fr": "Glace à l'eau",
 "pirate": "Ice Lolly"
 }
-section_index = 3
-sort_index = 2720
+section_index = 4
+sort_index = 410
 columns = 7
 rows = 10
 multi_goal_mode = true

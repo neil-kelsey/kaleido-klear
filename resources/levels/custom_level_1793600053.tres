@@ -29,7 +29,7 @@ locale_display_names = {
 "pirate": "Dumbbell"
 }
 section_index = 4
-sort_index = 530
+sort_index = 120
 columns = 12
 rows = 5
 multi_goal_mode = true

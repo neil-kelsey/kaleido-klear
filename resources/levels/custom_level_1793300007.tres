@@ -32,7 +32,7 @@ locale_display_names = {
 "pirate": "Carrot"
 }
 section_index = 3
-sort_index = 1070
+sort_index = 80
 columns = 9
 multi_goal_mode = true
 goal_right_phases = Array[ExtResource("1_m7cb1")]([SubResource("Resource_8faqp")])

@@ -1,6 +1,6 @@
 extends Node2D
 
-## Daily puzzles: three cards (Easy / Medium / Hard) for the UTC day, plus streaks.
+## Daily puzzle: one large diamond for the UTC day, plus a single streak.
 ## Same nebula + star-chart language as dimension level select.
 
 const MAIN_MENU_SCENE := "res://scenes/ui/main_menu.tscn"
@@ -9,13 +9,10 @@ const STAR_CHART_PATH := "res://assets/backgrounds/level_star_chart.png"
 const LevelDetailsModalScript := preload("res://scritps/ui/LevelDetailsModal.gd")
 const STRIP_WORLD := Rect2(-420, -180, 840, 2800)
 
-const CARD_SPACING := 240.0
-const CARD_FIRST_SCREEN_Y := 720.0
-const LEVEL_DIAMOND_SIZE := 130.0
-const DIAMOND_X := -160.0
-const TEXT_X := -70.0
-const TEXT_MAX_W := 340.0
-const CARD_HIT := Rect2(-240, -90, 520, 180)
+const CARD_FIRST_SCREEN_Y := 1020.0
+const LEVEL_DIAMOND_SIZE := 220.0
+const DIAMOND_X := 0.0
+const TEXT_MAX_W := 520.0
 const DAY_CHECK_INTERVAL := 1.0
 const TITLE_POLE_SCREEN_Y := 248.0
 const TITLE_FONT_SIZE := 53
@@ -99,11 +96,10 @@ func _load_day() -> void:
 	_day_key = DailyCatalog.today_key()
 	_levels.clear()
 	_slots.clear()
-	var picks := DailyCatalog.get_daily_set(_day_key)
-	for slot in DailyCatalog.SLOTS:
-		if picks.has(slot):
-			_levels.append(picks[slot])
-			_slots.append(slot)
+	var level: LevelConfig = DailyCatalog.get_daily_level(_day_key)
+	if level != null:
+		_levels.append(level)
+		_slots.append(DailyCatalog.SLOT_DAILY)
 
 
 func _ensure_streak_label() -> void:
@@ -268,7 +264,7 @@ func _rebuild_map() -> void:
 	var z := maxf(camera.zoom.x, 0.001)
 	var start_y := (CARD_FIRST_SCREEN_Y - _title_pole_screen_y()) / z
 	for i in _levels.size():
-		_level_positions.append(Vector2(0.0, start_y + float(i) * CARD_SPACING))
+		_level_positions.append(Vector2(0.0, start_y))
 	camera.position = Vector2(0, _camera_y_for_pole())
 	_sync_chart_sprite()
 	queue_redraw()
@@ -331,14 +327,15 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 	var z := maxf(camera.zoom.x, 0.001)
 	var world_px := 1.0 / z
 	var dsize := LEVEL_DIAMOND_SIZE
-	var rim_w := 1.8 * MAP_DRAW_ZOOM * world_px
+	var rim_w := 2.2 * MAP_DRAW_ZOOM * world_px
 	var count := mini(_levels.size(), _level_positions.size())
 	for i in count:
 		var row: Vector2 = _level_positions[i]
 		var center := row + Vector2(DIAMOND_X, 0.0)
 		var level: LevelConfig = _levels[i]
 		var slot: String = _slots[i]
-		var tint := LevelDifficulty.banner_color(DailyCatalog.slot_tier(slot))
+		## Always the Daily puzzle banner blue, never the level's difficulty colour.
+		var tint: Color = _theme_color
 		var pts := _diamond_points(center, dsize)
 		var outline := pts + PackedVector2Array([pts[0]])
 		var stars := GameSession.get_daily_stars(slot, _day_key)
@@ -347,24 +344,25 @@ func _draw_award_stars_on(item: CanvasItem) -> void:
 		if hovered:
 			NebulaEffect.draw_selection_glow(item, center, dsize, tint)
 		if completed:
-			item.draw_colored_polygon(pts, tint.lightened(0.20 if hovered else 0.05))
+			item.draw_colored_polygon(pts, tint.lightened(0.12 if hovered else 0.0))
 			if stars >= 3:
-				FaVector.draw_star(item, center, dsize * 0.40, Color(0.95, 0.78, 0.2, 1.0),
+				FaVector.draw_star(item, center, dsize * 0.36, Color(0.95, 0.78, 0.2, 1.0),
 					2.0 * MAP_DRAW_ZOOM * world_px, 1.0 * MAP_DRAW_ZOOM * world_px)
 			else:
-				FaVector.draw_check(item, center, dsize * 0.30, Color(1, 1, 1, 0.95))
+				FaVector.draw_check(item, center, dsize * 0.26, Color(1, 1, 1, 0.95))
 		else:
 			var wash := tint
-			wash.a = 0.30 if hovered else 0.16
+			wash.a = 0.32 if hovered else 0.18
 			item.draw_colored_polygon(pts, wash)
 			item.draw_polyline(outline, tint.lightened(0.18) if hovered else tint, rim_w * (1.8 if hovered else 1.4), true)
-			FaVector.draw_named(item, "play", center + Vector2(dsize * 0.03, 0), dsize * 0.28, tint.lightened(0.25))
-		var text_x := row.x + TEXT_X
-		_draw_text(item, tr(DailyCatalog.slot_label_key(slot)).to_upper(), Vector2(text_x, row.y - 34.0 * world_px * 1.6), 40.0, tint.lightened(0.15), world_px)
-		_draw_text(item, LevelCatalog.get_level_label(level), Vector2(text_x, row.y + 14.0 * world_px * 1.6), 32.0, Color(1, 1, 1, 0.88), world_px)
-		var star_r := 15.0 * world_px * 1.6
+			FaVector.draw_named(item, "play", center + Vector2(dsize * 0.03, 0), dsize * 0.26, tint.lightened(0.25))
+		var label_y := center.y + dsize * 0.5 + 48.0 * world_px
+		_draw_text_centered(item, LevelCatalog.get_level_label(level), Vector2(center.x, label_y), 36.0, Color(1, 1, 1, 0.92), world_px)
+		var star_r := 16.0 * world_px * 1.6
+		var star_y := label_y + 44.0 * world_px
+		var star_span := star_r * 2.6 * 2.0
 		for s_i in 3:
-			var sc := Vector2(text_x + star_r + float(s_i) * star_r * 2.6, row.y + 58.0 * world_px * 1.6)
+			var sc := Vector2(center.x - star_span * 0.5 + float(s_i) * star_r * 2.6, star_y)
 			if s_i < stars:
 				FaVector.draw_award_star(item, sc, star_r, 1.6 * world_px * 1.6, 0.8 * world_px * 1.6)
 			else:
@@ -379,6 +377,16 @@ func _draw_text(item: CanvasItem, text: String, left_mid: Vector2, screen_px: fl
 		font_size -= 1
 		width = _map_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	var pos := Vector2(left_mid.x, left_mid.y + (_map_font.get_ascent(font_size) - _map_font.get_descent(font_size)) * 0.5)
+	item.draw_string(_map_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+
+
+func _draw_text_centered(item: CanvasItem, text: String, mid: Vector2, screen_px: float, color: Color, world_px: float) -> void:
+	var font_size := maxi(10, int(round(screen_px * world_px)))
+	var width := _map_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	while width > TEXT_MAX_W and font_size > 10:
+		font_size -= 1
+		width = _map_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var pos := Vector2(mid.x - width * 0.5, mid.y + (_map_font.get_ascent(font_size) - _map_font.get_descent(font_size)) * 0.5)
 	item.draw_string(_map_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 
@@ -424,10 +432,15 @@ func _set_hover_index(index: int) -> void:
 
 
 func _hit_level(world: Vector2) -> int:
+	var z := maxf(camera.zoom.x, 0.001)
+	var world_px := 1.0 / z
+	## Diamond plus the caption/stars underneath.
+	var half := LEVEL_DIAMOND_SIZE * 0.5 + 16.0 * world_px
+	var below := LEVEL_DIAMOND_SIZE * 0.5 + 120.0 * world_px
 	for i in _level_positions.size():
-		var hit_rect := CARD_HIT
-		hit_rect.position += _level_positions[i]
-		if hit_rect.has_point(world):
+		var center: Vector2 = _level_positions[i] + Vector2(DIAMOND_X, 0.0)
+		var delta: Vector2 = world - center
+		if absf(delta.x) <= half and delta.y >= -half and delta.y <= below:
 			return i
 	return -1
 

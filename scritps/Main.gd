@@ -5,6 +5,7 @@ const LEVEL_SELECT_SCENE := "res://scenes/ui/dimension_map.tscn"
 const LEVEL_CREATOR_SCENE := "res://scenes/editor/level_creator.tscn"
 const LevelKlearedOverlay := preload("res://scritps/ui/LevelKlearedOverlay.gd")
 const DifficultyBannerScript := preload("res://scritps/ui/DifficultyBanner.gd")
+const GameTipToastScript := preload("res://scritps/ui/GameTipToast.gd")
 const LevelDifficultyScript := preload("res://scritps/tools/LevelDifficulty.gd")
 
 const ZOOM_MIN := 0.55
@@ -36,6 +37,7 @@ const INTRO_ZOOM_DURATION := 0.9
 var _current_level: LevelConfig = null
 var _section_backdrop: SectionBackdrop = null
 var _tutorial: TutorialWalkthrough = null
+var _heart_tip: GameTipToastScript = null
 var _zoom: float = 1.0
 var _pinch_active := false
 var _pinch_touches: Dictionary = {} # index -> screen position
@@ -104,6 +106,7 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_layout_hud_circle_buttons)
 	_sync_tutorial_help_button()
 	_update_undo_button()
+	_ensure_heart_tip()
 	_play_level_intro()
 	_show_difficulty_banner()
 
@@ -778,6 +781,7 @@ func _go_to_level_creator() -> void:
 
 
 func _go_back() -> void:
+	_hide_heart_tip()
 	if GameSession.playtest_mode:
 		_go_to_level_creator()
 	elif _leave_audit_play():
@@ -868,6 +872,7 @@ func _update_undo_button() -> void:
 
 
 func _restart_level() -> void:
+	_hide_heart_tip()
 	if _current_level == null:
 		return
 	GameSession.restart_level(_current_level)
@@ -926,9 +931,43 @@ func _on_level_cleared(remaining_lives: int) -> void:
 
 func _on_life_lost(remaining_lives: int) -> void:
 	_update_lives_hud(remaining_lives)
+	_maybe_show_heart_tip(remaining_lives)
+
+
+func _ensure_heart_tip() -> void:
+	if _heart_tip != null and is_instance_valid(_heart_tip):
+		return
+	_heart_tip = GameTipToastScript.new()
+	_heart_tip.name = "HeartTipToast"
+	$UI.add_child(_heart_tip)
+
+
+func _hide_heart_tip() -> void:
+	if _heart_tip != null and is_instance_valid(_heart_tip):
+		_heart_tip.hide_tip()
+
+
+func _maybe_show_heart_tip(remaining_lives: int) -> void:
+	if GameSession.has_seen_heart_tip():
+		return
+	## Don't fight the game-over modal if this was the last heart.
+	if remaining_lives <= 0:
+		return
+	if GameSession.playtest_mode or GameSession.audit_play:
+		return
+	if GameSession.is_daily_play(_current_level):
+		return
+	if _intro_playing or _is_tutorial_open():
+		return
+	if game_over_modal != null and game_over_modal.visible:
+		return
+	_ensure_heart_tip()
+	GameSession.mark_heart_tip_seen()
+	_heart_tip.present(tr("UI_HEART_TIP"), lives_hud)
 
 
 func _on_game_over() -> void:
+	_hide_heart_tip()
 	Sfx.play_fail()
 	game_over_modal.show_modal()
 
@@ -1016,7 +1055,8 @@ func _on_share_pressed() -> void:
 	var stars := GameSession.get_level_stars(_current_level.level_id)
 	var share_text := tr("UI_SHARE_MESSAGE") % [stars, tr(_current_level.level_name_key)]
 	DisplayServer.clipboard_set(share_text)
-	print(share_text)
+	if OS.is_debug_build():
+		print(share_text)
 
 
 func _update_lives_hud(remaining_lives: int) -> void:

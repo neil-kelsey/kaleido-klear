@@ -43,8 +43,8 @@ locale_display_names = {
 "fr": "Pile Spectrale",
 "pirate": "Stack o' Spectrum"
 }
-section_index = 2
-sort_index = 4
+section_index = 0
+sort_index = 340
 columns = 6
 rows = 6
 multi_goal_mode = true
@@ -60,7 +60,7 @@ block_shapes = Array[String](["single", "single", "single", "single", "single", 
 block_kinds = Array[int]([0, 0, 0, 0, 0, 0])
 block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0)])]
 block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6"])
-group_title_key = "UI_GROUP_COMET_SHALLOWS"
+group_title_key = "UI_GROUP_MOONLACE_WALLS"
 verified_solvable = true
 min_moves = 6
 difficulty_score = 60.0

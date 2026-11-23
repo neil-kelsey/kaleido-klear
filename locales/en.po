@@ -1,3 +1,8 @@
+msgid ""
+msgstr ""
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "UI_LEVEL_EVENTIDE_VAULT"
 msgstr "Eventide Vault"
@@ -10,11 +15,6 @@ msgstr "Chitin Reef"
 
 msgid "UI_LEVEL_ANVIL_GYRE"
 msgstr "Anvil Gyre"
-msgid ""
-msgstr ""
-"Language: en\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "UI_GAME_TITLE"
 msgstr "Kaleido Klear"
@@ -107,7 +107,7 @@ msgid "UI_DIMENSION_7"
 msgstr "Redshift Wastes"
 
 msgid "UI_DIMENSION_8"
-msgstr "Event Shore"
+msgstr "The Maw"
 
 msgid "UI_DIMENSION_9"
 msgstr "Null Spire"
@@ -117,6 +117,7 @@ msgstr "The Maw"
 
 msgid "UI_DIMENSION_TUTORIAL"
 msgstr "Tutorial"
+
 
 msgid "UI_DIMENSION_MAP_HINT"
 msgstr "Scroll to zoom · drag to pan · tap a diamond"
@@ -145,14 +146,8 @@ msgstr "English"
 msgid "UI_SOUND"
 msgstr "Sound"
 
-msgid "UI_MUSIC"
-msgstr "Music"
-
 msgid "UI_DEVELOP_MODE"
 msgstr "Develop mode"
-
-msgid "UI_COMING_SOON"
-msgstr "Coming soon"
 
 msgid "UI_SETTINGS_PREFERENCES"
 msgstr "Preferences"
@@ -590,7 +585,7 @@ msgid "UI_NO"
 msgstr "No"
 
 msgid "UI_DAILY_PUZZLES"
-msgstr "Daily puzzles"
+msgstr "Daily puzzle"
 
 msgid "UI_DAILY_PUZZLE"
 msgstr "Puzzle %d"
@@ -602,7 +597,43 @@ msgid "UI_DAILY_STREAK_HINT"
 msgstr "Complete one puzzle to keep your streak going!"
 
 msgid "UI_DAILY_EMPTY"
-msgstr "No daily puzzles today."
+msgstr "No daily puzzle today."
+
+msgid "UI_SETTINGS_NOTIFICATIONS"
+msgstr "Notifications"
+
+msgid "UI_DAILY_REMINDERS"
+msgstr "Daily reminders"
+
+msgid "UI_REMINDER_TIME_LABEL"
+msgstr "Reminder time"
+
+msgid "UI_REMINDER_TIME"
+msgstr "12:00"
+
+msgid "UI_TIME_HOUR"
+msgstr "Hour"
+
+msgid "UI_TIME_MINUTE"
+msgstr "Minute"
+
+msgid "UI_REMINDER_TEST"
+msgstr "Test reminder (10s)"
+
+msgid "UI_REMINDER_TITLE"
+msgstr "Daily puzzle"
+
+msgid "UI_REMINDER_BODY_1"
+msgstr "🔥 Your %d-day streak is waiting! Solve today's daily puzzle to keep it going."
+
+msgid "UI_REMINDER_BODY_2"
+msgstr "🔥 %d days and counting. Solve today's daily puzzle to keep the streak going."
+
+msgid "UI_REMINDER_BODY_3"
+msgstr "🔥 Don't let a %d-day streak go cold. Solve today's daily puzzle."
+
+msgid "UI_REMINDER_BODY_4"
+msgstr "🔥 Your %d-day streak misses you. One daily puzzle keeps it going."
 
 msgid "UI_MONTH_1"
 msgstr "January"
@@ -841,9 +872,6 @@ msgstr "Swipe each block into the matching colour goal around the board.\n\nThe 
 msgid "UI_TUTORIAL_BASIC_GOALS"
 msgstr "Each side of the screen can be a different coloured goal, shown as a coloured bar. Swipe a matching block towards a goal to clear that piece."
 
-msgid "UI_TUTORIAL_BASIC_LIVES"
-msgstr "You have three lives. A wrong move costs a heart."
-
 msgid "UI_TUTORIAL_SHIFTING_CHEVRONS"
 msgstr "When a goal hits its quota, it’s cleared.\n\nAnother goal may take its place — or that edge may stay empty.\n\nChevrons on the edges of the goal show which colour the next goal will be."
 
@@ -890,7 +918,7 @@ msgid "UI_SECTION_7"
 msgstr "Redshift Wastes"
 
 msgid "UI_SECTION_8"
-msgstr "Event Shore"
+msgstr "The Maw"
 
 msgid "UI_SECTION_9"
 msgstr "Null Spire"
@@ -976,6 +1004,9 @@ msgstr "Restore purchases"
 msgid "UI_PRIVACY_SETTINGS"
 msgstr "Privacy settings"
 
+msgid "UI_PRIVACY_POLICY"
+msgstr "Privacy policy"
+
 msgid "UI_ADS_REMOVED"
 msgstr "Ads removed. Thank you!"
 
@@ -1053,7 +1084,6 @@ msgstr "Sluice Canal"
 
 msgid "UI_LEVEL_TWIN_MERIDIAN"
 msgstr "Twin Meridian"
-
 
 msgid "UI_LEVEL_AROUND_THE_CLOCK"
 msgstr "Around the Clock"
@@ -1144,3 +1174,24 @@ msgstr "Cottage Keepsakes"
 
 msgid "UI_GROUP_STARLIT_SOUVENIRS"
 msgstr "Starlit Souvenirs"
+
+msgid "UI_GROUP_STORMGLASS_CURIOS"
+msgstr "Stormglass Curios"
+
+msgid "UI_GROUP_TEMPEST_RELIQUARY"
+msgstr "Tempest Reliquary"
+
+msgid "UI_GROUP_EMBER_CACHE"
+msgstr "Ember Cache"
+
+msgid "UI_GROUP_DUST_ORCHARD"
+msgstr "Dust Orchard"
+
+msgid "UI_GROUP_SHORE_RELICS"
+msgstr "Shore Relics"
+
+msgid "UI_GROUP_LAST_QUAY"
+msgstr "The Last Quay"
+
+msgid "UI_HEART_TIP"
+msgstr "Bumping a block you can't mix, or swiping into the wrong colour goal, costs a heart."

@@ -1,3 +1,8 @@
+msgid ""
+msgstr ""
+"Language: pirate\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "UI_LEVEL_EVENTIDE_VAULT"
 msgstr "Dusk'o Vault"
@@ -10,11 +15,6 @@ msgstr "Chitin Reef"
 
 msgid "UI_LEVEL_ANVIL_GYRE"
 msgstr "Anvil Gyre"
-msgid ""
-msgstr ""
-"Language: pirate\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "UI_GAME_TITLE"
 msgstr "Kaleido Klear"
@@ -107,7 +107,7 @@ msgid "UI_DIMENSION_7"
 msgstr "Redshift Doldrums"
 
 msgid "UI_DIMENSION_8"
-msgstr "Event Strand"
+msgstr "The Maw"
 
 msgid "UI_DIMENSION_9"
 msgstr "Null Spar"
@@ -117,6 +117,7 @@ msgstr "The Maw"
 
 msgid "UI_DIMENSION_TUTORIAL"
 msgstr "Tutorin'"
+
 
 msgid "UI_DIMENSION_MAP_HINT"
 msgstr "Scroll to spyglass · drag to sail · tap a diamond"
@@ -145,14 +146,8 @@ msgstr "Proper English"
 msgid "UI_SOUND"
 msgstr "Cannon noise"
 
-msgid "UI_MUSIC"
-msgstr "Sea shanties"
-
 msgid "UI_DEVELOP_MODE"
 msgstr "Cap’n’s workshop"
-
-msgid "UI_COMING_SOON"
-msgstr "Comin’ soon over the horizon"
 
 msgid "UI_SETTINGS_PREFERENCES"
 msgstr "Shipboard"
@@ -590,7 +585,7 @@ msgid "UI_NO"
 msgstr "Nay"
 
 msgid "UI_DAILY_PUZZLES"
-msgstr "Daily voyages"
+msgstr "Daily voyage"
 
 msgid "UI_DAILY_PUZZLE"
 msgstr "Voyage %d"
@@ -602,7 +597,43 @@ msgid "UI_DAILY_STREAK_HINT"
 msgstr "Plunder one puzzle to keep yer streak afloat, matey!"
 
 msgid "UI_DAILY_EMPTY"
-msgstr "No voyages charted for this day."
+msgstr "No voyage charted for this day."
+
+msgid "UI_SETTINGS_NOTIFICATIONS"
+msgstr "Hails"
+
+msgid "UI_DAILY_REMINDERS"
+msgstr "Noon hail"
+
+msgid "UI_REMINDER_TIME_LABEL"
+msgstr "Hail time"
+
+msgid "UI_REMINDER_TIME"
+msgstr "High noon"
+
+msgid "UI_TIME_HOUR"
+msgstr "Bell"
+
+msgid "UI_TIME_MINUTE"
+msgstr "Glass"
+
+msgid "UI_REMINDER_TEST"
+msgstr "Test hail (10s)"
+
+msgid "UI_REMINDER_TITLE"
+msgstr "Daily voyage"
+
+msgid "UI_REMINDER_BODY_1"
+msgstr "🔥 Yer %d-day run be waitin'! Solve today's voyage to keep it goin'."
+
+msgid "UI_REMINDER_BODY_2"
+msgstr "🔥 %d days afore the mast. Today's voyage keeps the run alive."
+
+msgid "UI_REMINDER_BODY_3"
+msgstr "🔥 Don't let a %d-day run go cold. Solve today's voyage."
+
+msgid "UI_REMINDER_BODY_4"
+msgstr "🔥 Yer %d-day run misses ye. One voyage keeps it goin'."
 
 msgid "UI_MONTH_1"
 msgstr "January"
@@ -841,9 +872,6 @@ msgstr "Shove each block into the matching colour mark around the board.\n\nYe�
 msgid "UI_TUTORIAL_BASIC_GOALS"
 msgstr "Each side of the screen can be a different coloured mark, shown as a coloured bar. Shove a matching block toward a mark to clear that piece."
 
-msgid "UI_TUTORIAL_BASIC_LIVES"
-msgstr "Ye get three lives. A botched move costs a heart."
-
 msgid "UI_TUTORIAL_SHIFTING_CHEVRONS"
 msgstr "When a mark hits its quota, it’s wiped.\n\nAnother mark may take the berth — or that edge may stay empty.\n\nChevrons on the edges of the mark show which colour the next mark will be."
 
@@ -890,7 +918,7 @@ msgid "UI_SECTION_7"
 msgstr "Redshift Doldrums"
 
 msgid "UI_SECTION_8"
-msgstr "Event Strand"
+msgstr "The Maw"
 
 msgid "UI_SECTION_9"
 msgstr "Null Spar"
@@ -976,6 +1004,9 @@ msgstr "Recover me treasure"
 msgid "UI_PRIVACY_SETTINGS"
 msgstr "Secrets o' the ship"
 
+msgid "UI_PRIVACY_POLICY"
+msgstr "Articles o' privacy"
+
 msgid "UI_ADS_REMOVED"
 msgstr "No more scurvy ads. Thank ye!"
 
@@ -1053,7 +1084,6 @@ msgstr "Sluice Ditch"
 
 msgid "UI_LEVEL_TWIN_MERIDIAN"
 msgstr "Twin Meridian"
-
 
 msgid "UI_LEVEL_AROUND_THE_CLOCK"
 msgstr "Round the Ship's Clock"
@@ -1144,3 +1174,24 @@ msgstr "Cottage Booty"
 
 msgid "UI_GROUP_STARLIT_SOUVENIRS"
 msgstr "Starlit Spoils"
+
+msgid "UI_GROUP_STORMGLASS_CURIOS"
+msgstr "Stormglass Oddments"
+
+msgid "UI_GROUP_TEMPEST_RELIQUARY"
+msgstr "Tempest Reliquary"
+
+msgid "UI_GROUP_EMBER_CACHE"
+msgstr "Ember Stash"
+
+msgid "UI_GROUP_DUST_ORCHARD"
+msgstr "Dust Orchard"
+
+msgid "UI_GROUP_SHORE_RELICS"
+msgstr "Shore Spoils"
+
+msgid "UI_GROUP_LAST_QUAY"
+msgstr "The Last Quay"
+
+msgid "UI_HEART_TIP"
+msgstr "Bumpin' a block ye can't mix, or swipin' into the wrong colour goal, costs a heart."

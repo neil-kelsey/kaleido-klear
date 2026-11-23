@@ -32,8 +32,8 @@ locale_display_names = {
 "fr": "Oignon",
 "pirate": "Onion"
 }
-section_index = 4
-sort_index = 580
+section_index = 6
+sort_index = 430
 multi_goal_mode = true
 goal_top_phases = Array[ExtResource("1_u607d")]([SubResource("Resource_u6rky")])
 goal_right_phases = Array[ExtResource("1_u607d")]([SubResource("Resource_rd43t"), SubResource("Resource_yhlri"), SubResource("Resource_ovvra")])
@@ -46,7 +46,7 @@ block_shapes = Array[String](["single", "single", "single", "single", "single", 
 block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1])
 block_cell_patterns = [Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2), Vector2i(0, 2), Vector2i(1, 3)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 2), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2), Vector2i(2, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 3), Vector2i(1, 2), Vector2i(1, 1), Vector2i(0, 2), Vector2i(1, 0), Vector2i(2, 1), Vector2i(2, 2)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0)])]
 block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9"])
-group_title_key = "UI_GROUP_STARLIT_SOUVENIRS"
+group_title_key = "UI_GROUP_DUST_ORCHARD"
 verified_solvable = true
 min_moves = 9
 difficulty_score = 62.09

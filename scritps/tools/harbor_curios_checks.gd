@@ -13,6 +13,7 @@ extends SceneTree
 const Gen := preload("res://scritps/tools/generate_harbor_curios_levels.gd")
 const PuzzleSimScript := preload("res://scritps/tools/PuzzleSim.gd")
 const LevelGenRulesScript := preload("res://scritps/tools/LevelGenRules.gd")
+const CampaignLayoutScript := preload("res://scritps/tools/CampaignLayout.gd")
 
 var _fails := 0
 
@@ -76,8 +77,9 @@ func _run() -> void:
 		if level == null:
 			_fail("%s does not load" % label)
 			continue
-		if level.section_index != 2 or level.group_title_key != "UI_GROUP_HARBOR_CURIOS":
-			_fail("%s wrong section/group" % label)
+		var place_err := CampaignLayoutScript.matches(level)
+		if place_err != "":
+			_fail("%s %s" % [label, place_err])
 		if level.difficulty_tier != int(spec.tier):
 			_fail("%s tier %d != %d" % [label, level.difficulty_tier, int(spec.tier)])
 		tiers[level.difficulty_tier] = int(tiers.get(level.difficulty_tier, 0)) + 1

@@ -31,7 +31,7 @@ const SCRIPTS := {
 			{
 				"text_key": "UI_TUTORIAL_BASIC_SWIPE",
 				"spotlight": "board",
-				"icons": [{"kind": "swipe", "a": 2, "height": 150}],
+				"clip": "res://assets/tutorials/basic_swipe.ogv",
 			},
 			{
 				"text_key": "UI_TUTORIAL_ARROWS",
@@ -41,12 +41,7 @@ const SCRIPTS := {
 			{
 				"text_key": "UI_TUTORIAL_BASIC_GOALS",
 				"spotlight": "goal_edges",
-				"icons": [{"kind": "goals", "height": 240}],
-			},
-			{
-				"text_key": "UI_TUTORIAL_BASIC_LIVES",
-				"spotlight": "lives",
-				"icons": [{"kind": "lives", "height": 100}],
+				"clip": "res://assets/tutorials/basic_goals.ogv",
 			},
 		],
 	},
@@ -73,12 +68,12 @@ const SCRIPTS := {
 			{
 				"text_key": "UI_TUTORIAL_SHIFTING_CHEVRONS",
 				"spotlight": "goal_edges",
-				"icons": [{"kind": "chevrons", "a": 0, "b": 2, "height": 112}],
+				"clip": "res://assets/tutorials/shifting_chevrons.ogv",
 			},
 			{
 				"text_key": "UI_TUTORIAL_SHIFTING_MAP",
 				"spotlight": "goals_button",
-				"icons": [{"kind": "goal_list", "a": 0, "b": 2, "r": 3, "height": 96}],
+				"clip": "res://assets/tutorials/shifting_map.ogv",
 			},
 		],
 	},
@@ -100,7 +95,6 @@ const SCRIPTS := {
 			{
 				"text_key": "UI_TUTORIAL_BIGGER_BOARDS",
 				"spotlight": "board",
-				"icons": [{"kind": "bigger", "height": 240}],
 			},
 		],
 	},
@@ -409,6 +403,8 @@ func _place_card(hole: Rect2, vp: Vector2) -> void:
 	if top + h > vp.y - bottom_pad:
 		top = vp.y - bottom_pad - h
 	top = minf(top, vp.y - bottom_pad - h)
+	## Never let a tall card (long body + clip) run off the top of the screen.
+	top = maxf(top, top_pad)
 
 	_card.anchor_left = 0.5
 	_card.anchor_right = 0.5
@@ -427,20 +423,17 @@ func _fit_clip_size(inner_w: float, vp: Vector2, top_pad: float, bottom_pad: flo
 			_clip.custom_minimum_size = Vector2.ZERO
 		return
 	var aspect := _clip.content_aspect()
-	var desired := inner_w / aspect
-	## Leave room for title, caption, button, padding, and a little air above.
-	var reserved := (
-		CARD_PAD_Y * 2.0
-		+ TITLE_FONT_SIZE * 1.3
-		+ BODY_FONT_SIZE * 2.6
-		+ 128.0
-		+ 28.0 * 3.0
-		+ top_pad
-		+ bottom_pad
-		+ 24.0
-	)
-	var max_h := maxf(vp.y - reserved, 260.0)
-	_clip.custom_minimum_size = Vector2(inner_w, minf(desired, max_h))
+	## Keep the clip's native aspect so a goal flush on the video edge
+	## stays flush on the card. If height must shrink, shrink width too —
+	## never letterbox a shorter height into the full width.
+	var w := inner_w
+	var h := inner_w / aspect
+	## Always use the native 1080:804 size at full inner width (708x528).
+	## A reserved-height safety shrink was too conservative for this
+	## shorter-text card and letterboxed the clip. Tall cards are held
+	## on-screen by the top clamp in _layout_card.
+	_clip.custom_minimum_size = Vector2(w, h)
+	_clip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 
 func _spotlight_rect() -> Rect2:

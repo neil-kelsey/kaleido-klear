@@ -600,11 +600,23 @@ static func viewport_safe_insets(viewport: Viewport) -> Vector4:
 		return Vector4.ZERO
 	var sx := vp_size.x / win_size.x
 	var sy := vp_size.y / win_size.y
-	return Vector4(
+	var insets := Vector4(
 		maxf((clipped.position.x - win_pos.x) * sx, 0.0),
 		maxf((clipped.position.y - win_pos.y) * sy, 0.0),
 		maxf((win_rect.end.x - clipped.end.x) * sx, 0.0),
 		maxf((win_rect.end.y - clipped.end.y) * sy, 0.0)
+	)
+	## Inflated DisplayServer safe-area (e.g. a capture window not fully
+	## contained by the display) must not shove HUD buttons over the board.
+	## Real phone cutouts stay well under these fractions.
+	var max_x := vp_size.x * 0.10
+	var max_top := vp_size.y * 0.12
+	var max_bottom := vp_size.y * 0.12
+	return Vector4(
+		minf(insets.x, max_x),
+		minf(insets.y, max_top),
+		minf(insets.z, max_x),
+		minf(insets.w, max_bottom)
 	)
 
 

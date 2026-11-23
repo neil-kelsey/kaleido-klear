@@ -29,7 +29,7 @@ locale_display_names = {
 "pirate": "Moon"
 }
 section_index = 2
-sort_index = 2150
+sort_index = 470
 columns = 7
 rows = 6
 multi_goal_mode = true

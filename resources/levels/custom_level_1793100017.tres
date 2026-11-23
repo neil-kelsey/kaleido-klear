@@ -28,8 +28,8 @@ locale_display_names = {
 "fr": "Cactus",
 "pirate": "Cactus"
 }
-section_index = 2
-sort_index = 1170
+section_index = 1
+sort_index = 420
 rows = 7
 multi_goal_mode = true
 goal_left_phases = Array[ExtResource("1_rq3o3")]([SubResource("Resource_vsbf6"), SubResource("Resource_4rjgr")])
@@ -41,7 +41,7 @@ block_shapes = Array[String](["single", "single", "single", "single", "single", 
 block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1])
 block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 2), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(2, 1), Vector2i(3, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0)])]
 block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8"])
-group_title_key = "UI_GROUP_TIDEPOOL_GLYPHS"
+group_title_key = "UI_GROUP_NEBULA_MENAGERIE"
 verified_solvable = true
 min_moves = 8
 difficulty_score = 54.95

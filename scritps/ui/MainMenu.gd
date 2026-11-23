@@ -35,6 +35,7 @@ var _streak_count: Label
 func _ready() -> void:
 	_apply_translations()
 	_build_streak_badge()
+	GameSession.maybe_open_daily_from_reminder()
 	_star_map_tex = load(DIMENSION_MAP_SCRIPT.STAR_CHART_PATH) as Texture2D
 	star_map.draw.connect(_draw_star_map)
 	brand_icon.item_rect_changed.connect(star_map.queue_redraw)

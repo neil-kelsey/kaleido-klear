@@ -29,7 +29,7 @@ locale_display_names = {
 "pirate": "Fish"
 }
 section_index = 2
-sort_index = 1090
+sort_index = 190
 rows = 5
 multi_goal_mode = true
 goal_top_phases = Array[ExtResource("1_ff6oe")]([SubResource("Resource_1g5hl"), SubResource("Resource_mrj1t")])

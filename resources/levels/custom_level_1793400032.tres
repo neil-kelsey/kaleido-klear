@@ -37,7 +37,7 @@ locale_display_names = {
 "pirate": "Dragonfly"
 }
 section_index = 3
-sort_index = 2320
+sort_index = 470
 columns = 10
 multi_goal_mode = true
 goal_right_phases = Array[ExtResource("1_3dmjq")]([SubResource("Resource_g5jyj"), SubResource("Resource_8hibs"), SubResource("Resource_jfpfo")])

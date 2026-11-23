@@ -33,8 +33,8 @@ locale_display_names = {
 "fr": "Bouilloire",
 "pirate": "Kettle"
 }
-section_index = 3
-sort_index = 2930
+section_index = 4
+sort_index = 460
 columns = 10
 multi_goal_mode = true
 goal_right_phases = Array[ExtResource("1_xspfn")]([SubResource("Resource_6aq7s"), SubResource("Resource_c345p"), SubResource("Resource_o27p2")])

@@ -41,7 +41,7 @@ locale_display_names = {
 "pirate": "Compass"
 }
 section_index = 4
-sort_index = 120
+sort_index = 50
 columns = 9
 rows = 9
 multi_goal_mode = true

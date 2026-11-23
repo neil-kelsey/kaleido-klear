@@ -9,6 +9,10 @@ const CLIP_SIZES := {
 	"res://assets/tutorials/colour_mix_preview.ogv": Vector2(1080, 804),
 	"res://assets/tutorials/colour_mix_score.ogv": Vector2(1080, 956),
 	"res://assets/tutorials/arrows.ogv": Vector2(1080, 1166),
+	"res://assets/tutorials/basic_swipe.ogv": Vector2(1080, 804),
+	"res://assets/tutorials/basic_goals.ogv": Vector2(1080, 804),
+	"res://assets/tutorials/shifting_chevrons.ogv": Vector2(1080, 804),
+	"res://assets/tutorials/shifting_map.ogv": Vector2(1080, 804),
 }
 
 var content_size: Vector2 = Vector2(1080, 840)

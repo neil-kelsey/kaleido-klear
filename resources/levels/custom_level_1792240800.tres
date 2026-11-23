@@ -27,7 +27,7 @@ locale_display_names = {
 "en": "Three latches"
 }
 section_index = 0
-sort_index = 1070
+sort_index = 240
 columns = 11
 rows = 13
 multi_goal_mode = true

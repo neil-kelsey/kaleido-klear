@@ -36,8 +36,8 @@ locale_display_names = {
 "fr": "Ballon de foot",
 "pirate": "Football"
 }
-section_index = 3
-sort_index = 2680
+section_index = 4
+sort_index = 520
 multi_goal_mode = true
 goal_left_phases = Array[ExtResource("1_66kvv")]([SubResource("Resource_kyhg0"), SubResource("Resource_va6l5"), SubResource("Resource_qio3b"), SubResource("Resource_jjflb")])
 goal_top_phases = Array[ExtResource("1_66kvv")]([SubResource("Resource_2vq6y"), SubResource("Resource_pnhlr")])

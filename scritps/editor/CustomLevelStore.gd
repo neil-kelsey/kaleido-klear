@@ -33,7 +33,10 @@ func saves_to_project() -> bool:
 
 func uses_dynamic_level_list() -> bool:
 	## Published builds use the packaged registry. Developer mode on a device
-	## merges user:// drafts, which change whenever a level is saved.
+	## merges user://custom_levels/*.tres drafts (and deleted_ids.json). Those
+	## files are full LevelConfig snapshots, including whatever chapter, sort,
+	## and rating the level had when it was last saved on the phone.
+	## LevelCatalog keeps packaged placement and ratings for shipped ids.
 	if saves_to_project():
 		return false
 	return GameSession != null and GameSession.develop_mode
@@ -196,9 +199,10 @@ func _ensure_user_levels() -> void:
 		file_name = dir.get_next()
 	dir.list_dir_end()
 	_user_levels_list.sort_custom(_sort_levels)
-	print("[CustomLevelStore] cached %s device levels in %sms" % [
-		_user_levels_list.size(), Time.get_ticks_msec() - started
-	])
+	if OS.is_debug_build():
+		print("[CustomLevelStore] cached %s device levels in %sms" % [
+			_user_levels_list.size(), Time.get_ticks_msec() - started
+		])
 
 
 func _refresh_dynamic_catalog() -> void:
@@ -207,19 +211,29 @@ func _refresh_dynamic_catalog() -> void:
 		LevelCatalog.refresh_runtime_levels()
 
 
+func list_packaged_level_paths() -> PackedStringArray:
+	## The list an exported APK actually loads. DirAccess cannot scan res://
+	## inside a packed build, so the game uses this compiled registry only.
+	var paths: PackedStringArray = []
+	for path in LevelRegistry.LEVEL_PATHS:
+		if ResourceLoader.exists(path):
+			paths.append(path)
+	return paths
+
+
 func list_project_level_paths() -> PackedStringArray:
 	## Packed registry works in Android APKs (DirAccess cannot list res:// there).
 	## In the editor, always scan disk: LevelRegistry.LEVEL_PATHS is a compiled
 	## constant, so a save that rewrites the script would otherwise be invisible
 	## until Godot reloads the class (catalog and audit miss the new level).
+	## Headless checks MUST call list_packaged_level_paths() / 
+	## LevelCatalog.reload_levels_as_exported() instead of this, or they will
+	## count on-disk files that are missing from a shipped build.
 	if OS.has_feature("editor"):
 		var scanned := _scan_project_level_paths()
 		if not scanned.is_empty():
 			return scanned
-	var paths: PackedStringArray = []
-	for path in LevelRegistry.LEVEL_PATHS:
-		if ResourceLoader.exists(path):
-			paths.append(path)
+	var paths := list_packaged_level_paths()
 	if not paths.is_empty():
 		return paths
 	return _scan_project_level_paths()

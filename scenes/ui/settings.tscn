@@ -1,11 +1,12 @@
-[gd_scene load_steps=7 format=3 uid="uid://kaleido_settings"]
+[gd_scene load_steps=8 format=3 uid="uid://kaleido_settings"]
 
 [ext_resource type="Script" path="res://scritps/ui/Settings.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://kaleido_exit_confirm_modal" path="res://scenes/ui/exit_confirm_modal.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://kaleido_circle_back_button" path="res://scenes/ui/circle_back_button.tscn" id="3_back"]
 [ext_resource type="PackedScene" uid="uid://kaleido_diamond_title_badge" path="res://scenes/ui/diamond_title_badge.tscn" id="4_title"]
-[ext_resource type="Script" path="res://scritps/ui/ChartModalPanel.gd" id="5_chart"]
 [ext_resource type="Script" path="res://scritps/ui/MenuActionButton.gd" id="6_cta"]
+[ext_resource type="Script" path="res://scritps/ui/TimePicker.gd" id="7_time"]
+[ext_resource type="Script" path="res://scritps/ui/SettingsToggle.gd" id="8_toggle"]
 
 [node name="Settings" type="Control"]
 layout_mode = 3
@@ -50,46 +51,49 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 48
-theme_override_constants/margin_top = 196
-theme_override_constants/margin_right = 48
+theme_override_constants/margin_left = 56
+theme_override_constants/margin_top = 208
+theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 176
 
-[node name="Panel" type="PanelContainer" parent="Margin"]
-layout_mode = 2
-size_flags_vertical = 3
-script = ExtResource("5_chart")
-shrink_wrap = false
-
-[node name="Scroll" type="ScrollContainer" parent="Margin/Panel"]
+[node name="Scroll" type="ScrollContainer" parent="Margin"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="SettingsList" type="VBoxContainer" parent="Margin/Panel/Scroll"]
+[node name="ListPad" type="MarginContainer" parent="Margin/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 40
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 20
 
-[node name="PreferencesSection" type="VBoxContainer" parent="Margin/Panel/Scroll/SettingsList"]
+[node name="SettingsList" type="VBoxContainer" parent="Margin/Scroll/ListPad"]
 layout_mode = 2
-theme_override_constants/separation = 10
+size_flags_horizontal = 3
+theme_override_constants/separation = 56
 
-[node name="PreferencesTitle" type="Label" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection"]
+[node name="PreferencesSection" type="VBoxContainer" parent="Margin/Scroll/ListPad/SettingsList"]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="PreferencesTitle" type="Label" parent="Margin/Scroll/ListPad/SettingsList/PreferencesSection"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Preferences"
 
-[node name="LanguageRow" type="VBoxContainer" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection"]
+[node name="LanguageRow" type="VBoxContainer" parent="Margin/Scroll/ListPad/SettingsList/PreferencesSection"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 
-[node name="LanguageLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection/LanguageRow"]
+[node name="LanguageLabel" type="Label" parent="Margin/Scroll/ListPad/SettingsList/PreferencesSection/LanguageRow"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Language"
 
-[node name="LanguageOption" type="OptionButton" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection/LanguageRow"]
+[node name="LanguageOption" type="OptionButton" parent="Margin/Scroll/ListPad/SettingsList/PreferencesSection/LanguageRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
@@ -97,63 +101,104 @@ size_flags_horizontal = 3
 fit_to_longest_item = true
 clip_contents = false
 
-[node name="SoundRow" type="HBoxContainer" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection"]
+[node name="SoundRow" type="HBoxContainer" parent="Margin/Scroll/ListPad/SettingsList/PreferencesSection"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="SoundLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection/SoundRow"]
+[node name="SoundLabel" type="Label" parent="Margin/Scroll/ListPad/SettingsList/PreferencesSection/SoundRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 text = "Sound"
 
-[node name="SoundCheckBox" type="CheckBox" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection/SoundRow"]
+[node name="SoundToggle" type="CheckButton" parent="Margin/Scroll/ListPad/SettingsList/PreferencesSection/SoundRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 80)
+custom_minimum_size = Vector2(128, 72)
 layout_mode = 2
-clip_contents = false
+size_flags_vertical = 4
+script = ExtResource("8_toggle")
 
-[node name="MusicLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection"]
+[node name="NotificationsSection" type="VBoxContainer" parent="Margin/Scroll/ListPad/SettingsList"]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="NotificationsTitle" type="Label" parent="Margin/Scroll/ListPad/SettingsList/NotificationsSection"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Music"
+text = "Notifications"
 
-[node name="ComingSoonLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/PreferencesSection"]
+[node name="ReminderRow" type="HBoxContainer" parent="Margin/Scroll/ListPad/SettingsList/NotificationsSection"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="ReminderLabel" type="Label" parent="Margin/Scroll/ListPad/SettingsList/NotificationsSection/ReminderRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Coming soon"
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "Daily reminders"
 
-[node name="DeveloperSection" type="VBoxContainer" parent="Margin/Panel/Scroll/SettingsList"]
+[node name="ReminderToggle" type="CheckButton" parent="Margin/Scroll/ListPad/SettingsList/NotificationsSection/ReminderRow"]
 unique_name_in_owner = true
-visible = false
+custom_minimum_size = Vector2(128, 72)
+layout_mode = 2
+size_flags_vertical = 4
+script = ExtResource("8_toggle")
+
+[node name="ReminderTimeRow" type="VBoxContainer" parent="Margin/Scroll/ListPad/SettingsList/NotificationsSection"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="DeveloperTitle" type="Label" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection"]
+[node name="ReminderTimeLabel" type="Label" parent="Margin/Scroll/ListPad/SettingsList/NotificationsSection/ReminderTimeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reminder time"
+
+[node name="ReminderTimeButton" type="Button" parent="Margin/Scroll/ListPad/SettingsList/NotificationsSection/ReminderTimeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "12:00"
+
+[node name="DeveloperSection" type="VBoxContainer" parent="Margin/Scroll/ListPad/SettingsList"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 28
+
+[node name="DeveloperTitle" type="Label" parent="Margin/Scroll/ListPad/SettingsList/DeveloperSection"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Developer"
 
-[node name="DevelopModeRow" type="HBoxContainer" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection"]
+[node name="DevelopModeRow" type="HBoxContainer" parent="Margin/Scroll/ListPad/SettingsList/DeveloperSection"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="DevelopModeLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection/DevelopModeRow"]
+[node name="DevelopModeLabel" type="Label" parent="Margin/Scroll/ListPad/SettingsList/DeveloperSection/DevelopModeRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 text = "Develop mode"
 
-[node name="DevelopModeCheckBox" type="CheckBox" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection/DevelopModeRow"]
+[node name="DevelopModeToggle" type="CheckButton" parent="Margin/Scroll/ListPad/SettingsList/DeveloperSection/DevelopModeRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 80)
+custom_minimum_size = Vector2(128, 72)
 layout_mode = 2
-clip_contents = false
+size_flags_vertical = 4
+script = ExtResource("8_toggle")
 
-[node name="LevelCreatorButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection"]
+[node name="LevelCreatorButton" type="Button" parent="Margin/Scroll/ListPad/SettingsList/DeveloperSection"]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(0, 112)
@@ -164,7 +209,7 @@ compact = true
 show_trailing_icon = false
 label_text = "Level creator"
 
-[node name="LevelAuditButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/DeveloperSection"]
+[node name="LevelAuditButton" type="Button" parent="Margin/Scroll/ListPad/SettingsList/DeveloperSection"]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(0, 112)
@@ -175,17 +220,28 @@ compact = true
 show_trailing_icon = false
 label_text = "Level audit"
 
-[node name="AdsSection" type="VBoxContainer" parent="Margin/Panel/Scroll/SettingsList"]
+[node name="ReminderTestButton" type="Button" parent="Margin/Scroll/ListPad/SettingsList/DeveloperSection"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+script = ExtResource("6_cta")
+kind = 1
+compact = true
+show_trailing_icon = false
+label_text = "Test reminder (10s)"
+
+[node name="AdsSection" type="VBoxContainer" parent="Margin/Scroll/ListPad/SettingsList"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 28
 
-[node name="AdsTitle" type="Label" parent="Margin/Panel/Scroll/SettingsList/AdsSection"]
+[node name="AdsTitle" type="Label" parent="Margin/Scroll/ListPad/SettingsList/AdsSection"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Ads"
 
-[node name="RemoveAdsSettingsButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/AdsSection"]
+[node name="RemoveAdsSettingsButton" type="Button" parent="Margin/Scroll/ListPad/SettingsList/AdsSection"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
@@ -195,7 +251,7 @@ compact = true
 show_trailing_icon = false
 label_text = "Remove ads"
 
-[node name="RestorePurchasesButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/AdsSection"]
+[node name="RestorePurchasesButton" type="Button" parent="Margin/Scroll/ListPad/SettingsList/AdsSection"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
@@ -205,7 +261,7 @@ compact = true
 show_trailing_icon = false
 label_text = "Restore purchases"
 
-[node name="PrivacySettingsButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/AdsSection"]
+[node name="PrivacySettingsButton" type="Button" parent="Margin/Scroll/ListPad/SettingsList/AdsSection"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
@@ -215,23 +271,33 @@ compact = true
 show_trailing_icon = false
 label_text = "Privacy settings"
 
-[node name="AdsStatusLabel" type="Label" parent="Margin/Panel/Scroll/SettingsList/AdsSection"]
+[node name="PrivacyPolicyButton" type="Button" parent="Margin/Scroll/ListPad/SettingsList/AdsSection"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+script = ExtResource("6_cta")
+kind = 1
+compact = true
+show_trailing_icon = false
+label_text = "Privacy policy"
+
+[node name="AdsStatusLabel" type="Label" parent="Margin/Scroll/ListPad/SettingsList/AdsSection"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="DataSection" type="VBoxContainer" parent="Margin/Panel/Scroll/SettingsList"]
+[node name="DataSection" type="VBoxContainer" parent="Margin/Scroll/ListPad/SettingsList"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 28
 
-[node name="DataTitle" type="Label" parent="Margin/Panel/Scroll/SettingsList/DataSection"]
+[node name="DataTitle" type="Label" parent="Margin/Scroll/ListPad/SettingsList/DataSection"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Data"
 
-[node name="ResetTutorialsButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/DataSection"]
+[node name="ResetTutorialsButton" type="Button" parent="Margin/Scroll/ListPad/SettingsList/DataSection"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
@@ -241,7 +307,7 @@ compact = true
 show_trailing_icon = false
 label_text = "Reset tutorials"
 
-[node name="ResetProgressButton" type="Button" parent="Margin/Panel/Scroll/SettingsList/DataSection"]
+[node name="ResetProgressButton" type="Button" parent="Margin/Scroll/ListPad/SettingsList/DataSection"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 128)
 layout_mode = 2
@@ -254,6 +320,18 @@ label_text = "Reset game data"
 [node name="BackButton" parent="." instance=ExtResource("3_back")]
 unique_name_in_owner = true
 
+[node name="TimePicker" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("7_time")
+
 [node name="ResetConfirmModal" parent="." instance=ExtResource("2")]
 unique_name_in_owner = true
 layout_mode = 1
@@ -263,15 +341,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/DataSection/ResetTutorialsButton" to="." method="_on_reset_tutorials_button_pressed"]
-[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/DataSection/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]
-[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/DeveloperSection/LevelCreatorButton" to="." method="_on_level_creator_button_pressed"]
-[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/DeveloperSection/LevelAuditButton" to="." method="_on_level_audit_button_pressed"]
-[connection signal="toggled" from="Margin/Panel/Scroll/SettingsList/PreferencesSection/SoundRow/SoundCheckBox" to="." method="_on_sound_checkbox_toggled"]
-[connection signal="toggled" from="Margin/Panel/Scroll/SettingsList/DeveloperSection/DevelopModeRow/DevelopModeCheckBox" to="." method="_on_develop_mode_checkbox_toggled"]
-[connection signal="item_selected" from="Margin/Panel/Scroll/SettingsList/PreferencesSection/LanguageRow/LanguageOption" to="." method="_on_language_option_item_selected"]
+[connection signal="pressed" from="Margin/Scroll/ListPad/SettingsList/DataSection/ResetTutorialsButton" to="." method="_on_reset_tutorials_button_pressed"]
+[connection signal="pressed" from="Margin/Scroll/ListPad/SettingsList/DataSection/ResetProgressButton" to="." method="_on_reset_progress_button_pressed"]
+[connection signal="pressed" from="Margin/Scroll/ListPad/SettingsList/DeveloperSection/LevelCreatorButton" to="." method="_on_level_creator_button_pressed"]
+[connection signal="pressed" from="Margin/Scroll/ListPad/SettingsList/DeveloperSection/LevelAuditButton" to="." method="_on_level_audit_button_pressed"]
+[connection signal="toggled" from="Margin/Scroll/ListPad/SettingsList/PreferencesSection/SoundRow/SoundToggle" to="." method="_on_sound_checkbox_toggled"]
+[connection signal="toggled" from="Margin/Scroll/ListPad/SettingsList/DeveloperSection/DevelopModeRow/DevelopModeToggle" to="." method="_on_develop_mode_checkbox_toggled"]
+[connection signal="item_selected" from="Margin/Scroll/ListPad/SettingsList/PreferencesSection/LanguageRow/LanguageOption" to="." method="_on_language_option_item_selected"]
 [connection signal="confirmed" from="ResetConfirmModal" to="." method="_on_reset_confirm_modal_confirmed"]
 [connection signal="cancelled" from="ResetConfirmModal" to="." method="_on_reset_confirm_modal_cancelled"]
-[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/AdsSection/RemoveAdsSettingsButton" to="." method="_on_remove_ads_settings_button_pressed"]
-[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/AdsSection/RestorePurchasesButton" to="." method="_on_restore_purchases_button_pressed"]
-[connection signal="pressed" from="Margin/Panel/Scroll/SettingsList/AdsSection/PrivacySettingsButton" to="." method="_on_privacy_settings_button_pressed"]
+[connection signal="pressed" from="Margin/Scroll/ListPad/SettingsList/AdsSection/RemoveAdsSettingsButton" to="." method="_on_remove_ads_settings_button_pressed"]
+[connection signal="pressed" from="Margin/Scroll/ListPad/SettingsList/AdsSection/RestorePurchasesButton" to="." method="_on_restore_purchases_button_pressed"]
+[connection signal="pressed" from="Margin/Scroll/ListPad/SettingsList/AdsSection/PrivacySettingsButton" to="." method="_on_privacy_settings_button_pressed"]
+[connection signal="pressed" from="Margin/Scroll/ListPad/SettingsList/AdsSection/PrivacyPolicyButton" to="." method="_on_privacy_policy_button_pressed"]
+[connection signal="toggled" from="Margin/Scroll/ListPad/SettingsList/NotificationsSection/ReminderRow/ReminderToggle" to="." method="_on_reminder_checkbox_toggled"]
+[connection signal="pressed" from="Margin/Scroll/ListPad/SettingsList/NotificationsSection/ReminderTimeRow/ReminderTimeButton" to="." method="_on_reminder_time_pressed"]
+[connection signal="pressed" from="Margin/Scroll/ListPad/SettingsList/DeveloperSection/ReminderTestButton" to="." method="_on_reminder_test_button_pressed"]

@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_hhb4t"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_j4eo8"]
+
+[sub_resource type="Resource" id="Resource_q07tn"]
+script = ExtResource("1_hhb4t")
+color = 1
+count = 2
+
+[sub_resource type="Resource" id="Resource_vv4i3"]
+script = ExtResource("1_hhb4t")
+count = 6
+
+[sub_resource type="Resource" id="Resource_h1207"]
+script = ExtResource("1_hhb4t")
+color = 2
+count = 6
+
+[sub_resource type="Resource" id="Resource_1l8me"]
+script = ExtResource("1_hhb4t")
+color = 1
+count = 2
+
+[resource]
+script = ExtResource("2_j4eo8")
+level_id = "test_bigger_ribbon"
+level_name_key = ""
+display_name = "Bigger 6 — Ribbon"
+section_index = 8
+sort_index = 260
+columns = 5
+rows = 16
+goal_top_color = 1
+goal_right_color = 2
+goal_bottom_color = 1
+multi_goal_mode = true
+goal_left_phases = Array[ExtResource("1_hhb4t")]([SubResource("Resource_vv4i3")])
+goal_top_phases = Array[ExtResource("1_hhb4t")]([SubResource("Resource_1l8me")])
+goal_right_phases = Array[ExtResource("1_hhb4t")]([SubResource("Resource_h1207")])
+goal_bottom_phases = Array[ExtResource("1_hhb4t")]([SubResource("Resource_q07tn")])
+goal_bottom_enabled = true
+block_positions = Array[Vector2i]([Vector2i(0, 0), Vector2i(3, 0), Vector2i(0, 2), Vector2i(2, 3), Vector2i(1, 4), Vector2i(2, 5), Vector2i(0, 5), Vector2i(2, 7), Vector2i(0, 8), Vector2i(3, 9), Vector2i(0, 10), Vector2i(3, 11), Vector2i(0, 12), Vector2i(3, 13), Vector2i(0, 14), Vector2i(2, 15)])
+block_colors = Array[int]([1, 2, 0, 1, 0, 2, 0, 2, 1, 2, 0, 2, 0, 2, 0, 1])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(2, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 2), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(1, 1), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 2), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(1, 2), Vector2i(2, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])]
+block_shape_names = Array[String](["Green Cap", "Blue Crown", "Red Shoulder", "Green Shelf", "Red Step", "Blue Step", "Red Bend", "Blue Bend", "Green Mid", "Blue Mid", "Red Mid", "Blue Drop", "Red Base", "Blue Base", "Red Foot", "Green Foot"])
+group_title_key = "UI_GROUP_BIGGER_BOARDS"
+verified_solvable = true
+min_moves = 16
+difficulty_score = 52.02
+difficulty_tier = 2

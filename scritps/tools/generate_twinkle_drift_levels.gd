@@ -1919,7 +1919,7 @@ func _audit(lines: PackedStringArray, expected_dim0: int) -> int:
 					unverified += 1
 				if not _min_cell_error(level).is_empty():
 					tiny += 1
-			if level.section_index == 10:
+			if level.section_index == 8:
 				tutorial += 1
 		fname = dir.get_next()
 	dir.list_dir_end()

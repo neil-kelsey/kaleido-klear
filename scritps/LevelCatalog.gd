@@ -1,6 +1,6 @@
 extends Node
 
-## Ten dimensions (sections). Project levels come from levels_manifest.json
+## Eight campaign dimensions plus Tutorial. Project levels come from levels_manifest.json
 ## (DirAccess can't list res:// inside Android APKs). Device drafts in user://
 ## are still merged for on-phone creator work until synced.
 
@@ -19,8 +19,6 @@ var SECTIONS: Array[Dictionary] = [
 		"color": Color(0.12, 0.62, 0.48, 1.0),
 		"background": "",
 		"parent": 0,
-		## Phone drafts live here while testing so Twinkle Drift stays at 5×30.
-		"starts_unlocked": true,
 	},
 	{
 		"title_key": "UI_DIMENSION_3",
@@ -53,24 +51,14 @@ var SECTIONS: Array[Dictionary] = [
 		"parent": 5,
 	},
 	{
-		"title_key": "UI_DIMENSION_8",
-		"color": Color(0.95, 0.35, 0.55, 1.0),
-		"background": "",
-		"parent": 6,
-	},
-	{
-		"title_key": "UI_DIMENSION_9",
-		"color": Color(0.35, 0.55, 0.95, 1.0),
-		"background": "",
-		"parent": 7,
-	},
-	{
+		## Reuses the The Maw title strings (UI_DIMENSION_10) and its red.
 		"title_key": "UI_DIMENSION_10",
 		"color": Color(0.72, 0.05, 0.08, 1.0),
 		"background": "",
-		"parent": 8,
+		"parent": 6,
 	},
 	## Tutorial sits at the bottom of the map; main dimensions climb upward from there.
+	## Index 8 (was 10 when two empty stubs followed The Maw).
 	{
 		"title_key": "UI_DIMENSION_TUTORIAL",
 		"color": Color(0.45, 0.78, 0.35, 1.0),
@@ -106,6 +94,17 @@ func _ready() -> void:
 
 
 func reload_levels() -> void:
+	_reload_from_paths(CustomLevelStore.list_project_level_paths())
+
+
+func reload_levels_as_exported() -> void:
+	## LevelRegistry only — the same path list an exported APK uses.
+	## Editor / headless `--path -s` checks otherwise disk-scan res:// and can
+	## count levels that are not in the shipped registry.
+	_reload_from_paths(CustomLevelStore.list_packaged_level_paths())
+
+
+func _reload_from_paths(paths: PackedStringArray) -> void:
 	if CustomLevelStore != null and CustomLevelStore.has_method("invalidate_project_index"):
 		CustomLevelStore.invalidate_project_index()
 	_project_levels_by_section.clear()
@@ -115,7 +114,7 @@ func reload_levels() -> void:
 		_project_levels_by_section[i] = bucket
 	_project_daily_levels.clear()
 
-	for path in CustomLevelStore.list_project_level_paths():
+	for path in paths:
 		var level := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as LevelConfig
 		if level == null:
 			continue
@@ -160,9 +159,23 @@ func refresh_runtime_levels() -> void:
 	DailyCatalog.invalidate_cache()
 
 
+## Test hook: apply an explicit draft map the same way a device would in
+## develop mode. Production still goes through uses_dynamic_level_list().
+func refresh_runtime_levels_with_overrides(overrides: Dictionary) -> void:
+	if _project_levels_by_section.is_empty():
+		reload_levels()
+	_rebuild_runtime_levels_from(overrides, true)
+	DailyCatalog.invalidate_cache()
+
+
 func _rebuild_runtime_levels() -> void:
 	var dynamic := CustomLevelStore != null and CustomLevelStore.uses_dynamic_level_list()
 	var overrides: Dictionary = CustomLevelStore._user_levels_by_id() if dynamic else {}
+	_rebuild_runtime_levels_from(overrides, dynamic)
+
+
+func _rebuild_runtime_levels_from(overrides: Dictionary, apply_device_rules: bool) -> void:
+	var packaged_ids: Dictionary = {}
 	_runtime_levels_by_section.clear()
 	_runtime_levels_by_section.resize(SECTIONS.size())
 	for section_index in SECTIONS.size():
@@ -171,28 +184,34 @@ func _rebuild_runtime_levels() -> void:
 			var packaged := level as LevelConfig
 			if packaged == null:
 				continue
-			if dynamic and (
-				overrides.has(packaged.level_id)
-				or CustomLevelStore.is_level_deleted(packaged.level_id)
-			):
+			if not packaged.level_id.strip_edges().is_empty():
+				packaged_ids[packaged.level_id] = true
+			## A user:// draft of a shipped id is a stale snapshot (old chapter,
+			## sort, and often an old rating). Prefer the packaged level entirely
+			## so campaign placement and final ratings win. Stars stay on level_id.
+			if apply_device_rules and CustomLevelStore != null and CustomLevelStore.is_level_deleted(packaged.level_id):
 				continue
 			levels.append(packaged)
-		if dynamic:
-			for level_id in overrides.keys():
-				if CustomLevelStore.is_level_deleted(level_id):
-					continue
-				var custom_level: LevelConfig = overrides[level_id]
-				if (
-					DailyCatalog.is_daily_level(custom_level)
-					or custom_level.section_index == DailyCatalog.SECTION_DAILY
-					or custom_level.section_index < 0
-				):
-					continue
-				var index := clampi(custom_level.section_index, 0, SECTIONS.size() - 1)
-				if index == section_index:
-					levels.append(custom_level)
-		sort_levels_by_chapter(levels)
 		_runtime_levels_by_section[section_index] = levels
+	if apply_device_rules:
+		for level_id in overrides.keys():
+			if packaged_ids.has(level_id) or CustomLevelStore.is_level_deleted(level_id):
+				continue
+			var custom_level: LevelConfig = overrides[level_id]
+			if custom_level == null:
+				continue
+			if (
+				DailyCatalog.is_daily_level(custom_level)
+				or custom_level.section_index == DailyCatalog.SECTION_DAILY
+				or custom_level.section_index < 0
+			):
+				continue
+			var index := clampi(custom_level.section_index, 0, SECTIONS.size() - 1)
+			var bucket: Array[LevelConfig] = _runtime_levels_by_section[index]
+			bucket.append(custom_level)
+			_runtime_levels_by_section[index] = bucket
+	for section_index in SECTIONS.size():
+		sort_levels_by_chapter(_runtime_levels_by_section[section_index] as Array)
 	_runtime_ready = true
 
 
@@ -263,6 +282,13 @@ func is_tutorial_dimension(section_index: int) -> bool:
 	return str(SECTIONS[section_index].get("title_key", "")) == "UI_DIMENSION_TUTORIAL"
 
 
+func get_tutorial_section_index() -> int:
+	for i in SECTIONS.size():
+		if is_tutorial_dimension(i):
+			return i
+	return -1
+
+
 func is_first_level_of_group(level: LevelConfig) -> bool:
 	if level == null:
 		return false
@@ -287,11 +313,17 @@ func is_dimension_unlocked(section_index: int) -> bool:
 	## Develop mode: any dimension that has at least one level is open; empty stubs stay locked.
 	if GameSession.develop_mode:
 		return not get_section_levels(section_index).is_empty()
-	## Dimension 1 is always available; marked test branches can start unlocked too.
+	## Dimension 1 is always available; Tutorial (and any other marked side
+	## branch) can start unlocked too. The next main-path dimension opens
+	## once the previous dimension's first 30-level subsection is complete.
+	## Existing stars in this dimension also unlock it, so a reshuffle does
+	## not lock players out of a world they already started.
 	var section: Dictionary = SECTIONS[section_index]
 	if section_index == 0 or bool(section.get("starts_unlocked", false)):
 		return true
-	return is_dimension_complete(section_index - 1)
+	if dimension_has_progress(section_index):
+		return true
+	return is_first_subsection_complete(section_index - 1)
 
 
 func is_dimension_complete(section_index: int) -> bool:
@@ -305,6 +337,39 @@ func is_dimension_complete(section_index: int) -> bool:
 		if GameSession.get_level_stars(level.level_id) <= 0:
 			return false
 	return true
+
+
+## First chapter in the sorted section (two subsections of 30 in the campaign).
+func get_first_subsection_levels(section_index: int) -> Array[LevelConfig]:
+	var out: Array[LevelConfig] = []
+	var levels := get_section_levels(section_index)
+	if levels.is_empty():
+		return out
+	var key := levels[0].group_title_key.strip_edges()
+	for level in levels:
+		if level == null:
+			continue
+		if level.group_title_key.strip_edges() != key:
+			break
+		out.append(level)
+	return out
+
+
+func is_first_subsection_complete(section_index: int) -> bool:
+	var first := get_first_subsection_levels(section_index)
+	if first.is_empty():
+		return false
+	for level in first:
+		if GameSession.get_level_stars(level.level_id) <= 0:
+			return false
+	return true
+
+
+func dimension_has_progress(section_index: int) -> bool:
+	for level in get_section_levels(section_index):
+		if level != null and GameSession.get_level_stars(level.level_id) > 0:
+			return true
+	return false
 
 
 func is_dimension_perfect(section_index: int) -> bool:
@@ -666,7 +731,7 @@ func get_first_level_of_next_section(current: LevelConfig) -> LevelConfig:
 	return section_levels[0] as LevelConfig
 
 
-## Bottom → top map order: Tutorial first, then Dimension 1 → 10.
+## Bottom → top map order: Tutorial first, then campaign dimensions 1 → 8.
 func get_dimension_map_order() -> Array[int]:
 	var order: Array[int] = []
 	## Side branches that should lead the path (Tutorial) go first.
@@ -691,7 +756,6 @@ func get_dimension_map_order() -> Array[int]:
 	return order
 
 
-## Straight vertical path: bottom slot is Tutorial / first in map order.
 func build_dimension_positions(step_distance: float = 280.0) -> Array[Vector2]:
 	var count := SECTIONS.size()
 	var positions: Array[Vector2] = []

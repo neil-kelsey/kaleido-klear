@@ -37,7 +37,7 @@ locale_display_names = {
 "pirate": "Crown"
 }
 section_index = 2
-sort_index = 1130
+sort_index = 130
 rows = 6
 multi_goal_mode = true
 goal_top_phases = Array[ExtResource("1_vmna6")]([SubResource("Resource_87pxe"), SubResource("Resource_l2dtn")])

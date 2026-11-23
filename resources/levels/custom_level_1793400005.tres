@@ -29,7 +29,7 @@ locale_display_names = {
 "pirate": "Lemon"
 }
 section_index = 3
-sort_index = 2050
+sort_index = 310
 columns = 9
 rows = 6
 multi_goal_mode = true

@@ -36,7 +36,7 @@ locale_display_names = {
 "pirate": "Rugby Ball"
 }
 section_index = 4
-sort_index = 230
+sort_index = 270
 columns = 11
 rows = 6
 multi_goal_mode = true
@@ -53,4 +53,4 @@ group_title_key = "UI_GROUP_STARLIT_SOUVENIRS"
 verified_solvable = true
 min_moves = 10
 difficulty_score = 67.28
-difficulty_tier = 2
+difficulty_tier = 3

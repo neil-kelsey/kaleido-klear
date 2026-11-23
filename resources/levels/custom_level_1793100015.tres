@@ -32,8 +32,8 @@ locale_display_names = {
 "fr": "Lettre K",
 "pirate": "Letter K"
 }
-section_index = 2
-sort_index = 1150
+section_index = 4
+sort_index = 100
 rows = 7
 multi_goal_mode = true
 goal_right_phases = Array[ExtResource("1_mkvqb")]([SubResource("Resource_ps68k"), SubResource("Resource_d3t74"), SubResource("Resource_rk2ac"), SubResource("Resource_i0nql")])
@@ -47,7 +47,7 @@ block_shapes = Array[String](["single", "single", "single", "single", "single", 
 block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1])
 block_cell_patterns = [Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(3, 0), Vector2i(2, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(2, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(3, 0), Vector2i(2, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(1, 2), Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 2)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(2, 0), Vector2i(2, 1), Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2)])]
 block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9"])
-group_title_key = "UI_GROUP_TIDEPOOL_GLYPHS"
+group_title_key = "UI_GROUP_STARLIT_SOUVENIRS"
 verified_solvable = true
 min_moves = 9
 difficulty_score = 60.65

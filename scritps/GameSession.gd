@@ -12,6 +12,8 @@ const AVAILABLE_LOCALES: Array[Dictionary] = [
 	{"code": "pirate", "name_key": "UI_LANGUAGE_PIRATE"},
 ]
 
+const Reminders := preload("res://scritps/StreakReminder.gd")
+
 signal locale_changed(locale_code: String)
 
 var selected_level: LevelConfig = null
@@ -38,6 +40,11 @@ var current_dimension_index: int = 0
 var pending_map_zoom_out: bool = false
 var locale: String = "en"
 var sfx_enabled: bool = true
+var daily_reminders: bool = true
+var reminder_hour: int = 12
+var reminder_minute: int = 0
+var _reminder_permission_asked: bool = false
+var _reminder_test_pending: bool = false
 ## Scene to return to from gameplay (dimensions map, daily list, etc.).
 var return_scene_path: String = "res://scenes/ui/dimension_map.tscn"
 ## Dimension level map should reopen on the subsection of this level.
@@ -45,7 +52,7 @@ var dimension_return_index: int = -1
 var dimension_return_level_id: String = ""
 ## Optional ordered playlist (daily puzzles). Empty = campaign catalog order.
 var active_level_playlist: Array[LevelConfig] = []
-## Daily puzzles: "YYYY-MM-DD" -> {"easy": stars, "medium": stars, "hard": stars}.
+## Daily puzzle: "YYYY-MM-DD" -> {"daily": stars}. Legacy days may still have easy/medium/hard keys.
 var daily_completed: Dictionary = {}
 var daily_streak_current: int = 0
 var daily_streak_best: int = 0
@@ -56,6 +63,8 @@ var active_daily_date: String = ""
 var active_daily_level_id: String = ""
 ## Tutorial coach marks already shown (group id -> true).
 var seen_tutorials: Dictionary = {}
+## One-time in-game tip after the first heart loss (persists in progress.json).
+var heart_tip_seen: bool = false
 const DAILY_PUZZLES_SCENE := "res://scenes/ui/daily_puzzles.tscn"
 var _scene_wipe: ColorRect
 var _scene_wipe_tween: Tween
@@ -64,8 +73,10 @@ var _scene_wipe_tween: Tween
 func _ready() -> void:
 	_load_settings()
 	_load_progress()
+	_connect_reminder_signal()
 	## Defer so scene @onready nodes exist before TRANSLATION_CHANGED fires.
 	call_deferred("_boot_locale")
+	call_deferred("_refresh_reminder")
 
 
 func _notification(what: int) -> void:
@@ -76,6 +87,9 @@ func _notification(what: int) -> void:
 		or what == NOTIFICATION_WM_CLOSE_REQUEST
 	):
 		_save_progress()
+	elif what == NOTIFICATION_APPLICATION_RESUMED or what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		_refresh_reminder()
+		maybe_open_daily_from_reminder()
 
 
 func _boot_locale() -> void:
@@ -95,8 +109,19 @@ func set_level(level: LevelConfig) -> void:
 			current_dimension_index = int(context.section_index)
 
 
+## Tutorial used to live at section 10, after two empty stubs (8–9). Map those
+## saves onto the current Tutorial index; anything else is clamped.
+func _migrate_dimension_index(index: int) -> int:
+	var count := LevelCatalog.get_dimension_count()
+	if index == 10:
+		var tutorial := LevelCatalog.get_tutorial_section_index()
+		if tutorial >= 0:
+			return tutorial
+	return clampi(index, 0, maxi(count - 1, 0))
+
+
 func set_current_dimension(section_index: int) -> void:
-	var next := clampi(section_index, 0, LevelCatalog.get_dimension_count() - 1)
+	var next := _migrate_dimension_index(section_index)
 	if next == current_dimension_index:
 		return
 	current_dimension_index = next
@@ -254,10 +279,12 @@ func _clear_daily_context() -> void:
 	clear_level_playlist()
 
 
-## The single entry point for a daily win. Idempotent per (day, slot): stars keep the
-## best, and the streak moves at most once per UTC day. Returns true if anything changed.
+## The single entry point for a daily win. Idempotent per UTC day: stars keep the
+## best, and the streak moves at most once per day. Returns true if anything changed.
 func record_daily_completion(slot: String, stars: int, date_key: String = "") -> bool:
-	if not DailyCatalog.SLOTS.has(slot):
+	var key := slot if not slot.is_empty() else DailyCatalog.SLOT_DAILY
+	## Old easy/medium/hard writes still count, stored under the single daily key.
+	if key != DailyCatalog.SLOT_DAILY and not DailyCatalog.LEGACY_SLOTS.has(key):
 		return false
 	var day := date_key if not date_key.is_empty() else DailyCatalog.today_key()
 	var clamped := clampi(stars, 0, 3)
@@ -265,14 +292,17 @@ func record_daily_completion(slot: String, stars: int, date_key: String = "") ->
 		return false
 	var changed := false
 	var entry: Dictionary = daily_completed.get(day, {})
-	if clamped > int(entry.get(slot, 0)):
-		entry[slot] = clamped
+	var previous := get_daily_stars(DailyCatalog.SLOT_DAILY, day)
+	if clamped > previous:
+		entry[DailyCatalog.SLOT_DAILY] = clamped
 		daily_completed[day] = entry
 		changed = true
 	if apply_daily_streak(day):
 		changed = true
 	if changed:
 		_save_progress()
+		_maybe_ask_reminder_permission()
+		_refresh_reminder()
 	return changed
 
 
@@ -291,9 +321,17 @@ func apply_daily_streak(day: String) -> bool:
 	return true
 
 
-func get_daily_stars(slot: String, date_key: String = "") -> int:
+func get_daily_stars(slot: String = "", date_key: String = "") -> int:
 	var day := date_key if not date_key.is_empty() else DailyCatalog.today_key()
-	return int((daily_completed.get(day, {}) as Dictionary).get(slot, 0))
+	var entry: Dictionary = daily_completed.get(day, {})
+	## New saves use "daily". If a legacy day has easy/medium/hard stars, take the best
+	## so an already-cleared day stays cleared and the streak does not reset.
+	if slot.is_empty() or slot == DailyCatalog.SLOT_DAILY:
+		var best := int(entry.get(DailyCatalog.SLOT_DAILY, 0))
+		for legacy in DailyCatalog.LEGACY_SLOTS:
+			best = maxi(best, int(entry.get(legacy, 0)))
+		return best
+	return int(entry.get(slot, 0))
 
 
 ## Shown streak: 0 once a whole UTC day has been missed.
@@ -453,6 +491,7 @@ func reset_progress() -> void:
 	selected_level = null
 	clear_level_playlist()
 	_save_progress()
+	_refresh_reminder()
 
 
 func reset_tutorials() -> void:
@@ -463,6 +502,17 @@ func reset_tutorials() -> void:
 
 func has_seen_tutorial(tutorial_id: String) -> bool:
 	return bool(seen_tutorials.get(tutorial_id, false))
+
+
+func has_seen_heart_tip() -> bool:
+	return heart_tip_seen
+
+
+func mark_heart_tip_seen() -> void:
+	if heart_tip_seen:
+		return
+	heart_tip_seen = true
+	_save_progress()
 
 
 func mark_tutorial_seen(tutorial_id: String) -> void:
@@ -491,11 +541,23 @@ func is_level_unlocked(level: LevelConfig) -> bool:
 		return false
 	var section_levels := LevelCatalog.get_section_levels(section_index)
 	var level_index: int = int(context.level_index)
+	if level_index < 0 or level_index >= section_levels.size():
+		return false
+	## Already-earned stars stay reachable after a reshuffle.
+	if get_level_stars(level.level_id) > 0:
+		return true
 	if level_index <= 0:
 		return true
-	if level_index >= section_levels.size():
-		return false
-	return get_level_stars(section_levels[level_index - 1].level_id) > 0
+	## Sequential unlock along the new order.
+	if get_level_stars(section_levels[level_index - 1].level_id) > 0:
+		return true
+	## Migration: if the player already has stars later in this dimension,
+	## open every earlier level so they can keep playing the new order.
+	var furthest := -1
+	for i in section_levels.size():
+		if get_level_stars(section_levels[i].level_id) > 0:
+			furthest = i
+	return furthest >= 0 and level_index <= furthest
 
 
 func is_level_completed(level_id: String) -> bool:
@@ -530,8 +592,60 @@ func set_sfx_enabled(enabled: bool) -> void:
 	_save_settings()
 
 
+func set_daily_reminders(enabled: bool) -> void:
+	daily_reminders = enabled
+	_save_settings()
+	## Turning the toggle on is the player's ask, so the dialog may show again.
+	if enabled and Reminders.available() and not Reminders.has_permission():
+		Reminders.request_permission()
+	_refresh_reminder()
+
+
+func set_reminder_time(hour: int, minute: int) -> void:
+	reminder_hour = Reminders.clamp_hour(hour)
+	reminder_minute = Reminders.snap_minute(minute)
+	_save_settings()
+	_refresh_reminder()
+
+
+func test_daily_reminder() -> void:
+	if not Reminders.allows_test(OS.is_debug_build(), develop_mode):
+		return
+	if not Reminders.available() or Reminders.has_permission():
+		Reminders.schedule_test()
+		return
+	_reminder_test_pending = true
+	Reminders.request_permission()
+
+
+## A notification tap opens Daily after the splash has left. During the splash
+## the flag stays set so the menu can consume it.
+func maybe_open_daily_from_reminder() -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	var current := tree.current_scene
+	if current == null:
+		return
+	var path := str(current.scene_file_path)
+	if path.ends_with("veil_splash.tscn"):
+		return
+	if not Reminders.consume_open_daily():
+		return
+	if path == DAILY_PUZZLES_SCENE:
+		return
+	change_scene(DAILY_PUZZLES_SCENE)
+
+
+
+func _gated_develop_mode(stored: bool) -> bool:
+	## Release / non-debug builds ignore a stale true in user://settings.cfg.
+	return stored and OS.is_debug_build()
+
+
 func set_develop_mode(enabled: bool) -> void:
-	develop_mode = enabled
+	## Release builds can never turn this on, even if settings.cfg says so.
+	develop_mode = enabled and OS.is_debug_build()
 	_save_settings()
 	## Developer mode is what decides whether device drafts are part of the
 	## level list. Rebuild that list once here, not on every map visit.
@@ -561,6 +675,8 @@ func _apply_locale(locale_code: String, persist: bool) -> void:
 	if persist:
 		_save_settings()
 	locale_changed.emit(locale)
+	if persist:
+		_refresh_reminder()
 
 
 func _normalize_locale(locale_code: String) -> String:
@@ -574,19 +690,24 @@ func _load_settings() -> void:
 	var config := ConfigFile.new()
 	## Prefer unified settings; fall back to legacy develop-mode file.
 	if config.load(SETTINGS_PATH) == OK:
-		develop_mode = bool(config.get_value("dev", "develop_mode", false))
+		develop_mode = _gated_develop_mode(bool(config.get_value("dev", "develop_mode", false)))
 		locale = _normalize_locale(str(config.get_value("i18n", "locale", "en")))
 		sfx_enabled = bool(config.get_value("audio", "sfx_enabled", true))
+		_load_reminder_settings(config)
 		return
 	if config.load(DEV_SETTINGS_PATH) == OK:
-		develop_mode = bool(config.get_value("dev", "develop_mode", false))
+		develop_mode = _gated_develop_mode(bool(config.get_value("dev", "develop_mode", false)))
 
 
 func _save_settings() -> void:
 	var config := ConfigFile.new()
-	config.set_value("dev", "develop_mode", develop_mode)
+	config.set_value("dev", "develop_mode", develop_mode if OS.is_debug_build() else false)
 	config.set_value("i18n", "locale", locale)
 	config.set_value("audio", "sfx_enabled", sfx_enabled)
+	config.set_value("notifications", "daily_reminders", daily_reminders)
+	config.set_value("notifications", "reminder_hour", reminder_hour)
+	config.set_value("notifications", "reminder_minute", reminder_minute)
+	config.set_value("notifications", "permission_asked", _reminder_permission_asked)
 	var err := config.save(SETTINGS_PATH)
 	if err != OK:
 		push_warning("Failed to save settings.cfg: %s" % error_string(err))
@@ -603,6 +724,7 @@ func _load_progress() -> void:
 	daily_streak_last_date = ""
 	current_dimension_index = 0
 	seen_tutorials.clear()
+	heart_tip_seen = false
 	if FileAccess.file_exists(PROGRESS_PATH):
 		var file := FileAccess.open(PROGRESS_PATH, FileAccess.READ)
 		if file != null:
@@ -653,13 +775,14 @@ func _apply_progress_dict(data: Dictionary) -> void:
 	daily_streak_current = maxi(0, int(data.get("daily_streak_current", 0)))
 	daily_streak_best = maxi(daily_streak_current, int(data.get("daily_streak_best", 0)))
 	daily_streak_last_date = str(data.get("daily_streak_last_date", ""))
-	current_dimension_index = maxi(0, int(data.get("current_dimension_index", 0)))
+	current_dimension_index = _migrate_dimension_index(int(data.get("current_dimension_index", 0)))
 	var tutorials_raw: Variant = data.get("seen_tutorials", {})
 	seen_tutorials.clear()
 	if typeof(tutorials_raw) == TYPE_DICTIONARY:
 		for key in (tutorials_raw as Dictionary).keys():
 			if bool(tutorials_raw[key]):
 				seen_tutorials[str(key)] = true
+	heart_tip_seen = bool(data.get("heart_tip_seen", false))
 
 
 func _save_progress() -> void:
@@ -670,6 +793,7 @@ func _save_progress() -> void:
 		"level_best_time_ms": level_best_time_ms.duplicate(),
 		"current_dimension_index": current_dimension_index,
 		"seen_tutorials": seen_tutorials.duplicate(),
+		"heart_tip_seen": heart_tip_seen,
 		"daily_completed": daily_completed.duplicate(true),
 		"daily_streak_current": daily_streak_current,
 		"daily_streak_best": daily_streak_best,
@@ -682,3 +806,65 @@ func _save_progress() -> void:
 	file.store_string(JSON.stringify(payload))
 	file.flush()
 	file.close()
+
+
+func _load_reminder_settings(config: ConfigFile) -> void:
+	daily_reminders = bool(config.get_value("notifications", "daily_reminders", true))
+	reminder_hour = Reminders.clamp_hour(int(config.get_value("notifications", "reminder_hour", 12)))
+	reminder_minute = Reminders.snap_minute(int(config.get_value("notifications", "reminder_minute", 0)))
+	_reminder_permission_asked = bool(config.get_value("notifications", "permission_asked", false))
+
+
+func _connect_reminder_signal() -> void:
+	if not Reminders.available():
+		return
+	var plugin := Reminders.singleton()
+	if plugin == null or not plugin.has_signal("permission_result"):
+		return
+	if not plugin.permission_result.is_connected(_on_reminder_permission):
+		plugin.permission_result.connect(_on_reminder_permission)
+
+
+func _on_reminder_permission(granted: bool) -> void:
+	_reminder_permission_asked = true
+	_save_settings()
+	if _reminder_test_pending:
+		_reminder_test_pending = false
+		if granted:
+			Reminders.schedule_test()
+	_refresh_reminder()
+
+
+func _maybe_ask_reminder_permission() -> void:
+	var present := Reminders.available()
+	var granted := present and Reminders.has_permission()
+	var streak := get_display_streak()
+	if present and granted and daily_reminders and streak > 0 and not _reminder_permission_asked:
+		_reminder_permission_asked = true
+		_save_settings()
+		return
+	if not Reminders.should_request_permission(
+		daily_reminders,
+		streak,
+		_reminder_permission_asked,
+		present,
+		granted
+	):
+		return
+	_reminder_permission_asked = true
+	_save_settings()
+	Reminders.request_permission()
+
+
+func _refresh_reminder() -> void:
+	Reminders.sync(
+		int(Time.get_unix_time_from_system()),
+		Reminders.local_bias_minutes(),
+		daily_completed,
+		daily_reminders,
+		reminder_hour,
+		reminder_minute,
+		daily_streak_last_date,
+		daily_streak_current
+	)
+

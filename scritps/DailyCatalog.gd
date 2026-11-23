@@ -6,10 +6,13 @@ class_name DailyCatalog
 const SECTION_DAILY := 100
 
 
+## Single daily slot. Legacy saves may still have easy/medium/hard keys.
+const SLOT_DAILY := "daily"
 const SLOT_EASY := "easy"
 const SLOT_MEDIUM := "medium"
 const SLOT_HARD := "hard"
-const SLOTS: PackedStringArray = ["easy", "medium", "hard"]
+static var SLOTS: PackedStringArray = PackedStringArray(["daily"])
+static var LEGACY_SLOTS: PackedStringArray = PackedStringArray(["easy", "medium", "hard"])
 const SECONDS_PER_DAY := 86400
 
 ## Candidate pools, built once from LevelCatalog's startup scan (no .tres reloads).
@@ -42,8 +45,10 @@ static func slot_label_key(slot: String) -> String:
 			return "UI_DIFFICULTY_EASY"
 		SLOT_MEDIUM:
 			return "UI_DIFFICULTY_MEDIUM"
-		_:
+		SLOT_HARD:
 			return "UI_DIFFICULTY_HARD"
+		_:
+			return "UI_DAILY_PUZZLES"
 
 
 static func slot_tier(slot: String) -> int:
@@ -52,8 +57,10 @@ static func slot_tier(slot: String) -> int:
 			return 1
 		SLOT_MEDIUM:
 			return 2
-		_:
+		SLOT_HARD:
 			return 3
+		_:
+			return 0
 
 
 ## Tier 0 (unrated) counts as extreme, like the rest of the game.
@@ -109,12 +116,17 @@ static func _ensure_cache() -> void:
 	if dev:
 		var overrides: Dictionary = CustomLevelStore._user_levels_by_id()
 		var kept: Array[LevelConfig] = []
+		var dated_ids: Dictionary = {}
 		for level in _dated:
-			if not overrides.has(level.level_id) and not CustomLevelStore.is_level_deleted(level.level_id):
-				kept.append(level)
+			if CustomLevelStore.is_level_deleted(level.level_id):
+				continue
+			kept.append(level)
+			dated_ids[level.level_id] = true
 		for level_id in overrides.keys():
+			if dated_ids.has(level_id) or CustomLevelStore.is_level_deleted(level_id):
+				continue
 			var draft: LevelConfig = overrides[level_id]
-			if draft != null and is_daily_level(draft) and not CustomLevelStore.is_level_deleted(level_id):
+			if draft != null and is_daily_level(draft):
 				kept.append(draft)
 		_dated = kept
 	_cache_ready = true
@@ -139,7 +151,26 @@ static func pick_from_pool(pool: Array, date_key: String, slot: String) -> Level
 	return pool[stable_hash("kaleido-daily:%s:%s" % [date_key, slot]) % pool.size()] as LevelConfig
 
 
-## Pure selection (testable): dated levels win their slot, then the seeded rotation.
+## Combined Easy + Medium pool, stable id order. Hard / Very Hard / Extreme stay out.
+static func easy_medium_pool(pools: Dictionary) -> Array:
+	var out: Array = []
+	for tier in [1, 2]:
+		for level in (pools.get(tier, []) as Array):
+			if level != null:
+				out.append(level)
+	out.sort_custom(func(a: LevelConfig, b: LevelConfig) -> bool:
+		return a.level_id < b.level_id
+	)
+	return out
+
+
+static func is_easy_or_medium(level: LevelConfig) -> bool:
+	var tier := effective_tier(level)
+	return tier == 1 or tier == 2
+
+
+## Pure selection (testable): one Easy/Medium pick per date, deterministic.
+## A hand-dated Easy or Medium for that day wins; Hard dated levels are ignored.
 static func select_from(dated: Array, pools: Dictionary, date_key: String) -> Dictionary:
 	var out := {}
 	var todays: Array = []
@@ -152,29 +183,33 @@ static func select_from(dated: Array, pools: Dictionary, date_key: String) -> Di
 		return a.sort_index < b.sort_index
 	)
 	for level in todays:
-		var slot := slot_for_tier(effective_tier(level))
-		if not out.has(slot):
-			out[slot] = level
-	for slot in SLOTS:
-		if out.has(slot):
-			continue
-		var pool: Array = pools.get(slot_tier(slot), [])
-		if pool.is_empty() and slot == SLOT_HARD:
-			pool = pools.get(4, [])
-		var pick := pick_from_pool(pool, date_key, slot)
+		if is_easy_or_medium(level as LevelConfig):
+			out[SLOT_DAILY] = level
+			break
+	if not out.has(SLOT_DAILY):
+		var pick := pick_from_pool(easy_medium_pool(pools), date_key, SLOT_DAILY)
 		if pick != null:
-			out[slot] = pick
+			out[SLOT_DAILY] = pick
 	return out
 
 
-## slot -> LevelConfig for a UTC day key.
+## slot -> LevelConfig for a UTC day key (single "daily" slot).
 static func get_daily_set(date_key: String) -> Dictionary:
 	_ensure_cache()
 	return select_from(_dated, _pools, date_key)
 
 
+static func get_daily_level(date_key: String) -> LevelConfig:
+	var picks: Dictionary = get_daily_set(date_key)
+	return picks.get(SLOT_DAILY, null) as LevelConfig
+
+
 static func get_todays_set() -> Dictionary:
 	return get_daily_set(today_key())
+
+
+static func get_todays_level() -> LevelConfig:
+	return get_daily_level(today_key())
 
 
 static func format_date_key(date_key: String) -> String:

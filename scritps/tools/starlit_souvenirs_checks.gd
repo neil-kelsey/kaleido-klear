@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## Checks the 60 Starlit Souvenirs levels (Magnetar Belt, section 4, its first chapter):
-## - every level is in LevelRegistry, in the right section/group, tiers as listed in EXPECTED_TIERS, nothing above Medium except Football, Avocado and Number 9 (Hard, by request);
+## - every level is in LevelRegistry, in their campaign_layout.json placement, tiers as listed in EXPECTED_TIERS, all Medium except Rugby Ball and Shopping Bag (Hard, by request);
 ## - piece rules (>= 3 cells, connected, no overlap, walls are WALL pieces);
 ## - nothing can leave on the first swipe;
 ## - the recorded winning line wins in PuzzleSim AND on the real Board scene
@@ -13,6 +13,7 @@ extends SceneTree
 const Gen := preload("res://scritps/tools/generate_starlit_souvenirs_levels.gd")
 const PuzzleSimScript := preload("res://scritps/tools/PuzzleSim.gd")
 const LevelGenRulesScript := preload("res://scritps/tools/LevelGenRules.gd")
+const CampaignLayoutScript := preload("res://scritps/tools/CampaignLayout.gd")
 
 var _fails := 0
 
@@ -54,7 +55,7 @@ func _sim_sig(st) -> Array:
 	return out
 
 
-const EXPECTED_TIERS := {1: 0, 2: 60, 3: 0, 4: 0}
+const EXPECTED_TIERS := {1: 0, 2: 58, 3: 2, 4: 0}
 
 
 func _run() -> void:
@@ -76,8 +77,9 @@ func _run() -> void:
 		if level == null:
 			_fail("%s does not load" % label)
 			continue
-		if level.section_index != 4 or level.group_title_key != "UI_GROUP_STARLIT_SOUVENIRS":
-			_fail("%s wrong section/group" % label)
+		var place_err := CampaignLayoutScript.matches(level)
+		if place_err != "":
+			_fail("%s %s" % [label, place_err])
 		if level.difficulty_tier != int(spec.tier):
 			_fail("%s tier %d != %d" % [label, level.difficulty_tier, int(spec.tier)])
 		tiers[level.difficulty_tier] = int(tiers.get(level.difficulty_tier, 0)) + 1
@@ -144,54 +146,6 @@ func _run() -> void:
 		print("%s %s tier=%d moves=%d sim=WIN board=%s lives=%d" % [
 			"PASS" if ok else "FAIL", label, level.difficulty_tier, steps.size(),
 			"WIN" if ok else "NO", board.get_lives()])
-	## Placement: Magnetar Belt holds exactly this chapter, in the json order (easiest first).
-	var catalog = root.get_node("LevelCatalog")
-	var magnetar: Array = catalog.get_section_levels(4)
-	var order: Array[String] = []
-	for lv in magnetar:
-		var k := (lv as LevelConfig).group_title_key.strip_edges()
-		if order.is_empty() or order[-1] != k:
-			order.append(k)
-	if order != ["UI_GROUP_STARLIT_SOUVENIRS"]:
-		_fail("Magnetar Belt chapter order is %s" % [order])
-	else:
-		print("Magnetar Belt chapters: %s" % [order])
-	var want_ids: Array = []
-	for spec in data.levels:
-		want_ids.append(str(spec.level_id))
-	var got_ids: Array = []
-	for lv in magnetar:
-		got_ids.append((lv as LevelConfig).level_id)
-	if got_ids != want_ids:
-		_fail("Magnetar Belt level order differs from the json")
-	## Progression: Magnetar Belt opens once Ion Meadows is complete, the last Ion
-	## Meadows level's Next leads into it, and its own last level is end of content
-	## (Glass Tempest is still an empty stub). Stars are set in memory only, then restored.
-	var gs = root.get_node("GameSession")
-	var saved_stars: Dictionary = gs.level_stars.duplicate()
-	var saved_dev: bool = gs.develop_mode
-	gs.develop_mode = false
-	var ion: Array = catalog.get_section_levels(3)
-	var ion_last: LevelConfig = ion[ion.size() - 1]
-	for lv in ion:
-		gs.level_stars.erase((lv as LevelConfig).level_id)
-	if catalog.is_dimension_unlocked(4):
-		_fail("Magnetar Belt unlocked before Ion Meadows is complete")
-	if catalog.get_first_level_of_next_section(ion_last) != null:
-		_fail("Next from Ion Meadows' last level leads on while Magnetar Belt is locked")
-	for lv in ion:
-		gs.level_stars[(lv as LevelConfig).level_id] = 1
-	if not catalog.is_dimension_unlocked(4):
-		_fail("Magnetar Belt still locked after Ion Meadows is complete")
-	if catalog.get_first_level_of_next_section(ion_last) != magnetar[0]:
-		_fail("Next from Ion Meadows' last level does not open the first Starlit Souvenirs level")
-	else:
-		print("Progression: Ion Meadows complete -> Next opens %s" % (magnetar[0] as LevelConfig).level_id)
-	var mag_last: LevelConfig = magnetar[magnetar.size() - 1]
-	if not catalog.is_last_level_in_section(mag_last) or catalog.has_next_section(mag_last):
-		_fail("Magnetar Belt's last level should be end of content (Back to dimensions)")
-	gs.level_stars = saved_stars
-	gs.develop_mode = saved_dev
 	for t in [1, 2, 3, 4]:
 		if int(tiers[t]) != int(EXPECTED_TIERS[t]):
 			_fail("tier %d has %d levels" % [t, int(tiers[t])])

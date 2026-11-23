@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.neilk.kaleidoklear.reminder">
+    <uses-sdk android:minSdkVersion="24" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <application>
+        <meta-data
+            android:name="org.godotengine.plugin.v2.StreakReminder"
+            android:value="com.neilk.kaleidoklear.reminder.StreakReminderPlugin" />
+        <receiver
+            android:name="com.neilk.kaleidoklear.reminder.ReminderReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="com.neilk.kaleidoklear.reminder.ReminderOpenReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="com.neilk.kaleidoklear.reminder.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

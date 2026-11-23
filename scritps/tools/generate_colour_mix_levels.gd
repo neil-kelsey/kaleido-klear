@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Build the Tutorial Colour Mix chapter (section 10, sort 160–200).
+## Build the Tutorial Colour Mix chapter (section 8, sort 160–200).
 ## Run:
 ##   Godot --headless --path <project> -s res://scritps/tools/generate_colour_mix_levels.gd
 

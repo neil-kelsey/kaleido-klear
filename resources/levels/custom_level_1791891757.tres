@@ -65,9 +65,9 @@ display_name = "Antibiotics"
 locale_display_names = {
 "en": "Antibiotics"
 }
-section_index = 1
+section_index = 4
 daily_date = ""
-sort_index = 5080
+sort_index = 570
 columns = 8
 rows = 8
 goal_left_color = 0
@@ -90,7 +90,7 @@ block_shapes = Array[String](["single", "single", "single", "single", "single", 
 block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 block_cell_patterns = [Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(0, 0), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(0, 1), Vector2i(0, 0)])]
 block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9", "Shape 10", "Shape 11", "Shape 12", "Shape 13", "Shape 14", "Shape 15", "Shape 16", "Shape 17", "Shape 18", "Shape 19", "Shape 20", "Shape 21"])
-group_title_key = "UI_GROUP_RIFT_GEOMETRY"
+group_title_key = "UI_GROUP_COTTAGE_KEEPSAKES"
 verified_solvable = true
 min_moves = 21
 difficulty_score = 0.0

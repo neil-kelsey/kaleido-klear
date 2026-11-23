@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://scritps/GoalPhase.gd" id="1_aembj"]
+[ext_resource type="Script" path="res://scritps/LevelConfig.gd" id="2_7y8dq"]
+
+[sub_resource type="Resource" id="Resource_fjkon"]
+script = ExtResource("1_aembj")
+color = 5
+
+[sub_resource type="Resource" id="Resource_aa6ho"]
+script = ExtResource("1_aembj")
+color = 2
+
+[sub_resource type="Resource" id="Resource_gtt5s"]
+script = ExtResource("1_aembj")
+color = 5
+
+[sub_resource type="Resource" id="Resource_hxius"]
+script = ExtResource("1_aembj")
+color = 1
+
+[sub_resource type="Resource" id="Resource_k6e0p"]
+script = ExtResource("1_aembj")
+color = 5
+
+[resource]
+script = ExtResource("2_7y8dq")
+level_id = "custom_level_1793700045"
+display_name = "Surfboard"
+locale_display_names = {
+"en": "Surfboard",
+"fr": "Planche de surf",
+"pirate": "Surfboard"
+}
+section_index = 7
+sort_index = 40
+columns = 10
+rows = 10
+multi_goal_mode = true
+goal_right_phases = Array[ExtResource("1_aembj")]([SubResource("Resource_k6e0p")])
+goal_bottom_phases = Array[ExtResource("1_aembj")]([SubResource("Resource_fjkon"), SubResource("Resource_aa6ho"), SubResource("Resource_gtt5s"), SubResource("Resource_hxius")])
+goal_left_enabled = false
+goal_top_enabled = false
+goal_bottom_enabled = true
+block_positions = Array[Vector2i]([Vector2i(4, 7), Vector2i(2, 6), Vector2i(5, 6), Vector2i(6, 2), Vector2i(5, 4), Vector2i(2, 2), Vector2i(5, 1), Vector2i(3, 2), Vector2i(3, 0)])
+block_colors = Array[int]([0, 3, 3, 0, 2, 0, 2, 3, 3])
+block_shapes = Array[String](["single", "single", "single", "single", "single", "single", "single", "single", "single"])
+block_kinds = Array[int]([1, 1, 1, 1, 1, 1, 1, 1, 1])
+block_cell_patterns = [Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 0), Vector2i(2, 0), Vector2i(3, 0)]), Array[Vector2i]([Vector2i(0, 2), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 0), Vector2i(2, 0), Vector2i(2, 1)]), Array[Vector2i]([Vector2i(2, 3), Vector2i(1, 3), Vector2i(1, 2), Vector2i(0, 3), Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 1)]), Array[Vector2i]([Vector2i(2, 1), Vector2i(1, 1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, 0)]), Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(2, 0), Vector2i(1, 0)])]
+block_shape_names = Array[String](["Shape 1", "Shape 2", "Shape 3", "Shape 4", "Shape 5", "Shape 6", "Shape 7", "Shape 8", "Shape 9"])
+group_title_key = "UI_GROUP_SHORE_RELICS"
+verified_solvable = true
+min_moves = 9
+difficulty_score = 68.13
+difficulty_tier = 2

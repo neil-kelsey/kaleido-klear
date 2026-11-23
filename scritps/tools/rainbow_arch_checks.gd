@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Rainbow Arch (Comet Shallows) keeps a solid red 2×3 bar.
+## Rainbow Arch (now Twinkle Drift / Pebble Orbits) keeps a solid red 2×3 bar.
 ## The old top-left notch made an L. It is not required for the unique
 ## five-down clear. Run:
 ##   godot --headless --path . -s res://scritps/tools/rainbow_arch_checks.gd
@@ -56,9 +56,9 @@ func _process(_delta: float) -> bool:
 
 	_check(level.level_id == "custom_level_1792900028", "level id unchanged")
 	_check(level.columns == 10 and level.rows == 7, "board stays 10×7")
-	_check(level.section_index == 2, "stays in Comet Shallows section")
-	_check(level.group_title_key == "UI_GROUP_COMET_SHALLOWS", "group unchanged")
-	_check(level.sort_index == 5, "sort index unchanged")
+	_check(level.section_index == 0, "now in Twinkle Drift (dimension 1)")
+	_check(level.group_title_key == "UI_GROUP_PEBBLE_ORBITS", "first subsection of Twinkle Drift")
+	_check(level.sort_index == 10, "opens Pebble Orbits")
 	_check(level.difficulty_tier == 1 and level.min_moves == 5, "still an easy 5-move level")
 	_check(
 		level.goal_bottom_enabled
@@ -182,17 +182,17 @@ func _check_rainbow_heart_removed() -> void:
 			heart_listed = true
 		if level.level_id == "custom_level_1792900028":
 			arch_listed = true
-			_check(level.display_name == "Rainbow Arch" and level.sort_index == 5, "Rainbow Arch stays sort 5")
+			_check(level.display_name == "Rainbow Arch" and level.sort_index == 10, "Rainbow Arch opens Pebble Orbits at sort 10")
 		elif level.level_id == "custom_level_1792900027":
 			stack_sort = level.sort_index
 		elif level.level_id == "custom_level_1792900030":
 			paradiddle_sort = level.sort_index
 		elif level.level_id == "custom_level_1792900031":
-			_check(level.display_name == "Morse Beacon" and level.sort_index == 8, "Morse Beacon stays sort 8")
+			_check(level.display_name == "Morse Beacon" and level.sort_index == 60, "Morse Beacon is in Dewfall at sort 60")
 	_check(not heart_listed, "Rainbow Heart is absent from the playable list")
 	_check(arch_listed, "Rainbow Arch still loads in the list")
-	_check(stack_sort == 4, "Spectrum Stack keeps its id and sort index 4")
-	_check(paradiddle_sort == 7, "Paradiddle keeps its id and sort index 7")
+	_check(stack_sort == 340, "Spectrum Stack stays registered at sort 340")
+	_check(paradiddle_sort == 330, "Paradiddle stays registered at sort 330")
 
 
 func _enumerate(config: LevelConfig) -> Dictionary:

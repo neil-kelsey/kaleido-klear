@@ -37,8 +37,8 @@ locale_display_names = {
 "fr": "Hot-dog",
 "pirate": "Hot Dog"
 }
-section_index = 3
-sort_index = 2860
+section_index = 4
+sort_index = 360
 columns = 12
 rows = 6
 multi_goal_mode = true

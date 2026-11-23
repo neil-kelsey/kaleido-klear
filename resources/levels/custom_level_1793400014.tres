@@ -33,7 +33,7 @@ locale_display_names = {
 "pirate": "Daisy"
 }
 section_index = 3
-sort_index = 2140
+sort_index = 410
 columns = 9
 rows = 9
 multi_goal_mode = true

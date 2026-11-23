@@ -29,7 +29,7 @@ locale_display_names = {
 "pirate": "Bell"
 }
 section_index = 2
-sort_index = 1030
+sort_index = 10
 rows = 6
 multi_goal_mode = true
 goal_top_phases = Array[ExtResource("1_fyur0")]([SubResource("Resource_y730w"), SubResource("Resource_50ysa"), SubResource("Resource_v58b6"), SubResource("Resource_eltww")])
