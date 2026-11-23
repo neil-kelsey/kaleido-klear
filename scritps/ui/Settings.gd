@@ -6,8 +6,8 @@ const LEVEL_AUDIT_SCENE := "res://scenes/ui/level_audit.tscn"
 const Reminders := preload("res://scritps/StreakReminder.gd")
 const SettingsToggleScript := preload("res://scritps/ui/SettingsToggle.gd")
 const TITLE_FONT_SIZE := 48
-## Studio privacy page. The Kaleido Klear section uses the #kaleido-klear anchor.
-const PRIVACY_POLICY_URL := "https://veilmoth.com/privacy/#kaleido-klear"
+## Standalone Kaleido Klear privacy page on the studio site.
+const PRIVACY_POLICY_URL := "https://veilmoth.com/privacy/kaleido-klear/"
 
 ## Gold section titles, matching Daily puzzle captions on the nebula.
 const SECTION_TITLE_COLOR := Color(1.0, 0.90, 0.62, 0.92)
