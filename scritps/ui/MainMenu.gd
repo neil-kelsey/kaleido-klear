@@ -28,7 +28,16 @@ const DIMENSION_MAP_SCRIPT := preload("res://scritps/ui/DimensionMap.gd")
 var _star_map_tex: Texture2D
 
 const STREAK_GOLD := Color(1.0, 0.78, 0.30, 1.0)
+const STREAK_TODO_FILL := Color(0.88, 0.16, 0.24, 0.96)
+const STREAK_TODO_BORDER := Color(1.0, 0.52, 0.42, 1.0)
+const STREAK_TODO_FG := Color(1.0, 0.98, 0.96, 1.0)
+const STREAK_DONE_FILL := Color(0.05, 0.16, 0.10, 0.94)
+const STREAK_DONE_BORDER := Color(0.38, 0.88, 0.50, 1.0)
+const STREAK_DONE_ICON := Color(0.48, 0.96, 0.60, 1.0)
+const STREAK_DONE_TEXT := Color(0.95, 1.0, 0.96, 1.0)
+const STREAK_PERFECT_FILL := Color(0.06, 0.05, 0.12, 0.90)
 var _streak_badge: PanelContainer
+var _streak_icon: FaIconView
 var _streak_count: Label
 
 
@@ -83,42 +92,74 @@ func handle_back() -> void:
 		exit_confirm_modal.show_modal()
 
 
-## Small flame + current daily streak pinned to the Daily Puzzles button. Hidden at 0.
+## Daily-puzzle status pill on the Daily Puzzle button.
+## To do: coral/red flame + streak (at-risk, or 0). Done: green tick + streak.
+## Perfect (3 stars): gold star + streak. Always visible so today's state is clear.
 func _build_streak_badge() -> void:
 	if level_select_button == null:
 		return
-	var streak := GameSession.get_display_streak()
 	_streak_badge = PanelContainer.new()
 	_streak_badge.name = "StreakBadge"
 	_streak_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var bg := UiTheme.rounded_stylebox(Color(0.06, 0.05, 0.12, 0.88), 999)
-	bg.border_color = STREAK_GOLD
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 8)
+	_streak_badge.add_child(row)
+	_streak_icon = FaIconView.new()
+	_streak_icon.name = "StreakIcon"
+	_streak_icon.custom_minimum_size = Vector2(40, 44)
+	_streak_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(_streak_icon)
+	_streak_count = Label.new()
+	_streak_count.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UiTheme.apply_label_font(_streak_count, 36)
+	row.add_child(_streak_count)
+	level_select_button.add_child(_streak_badge)
+	_streak_badge.z_index = 5
+	_apply_streak_badge()
+	_place_streak_badge()
+
+
+func _apply_streak_badge() -> void:
+	if _streak_badge == null or _streak_icon == null or _streak_count == null:
+		return
+	var streak := GameSession.get_display_streak()
+	var fill: Color
+	var border: Color
+	var icon_name: String
+	var icon_color: Color
+	var text_color: Color
+	if GameSession.is_daily_perfect():
+		fill = STREAK_PERFECT_FILL
+		border = STREAK_GOLD
+		icon_name = "star"
+		icon_color = STREAK_GOLD
+		text_color = STREAK_GOLD
+	elif GameSession.is_daily_done():
+		fill = STREAK_DONE_FILL
+		border = STREAK_DONE_BORDER
+		icon_name = "check"
+		icon_color = STREAK_DONE_ICON
+		text_color = STREAK_DONE_TEXT
+	else:
+		fill = STREAK_TODO_FILL
+		border = STREAK_TODO_BORDER
+		icon_name = "fire"
+		icon_color = STREAK_TODO_FG
+		text_color = STREAK_TODO_FG
+	var bg := UiTheme.rounded_stylebox(fill, 999)
+	bg.border_color = border
 	bg.set_border_width_all(3)
 	bg.content_margin_left = 18
 	bg.content_margin_right = 22
 	bg.content_margin_top = 4
 	bg.content_margin_bottom = 4
 	_streak_badge.add_theme_stylebox_override("panel", bg)
-	var row := HBoxContainer.new()
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 8)
-	_streak_badge.add_child(row)
-	var flame := FaIconView.new()
-	flame.icon_name = "fire"
-	flame.icon_color = Color(1.0, 0.55, 0.15, 1.0)
-	flame.custom_minimum_size = Vector2(40, 44)
-	flame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(flame)
-	_streak_count = Label.new()
+	_streak_icon.icon_name = icon_name
+	_streak_icon.icon_color = icon_color
 	_streak_count.text = str(streak)
-	_streak_count.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	UiTheme.apply_label_font(_streak_count, 36)
-	_streak_count.add_theme_color_override("font_color", STREAK_GOLD)
-	row.add_child(_streak_count)
-	level_select_button.add_child(_streak_badge)
-	_streak_badge.z_index = 5
-	_streak_badge.visible = streak > 0
-	_place_streak_badge()
+	_streak_count.add_theme_color_override("font_color", text_color)
+	_streak_badge.visible = true
 
 
 func _place_streak_badge() -> void:

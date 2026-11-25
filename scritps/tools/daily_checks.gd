@@ -145,6 +145,27 @@ func _process(_delta: float) -> bool:
 	_check(not gs.record_daily_completion("daily", 2, "2026-11-20"), "legacy day already cleared: no streak rewrite")
 	_check(gs.daily_streak_current == 5 and gs.daily_streak_last_date == "2026-11-20", "streak is unchanged after reading a legacy day")
 
+	# --- main-menu badge state (todo / done / perfect) ---
+	gs.daily_completed = {}
+	gs.daily_streak_current = 4
+	gs.daily_streak_best = 4
+	gs.daily_streak_last_date = "2026-11-24"
+	_check(not gs.is_daily_done("2026-11-25") and not gs.is_daily_perfect("2026-11-25"), "today not done -> not perfect")
+	_check(gs.get_display_streak("2026-11-25") == 4, "at-risk streak still shows 4")
+	gs.daily_completed["2026-11-25"] = {"daily": 1}
+	gs.daily_streak_last_date = "2026-11-25"
+	_check(gs.is_daily_done("2026-11-25") and not gs.is_daily_perfect("2026-11-25"), "1 star -> done, not perfect")
+	gs.daily_completed["2026-11-25"] = {"daily": 2}
+	_check(gs.is_daily_done("2026-11-25") and not gs.is_daily_perfect("2026-11-25"), "2 stars -> done, not perfect")
+	gs.daily_completed["2026-11-25"] = {"daily": 3}
+	_check(gs.is_daily_done("2026-11-25") and gs.is_daily_perfect("2026-11-25"), "3 stars -> perfect")
+	gs.daily_completed["2026-11-26"] = {"easy": 2, "medium": 3, "hard": 1}
+	_check(gs.is_daily_done("2026-11-26") and gs.is_daily_perfect("2026-11-26"), "legacy best of 3 is perfect")
+	gs.daily_completed["2026-11-27"] = {"easy": 1, "hard": 2}
+	_check(gs.is_daily_done("2026-11-27") and not gs.is_daily_perfect("2026-11-27"), "legacy best of 2 is done, not perfect")
+	_check(not gs.is_daily_done("2026-11-28") and not gs.is_daily_perfect("2026-11-28"), "missing day is not done")
+	_check(gs.get_display_streak("2026-11-29") == 0, "display 0 with no recent streak")
+
 	# --- daily play context / playlist ---
 	var lvl: Resource = today_lv
 	gs.begin_daily_play(lvl, DC.SLOT_DAILY, key)

@@ -342,6 +342,17 @@ func get_display_streak(today: String = "") -> int:
 	return 0
 
 
+## Any recorded stars (including legacy easy/medium/hard) count as done for that day.
+func is_daily_done(date_key: String = "") -> bool:
+	return get_daily_stars(DailyCatalog.SLOT_DAILY, date_key) > 0
+
+
+## Perfect daily = the top 3-star rating (cleared with all lives remaining).
+## Matches the Daily Puzzles diamond, which draws a gold star at 3 stars.
+func is_daily_perfect(date_key: String = "") -> bool:
+	return get_daily_stars(DailyCatalog.SLOT_DAILY, date_key) >= 3
+
+
 func begin_audit_play(level: LevelConfig) -> void:
 	if level == null:
 		return
