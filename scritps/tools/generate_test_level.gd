@@ -426,7 +426,12 @@ func _build_variant_e() -> LevelConfig:
 		"test_5x5_three_color_3",
 		"Test 5x5 Three Color 3",
 		50,
-		_three_color_goals(),
+		{
+			"left": Block.TileColor.RED,
+			"top": Block.TileColor.GREEN,
+			"right": Block.TileColor.BLUE,
+			"bottom": Block.TileColor.YELLOW,
+		},
 		_GROUP_BASIC,
 		[
 			{
@@ -472,8 +477,8 @@ func _build_variant_e() -> LevelConfig:
 				],
 			},
 			{
-				"name": "Green Base",
-				"color": Block.TileColor.GREEN,
+				"name": "Yellow Base",
+				"color": Block.TileColor.YELLOW,
 				"cells": [
 					Vector2i(2, 3), Vector2i(1, 4), Vector2i(2, 4),
 				],
