@@ -506,8 +506,9 @@ func reset_progress() -> void:
 
 
 func reset_tutorials() -> void:
-	## Replay coach walkthroughs. Keeps stars and unlocks.
+	## Replay coach walkthroughs and one-time tips. Keeps stars and unlocks.
 	seen_tutorials.clear()
+	heart_tip_seen = false
 	_save_progress()
 
 
@@ -540,10 +541,10 @@ func is_level_unlocked(level: LevelConfig) -> bool:
 		return level != null
 	if level == null:
 		return false
-	## Device drafts only. has_project_level is true for every official .tres, and
-	## used to reload the whole library on each call — that is not an unlock gate.
-	if CustomLevelStore.has_level(level.level_id):
-		return true
+	## No draft shortcut here. Drafts only join the level list in developer mode,
+	## which already returned true above. Outside it, a leftover
+	## user://custom_levels/<id>.tres (a phone edit of a shipped level) used to
+	## count as an unlock, so those levels stayed open after Reset progress.
 	var context: Dictionary = LevelCatalog.find_level_context(level.level_id)
 	if context.is_empty():
 		return false

@@ -54,8 +54,11 @@ func invalidate_project_index() -> void:
 
 
 func has_level(level_id: String) -> bool:
-	## True for on-device drafts only (used to unlock creator drafts freely).
+	## True for on-device drafts, and only while drafts are in use (developer
+	## mode on a device). Published play ignores stray user:// files.
 	if level_id.strip_edges().is_empty():
+		return false
+	if not uses_dynamic_level_list():
 		return false
 	return ResourceLoader.exists(_user_level_path(level_id))
 
