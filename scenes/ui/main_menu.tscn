@@ -127,6 +127,7 @@ script = ExtResource("4_action")
 kind = 1
 label_text = "DAILY PUZZLES"
 icon_style = 0
+show_trailing_icon = false
 
 [node name="SettingsButton" type="Button" parent="Margin/VBox"]
 unique_name_in_owner = true

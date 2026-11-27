@@ -25,25 +25,15 @@ const MENU_SIDE_MARGIN_RATIO := 0.15
 const STAR_MAP_SCALE_PER_412PX := 0.85
 const STAR_MAP_OPACITY := 0.9
 const DIMENSION_MAP_SCRIPT := preload("res://scritps/ui/DimensionMap.gd")
+const STREAK_CLUSTER_SCRIPT := preload("res://scritps/ui/DailyStreakCluster.gd")
 var _star_map_tex: Texture2D
 
-const STREAK_GOLD := Color(1.0, 0.78, 0.30, 1.0)
-const STREAK_TODO_FILL := Color(0.88, 0.16, 0.24, 0.96)
-const STREAK_TODO_BORDER := Color(1.0, 0.52, 0.42, 1.0)
-const STREAK_TODO_FG := Color(1.0, 0.98, 0.96, 1.0)
-const STREAK_DONE_FILL := Color(0.05, 0.16, 0.10, 0.94)
-const STREAK_DONE_BORDER := Color(0.38, 0.88, 0.50, 1.0)
-const STREAK_DONE_ICON := Color(0.48, 0.96, 0.60, 1.0)
-const STREAK_DONE_TEXT := Color(0.95, 1.0, 0.96, 1.0)
-const STREAK_PERFECT_FILL := Color(0.06, 0.05, 0.12, 0.90)
-var _streak_badge: PanelContainer
-var _streak_icon: FaIconView
-var _streak_count: Label
+var _streak_cluster: Control
 
 
 func _ready() -> void:
 	_apply_translations()
-	_build_streak_badge()
+	_build_streak_cluster()
 	GameSession.maybe_open_daily_from_reminder()
 	_star_map_tex = load(DIMENSION_MAP_SCRIPT.STAR_CHART_PATH) as Texture2D
 	star_map.draw.connect(_draw_star_map)
@@ -92,89 +82,19 @@ func handle_back() -> void:
 		exit_confirm_modal.show_modal()
 
 
-## Daily-puzzle status pill on the Daily Puzzle button.
-## To do: coral/red flame + streak (at-risk, or 0). Done: green tick + streak.
-## Perfect (3 stars): gold star + streak. Always visible so today's state is clear.
-func _build_streak_badge() -> void:
+## Streak details live in the Daily Puzzle button's trailing slot (replaces the chevron).
+## Today not done: flame + greyed-out streak count.
+## Done with 2 hearts or fewer remaining (1–2 stars): tick + green count.
+## Perfect (3 stars, all hearts remaining): star + green count.
+func _build_streak_cluster() -> void:
 	if level_select_button == null:
 		return
-	_streak_badge = PanelContainer.new()
-	_streak_badge.name = "StreakBadge"
-	_streak_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var row := HBoxContainer.new()
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 8)
-	_streak_badge.add_child(row)
-	_streak_icon = FaIconView.new()
-	_streak_icon.name = "StreakIcon"
-	_streak_icon.custom_minimum_size = Vector2(40, 44)
-	_streak_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(_streak_icon)
-	_streak_count = Label.new()
-	_streak_count.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	UiTheme.apply_label_font(_streak_count, 36)
-	row.add_child(_streak_count)
-	level_select_button.add_child(_streak_badge)
-	_streak_badge.z_index = 5
-	_apply_streak_badge()
-	_place_streak_badge()
-
-
-func _apply_streak_badge() -> void:
-	if _streak_badge == null or _streak_icon == null or _streak_count == null:
-		return
-	var streak := GameSession.get_display_streak()
-	var fill: Color
-	var border: Color
-	var icon_name: String
-	var icon_color: Color
-	var text_color: Color
-	if GameSession.is_daily_perfect():
-		fill = STREAK_PERFECT_FILL
-		border = STREAK_GOLD
-		icon_name = "star"
-		icon_color = STREAK_GOLD
-		text_color = STREAK_GOLD
-	elif GameSession.is_daily_done():
-		fill = STREAK_DONE_FILL
-		border = STREAK_DONE_BORDER
-		icon_name = "check"
-		icon_color = STREAK_DONE_ICON
-		text_color = STREAK_DONE_TEXT
-	else:
-		fill = STREAK_TODO_FILL
-		border = STREAK_TODO_BORDER
-		icon_name = "fire"
-		icon_color = STREAK_TODO_FG
-		text_color = STREAK_TODO_FG
-	var bg := UiTheme.rounded_stylebox(fill, 999)
-	bg.border_color = border
-	bg.set_border_width_all(3)
-	bg.content_margin_left = 18
-	bg.content_margin_right = 22
-	bg.content_margin_top = 4
-	bg.content_margin_bottom = 4
-	_streak_badge.add_theme_stylebox_override("panel", bg)
-	_streak_icon.icon_name = icon_name
-	_streak_icon.icon_color = icon_color
-	_streak_count.text = str(streak)
-	_streak_count.add_theme_color_override("font_color", text_color)
-	_streak_badge.visible = true
-
-
-func _place_streak_badge() -> void:
-	if _streak_badge == null or level_select_button == null:
-		return
-	var badge_size := _streak_badge.get_combined_minimum_size()
-	_streak_badge.size = badge_size
-	_streak_badge.position = Vector2(
-		level_select_button.size.x - badge_size.x * 0.75,
-		-badge_size.y * 0.45
-	)
+	_streak_cluster = STREAK_CLUSTER_SCRIPT.new()
+	_streak_cluster.apply_from_session()
+	level_select_button.set_custom_trailing(_streak_cluster)
 
 
 func _on_viewport_resized() -> void:
-	_place_streak_badge.call_deferred()
 	_apply_side_margins()
 	_fit_brand_titles()
 	star_map.queue_redraw.call_deferred()

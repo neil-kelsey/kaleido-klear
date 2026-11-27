@@ -43,6 +43,10 @@ var _press_tween: Tween
 var _fx_time: float = 0.0
 var _hovering := false
 var _top_gap: Control
+## Optional trailing control that replaces the chevron/gear (e.g. streak cluster).
+var _custom_trailing: Control
+## Invisible spacer matching the trailing width so the label stays centred.
+var _leading_balance: Control
 
 
 func _ready() -> void:
@@ -157,6 +161,26 @@ func set_label(text_value: String) -> void:
 	_apply_label()
 
 
+func set_custom_trailing(control: Control) -> void:
+	if _custom_trailing != null and is_instance_valid(_custom_trailing) and _custom_trailing != control:
+		_detach_custom_trailing()
+	_custom_trailing = control
+	if not is_node_ready():
+		return
+	_build()
+	_apply_label()
+	_refresh_face_color()
+	_layout()
+
+
+func _detach_custom_trailing() -> void:
+	if _custom_trailing == null or not is_instance_valid(_custom_trailing):
+		return
+	var parent := _custom_trailing.get_parent()
+	if parent != null:
+		parent.remove_child(_custom_trailing)
+
+
 func apply_kind(new_kind: Kind) -> void:
 	if kind == new_kind and is_node_ready() and _face != null:
 		return
@@ -212,6 +236,9 @@ func _build() -> void:
 	_rainbow_border = null
 	_nebula = null
 	_nebula_mat = null
+	_icon = null
+	_leading_balance = null
+	_detach_custom_trailing()
 	for child in get_children():
 		child.queue_free()
 
@@ -237,6 +264,13 @@ func _build() -> void:
 
 	var text_color := Color.WHITE if _uses_nebula() else UiTheme.PRIMARY
 
+	if _custom_trailing != null and is_instance_valid(_custom_trailing):
+		_leading_balance = Control.new()
+		_leading_balance.name = "LeadingBalance"
+		_leading_balance.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_leading_balance.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(_leading_balance)
+
 	_label = Label.new()
 	_label.add_theme_font_override("font", UiTheme.button_typeface())
 	_label.add_theme_font_size_override("font_size", _font_size())
@@ -254,7 +288,12 @@ func _build() -> void:
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_label)
 
-	if show_trailing_icon:
+	if _custom_trailing != null and is_instance_valid(_custom_trailing):
+		_custom_trailing.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_custom_trailing.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(_custom_trailing)
+		_sync_leading_balance()
+	elif show_trailing_icon:
 		var icon_px := float(_icon_size())
 		var fa := FaIconView.new()
 		fa.icon_name = "gear" if icon_style == IconStyle.GEAR else "angles-right"
@@ -310,8 +349,32 @@ func _layout() -> void:
 	pivot_offset = size * 0.5
 	if _face:
 		_face.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_sync_leading_balance()
 	_sync_fx_rect()
 	_fit_wrapped_height()
+
+
+func _trailing_reserve() -> float:
+	var gap := 32.0 if _uses_nebula() else 24.0
+	if _custom_trailing != null and is_instance_valid(_custom_trailing):
+		var trail := _custom_trailing.get_combined_minimum_size().x
+		var lead := trail
+		if _leading_balance != null and is_instance_valid(_leading_balance):
+			lead = _leading_balance.get_combined_minimum_size().x
+		return trail + lead + gap * 2.0
+	if show_trailing_icon and _icon != null:
+		return float(_icon_size()) + gap
+	return 0.0
+
+
+func _sync_leading_balance() -> void:
+	if _leading_balance == null or not is_instance_valid(_leading_balance):
+		return
+	if _custom_trailing == null or not is_instance_valid(_custom_trailing):
+		return
+	var w := _custom_trailing.get_combined_minimum_size().x
+	if absf(_leading_balance.custom_minimum_size.x - w) >= 0.5:
+		_leading_balance.custom_minimum_size = Vector2(w, 0)
 
 
 func _fit_wrapped_height() -> void:
@@ -320,10 +383,7 @@ func _fit_wrapped_height() -> void:
 		## Wait until the button has a real laid-out width — wrapping at ~48px
 		## inflates height and can lock chart modals to a huge stale size.
 		return
-	var text_w := size.x - float(_pad_h() * 2)
-	if show_trailing_icon and _icon != null:
-		var gap := 32.0 if _uses_nebula() else 24.0
-		text_w -= float(_icon_size()) + gap
+	var text_w := size.x - float(_pad_h() * 2) - _trailing_reserve()
 	text_w = maxf(text_w, 120.0)
 	_label.custom_minimum_size.x = text_w
 	var text_h := _label.get_minimum_size().y
